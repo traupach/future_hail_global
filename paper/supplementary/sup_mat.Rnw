@@ -1,0 +1,53 @@
+\documentclass[12pt, titlepage]{article}
+
+\usepackage{fullpage}
+\usepackage[numbers,sort]{natbib}
+\usepackage{amsmath}
+\usepackage{times}
+\usepackage{parskip}
+\usepackage{url}
+
+\urlstyle{same}
+\newcommand{\todo}[1]{\textcolor{red}{\textbf{(#1)}}}
+
+\renewcommand{\figurename}{Supplementary Figure}
+\renewcommand\refname{Supplementary References}
+
+\title{Projected global changes in hail hazard: supplementary information}
+\author{Timothy H. Raupach$^{1,2}$, Raphael Portmann$^{3}$, Christian Siderius$^{4}$, \\and Steven C. Sherwood$^{1,2}$ \\
+ \\
+ \footnotesize 1: Climate Change Research Centre, The University of New South Wales, Sydney, Australia \\
+ \footnotesize 2: ARC Centre of Excellence for Climate Extremes, UNSW Sydney, Sydney, Australia \\
+ \footnotesize 3: Agroscope, Swiss Federal Office for Agriculture, Zurich, Switzerland \\
+ \footnotesize 4: Uncharted Waters Research, Sydney, Australia
+ }
+\date{}
+
+\begin{document}
+
+\maketitle
+
+<<loadResults, echo=FALSE, results=FALSE>>=
+#library(rjson)
+#library(data.table)
+#results = fromJSON(file='../../results/results.json')
+@
+
+<<runsTable, echo=FALSE, results="asis">>=
+
+@
+
+% \begin{figure*}[p]
+%     \centering
+%     \includegraphics[width=\textwidth]{file}
+%     \caption{\textbf{Heading.} Caption.}
+%     \label{fig:domain}
+% \end{figure*}
+
+\clearpage
+\footnotesize
+
+\bibliographystyle{unsrtnat}
+\bibliography{../main/library}
+
+\end{document}
