@@ -1,0 +1,70 @@
+\documentclass[pdflatex, sn-nature]{sn-jnl}
+
+\usepackage{xr}
+\usepackage{manyfoot}
+\usepackage{amsmath}
+\externaldocument[SM-]{../supplementary/sup_mat}
+
+\newcommand{\todo}[1]{\textcolor{red}{\textbf{(#1)}}}
+
+\begin{document}
+
+\title{Projected global changes in hail hazard}
+
+\author*[1,2]{\fnm{Timothy H.} \sur{Raupach}}\email{timothy.h.raupach@gmail.com}
+\author[3]{\fnm{Raphael} \sur{Portmann}}
+\author[4]{\fnm{Christian} \sur{Siderius}}
+\author[1,2]{\fnm{Steven C.} \sur{Sherwood}}
+
+\affil[1]{\orgdiv{Climate Change Research Centre}, \orgname{UNSW Sydney}, \orgaddress{\street{Mathews Building Level 4}, \city{The University of New South Wales, Sydney}, \postcode{2051}, \state{NSW}, \country{Australia}}}
+\affil[2]{\orgdiv{ARC Centre of Excellence for Climate Extremes}, \orgname{UNSW Sydney}, \orgaddress{\country{Australia}}}
+\affil[3]{\orgdiv{Agroscope}, \orgname{Swiss Federal Office for Agriculture}, \orgaddress{\city{Zurich}, \country{Switzerland}}}
+\affil[4]{\orgname{Uncharted Waters Research}, \orgaddress{\city{Sydney}, \country{Australia}}}
+
+\abstract{}
+
+\keywords{hail, severe weather, convection, trends, projections}
+
+\maketitle
+
+<<loadResults, echo=FALSE, results=FALSE>>=
+#library(rjson)
+#library(data.table)
+#results = fromJSON(file='../../results/results.json')
+@
+
+\section*{Results}
+\label{sec:results}
+
+% \begin{figure*}[h!]
+%     \includegraphics[width=\textwidth]{file}
+%     \caption{\textbf{Headline.} Caption.}
+%     \label{fig:}
+% \end{figure*}
+
+\subsection*{Subsection}
+
+\section*{Methods}
+\label{sec:methods}
+
+\backmatter
+
+\bmhead{Data availability}
+
+\bmhead{Code availability}
+
+Convective indices were calculated using \texttt{xarray\_parcel} by T. H. Raupach (https://doi.org/10.5281/zenodo.8088497).
+
+\bmhead{Acknowledgments}
+
+This research was undertaken with the assistance of resources and services from the NCI, which is supported by the Australian Government.
+
+\bmhead{Competing interests}
+
+The authors declare no competing financial or non-financial interests.
+
+\bmhead{Author contributions}
+
+\bibliography{library}
+
+\end{document}
