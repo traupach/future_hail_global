@@ -76,7 +76,7 @@ def open_CMIP_file(filename, res, ex, calendar, chunks={'time': 20}, **kwargs):
     shape = (times.size,) + ex.shape[1:]
     return dask.array.from_delayed(value=dat, shape=shape, dtype=ex.dtype)
     
-def open_CMIP(path, res, variable, chunks={'time': 25}):
+def open_CMIP(path, res, variable, chunks={'time': 25}, max_year=2100):
     """
     Open all CMIP files in a given path, using dask delayed for speed.
     
@@ -85,14 +85,22 @@ def open_CMIP(path, res, variable, chunks={'time': 25}):
         res: Temporal resolution.
         variable: The variable to open.
         chunks: Chunking for result.
+        max_year: Open files with years up to this year.
     """
     
     # List files to open.
-    files = sorted(glob(f'{path}/*.nc'))
+    all_files = sorted(glob(f'{path}/*.nc'))
     
     # Use the variable from the first file to get coordinate information.
-    first = xarray.open_dataset(files[0], use_cftime=True).chunk(chunks)
+    first = xarray.open_dataset(all_files[0], use_cftime=True).chunk(chunks)
     ex = first[variable]
+
+    # Keep files up to max year.
+    files = []
+    for file in all_files:
+        times = times_in_CMIP_file(file, res=res, calendar=first.time.dt.calendar)
+        if times.min().year < max_year:
+            files.append(file)
     
     # Get the time range using filename information.
     times_first = times_in_CMIP_file(files[0], res=res, calendar=first.time.dt.calendar)
@@ -191,15 +199,8 @@ def geopotential_height(dat, vert_dim='lev', Rd=287.04749, g=9.80665):
 def read_all_CMIP_data(model, CMIP6_dir='/g/data/oi10/replicas', orog_path='fx/orog/', 
                        backup_orog='CMIP6/CMIP/CNRM-CERFACS/CNRM-CM6-1/historical/r1i1p1f2/fx/orog/gr/v20180917/orog_fx_CNRM-CM6-1_historical_r1i1p1f2_gr.nc',
                        max_year=2100, pressure_var='ta', out_res='6H', chunks={'time': 20}, grid=None,
-                       variables={'va':   ['6hrLev/va',  '6H'],
-                                  'ua':   ['6hrLev/ua',  '6H'],
-                                  'ta':   ['6hrLev/ta',  '6H'],
-                                  'hus':  ['6hrLev/hus', '6H'],
-                                  'ps':   ['6hrLev/ps',  '6H'],
-                                  'vas':  ['3hr/vas',    '3H'], 
-                                  'uas':  ['3hr/uas',    '3H'],
-                                  'huss': ['3hr/huss',   '3H'],
-                                  'tas':  ['3hr/tas',    '3H']}):
+                       tables=[['6hrLev', '6H'], ['3hr', '3H']],
+                       variables=['va', 'ua', 'ta', 'hus', 'ps', 'vas', 'uas', 'huss', 'tas']):
     """
     Read all CMIP6 data for a given model, at 6H resolution. 
     
@@ -214,7 +215,8 @@ def read_all_CMIP_data(model, CMIP6_dir='/g/data/oi10/replicas', orog_path='fx/o
         out_res: Output resolution.
         chunks: Chunks to use for opening datasets.
         grid: Grid to use.
-        variables: {var: [path, res]} dictionary.
+        tables: [path, res] groups to search for variables in.
+        variables: variables to read.
         
     Returns: An xarray object with all CMIP6 data for the given model at the correct resolution.
     """
@@ -226,12 +228,16 @@ def read_all_CMIP_data(model, CMIP6_dir='/g/data/oi10/replicas', orog_path='fx/o
     # Parse model string.
     project, mip, source, model_name, exp, ensemble = model.split('.')
 
-    for v, [p, res] in variables.items():
-        path = f'{base_path}/{p}'
+    for v in variables:
+        for [p, res] in tables:
+            path = f'{base_path}/{p}/{v}'
+            if os.path.exists(path):
+                break
+        assert os.path.exists(path), f'Could not find path/res combinations for {v}.'
         
         if grid is None:
             grids = [os.path.basename(x) for x in sorted(glob(f'{path}/*'))]
-            assert len(grids) == 1, 'Multiple grids to choose from.'
+            assert len(grids) == 1, f'Multiple grids to choose from for {path}/{v}.'
             grid = grids[0]
             
         path = f'{path}/{grid}'
@@ -1073,15 +1079,22 @@ def warming_years(future_models, warming_degrees=2,
 
     return all_levels
 
-def define_runs(models, hist_start=1980, hist_end=1999, warming_degrees=[2, 3]):
+def define_runs(models, hist_start=1980, hist_end=1999, warming_degrees=[2, 3],
+                tables=[['6hrLev', '6H'], ['3hr', '3H']], 
+                variables=['va', 'ua', 'ta', 'hus', 'ps', 'vas', 'uas', 'huss', 'tas'],
+                CMIP6_dir='/g/data/oi10/replicas', file=None):
     """
     Define model runs with start/end years for the period in which they reached
-    certain warming levels, and a historical period.
+    certain warming levels, and a historical period. Exclude models that don't cover
+    the required times.
     
     Arguments:
         models: The models to use.
         hist_start, hist_end: The historical period to use.
         warming_degrees: Number of degrees warming.
+        tables, variables: CMIP6 tables and variables required.
+        CMIP6_dir: Base directory for CMIP6 data.
+        file: File to write a CSV of run information to.
 
     Returns: A DataFrame with one row per run.
     """
@@ -1102,7 +1115,35 @@ def define_runs(models, hist_start=1980, hist_end=1999, warming_degrees=[2, 3]):
         future['exp'] = future.exp + f' ({deg}C)'
         all = pd.concat([all, future])
     
-    return all.reset_index(drop=True)
+    # Exclude models that do not have the temperal coverage required.
+    exclude = []
+    for i, run in all.iterrows():
+        base_path = f'{CMIP6_dir}/{run.desc.replace(".", "/")}'
+    
+        for v in variables:
+            for [p, res] in tables:
+                path = f'{base_path}/{p}/{v}'
+                if os.path.exists(path):
+                    break
+            assert os.path.exists(path), f'Could not find path/res combinations for {v}.'
+    
+            files = sorted(glob(f'{path}/*/*/*.nc'))
+            min_time = times_in_CMIP_file(filename=files[0], res=res, calendar='standard').min()
+            max_time = times_in_CMIP_file(filename=files[-1], res=res, calendar='standard').max()
+    
+            if (min_time > pd.to_datetime(f'{run.start_year}-1-1') or 
+                max_time < pd.to_datetime(f'{run.end_year}-12-31')):
+                print(f'{run.model} {run.exp} requires {run.start_year}-{run.end_year}, but data for {v} covers only {min_time.year}-{max_time.year}. Excluding {run.model}.')
+                exclude.append(run.model)
+                break
+    
+    runs = all.iloc[~np.isin(all.model, exclude)]
+    runs = runs.reset_index(drop=True)
+
+    if not file is None:
+        runs.to_csv(file)
+    
+    return runs.reset_index(drop=True)
 
 def make_run_scripts(runs, scripts_dir='scripts/', template='scripts/process_CMIP_template.sh', yrs=9):
     """

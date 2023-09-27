@@ -3,6 +3,10 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# PBS output
+*job_*
+*sched*
+
 # C extensions
 *.so
 
