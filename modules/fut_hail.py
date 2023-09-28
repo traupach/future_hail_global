@@ -1178,3 +1178,47 @@ def make_run_scripts(runs, scripts_dir='scripts/', template='scripts/process_CMI
             os.system(f'sed -i s/MODEL/{row.desc}/g {script}')
             os.system(f'sed -i s/START/{start}/g {script}')
             os.system(f'sed -i s/END/{start+yrs}/g {script}')
+
+def plot_run_years(runs, figsize=(10,2.8), legend_y=9.5, file=None, show=True):
+    """
+    Make a plot to show the (overlapping) run years per model.
+
+    Arguments:
+        runs: As from define_runs().
+        figsize: Figure size to use.
+        legend_y: Y position for legend.
+        file: Plot output file.
+        show: Show the plot?
+    """
+
+    rename_exps = {'historical': 'Historical',
+                   'ssp585 (2C)': 'SSP5-8.5 (2C)',
+                   'ssp585 (3C)': 'SSP5-8.5 (3C)'}
+    
+    for key, val in rename_exps.items():
+        runs.loc[runs.exp == key, 'exp'] = val
+        
+    fig, axs = plt.subplots(figsize=figsize, ncols=1, nrows=len(np.unique(runs.model)))
+    
+    for i, model in enumerate(np.unique(runs.model)):
+        mod_runs = runs.loc[runs.model == model]
+        for _, run in mod_runs.iterrows():
+            axs[i].fill_betweenx([0, 1], run.start_year, run.end_year, label=run.exp, alpha=0.5, zorder=1)
+    
+        if i < len(np.unique(runs.model)) - 1:
+            axs[i].set_xticks([])
+        axs[i].set_yticks([])
+        axs[i].set_xlim(1980, 2100)
+        axs[i].set_ylabel(model, rotation=0, ha='right', va='center')
+        
+    plt.legend(loc='upper right', bbox_to_anchor=(1.05, legend_y), framealpha=1)
+
+    if not file is None:
+        plt.savefig(fname=file, bbox_inches='tight')
+        
+        if show:
+            plt.show()
+        plt.close()
+    else:
+        if show:
+            plt.show()
