@@ -1141,7 +1141,7 @@ def define_runs(models, hist_start=1980, hist_end=1999, warming_degrees=[2, 3],
     runs = runs.reset_index(drop=True)
 
     if not file is None:
-        runs.to_csv(file)
+        runs.to_csv(file, index=False)
     
     return runs.reset_index(drop=True)
 
