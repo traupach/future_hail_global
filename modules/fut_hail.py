@@ -1209,8 +1209,7 @@ def warming_years(future_models, warming_degrees=2, baseline_range=[1980,1999]):
 
 def define_runs(models, hist_start=1980, hist_end=1999, warming_degrees=[2, 3],
                 tables=[['6hrLev', '6H'], ['3hr', '3H']], 
-                variables=['va', 'ta', 'hus', 'ps', 'vas', 'huss', 'tas'],
-                file=None):
+                variables=['va', 'ta', 'hus', 'ps', 'vas', 'huss', 'tas']):
     # Define model runs with start/end years for the period in which they reached
     # certain warming levels, and a historical period. Exclude models that don't cover
     # the required times.
@@ -1220,7 +1219,6 @@ def define_runs(models, hist_start=1980, hist_end=1999, warming_degrees=[2, 3],
     #     hist_start, hist_end: The historical period to use.
     #     warming_degrees: Number of degrees warming.
     #     tables, variables: CMIP6 tables and variables to check for temporal coverage.
-    #     file: File to write a CSV of run information to.
     
     # Returns: A DataFrame with one row per run.
     # """
@@ -1305,9 +1303,6 @@ def define_runs(models, hist_start=1980, hist_end=1999, warming_degrees=[2, 3],
     runs = all.iloc[~np.isin(all.model, exclude)]
     runs = runs.reset_index(drop=True)
     
-    if not file is None:
-        runs.to_csv(file, index=False)
-    
     return runs.reset_index(drop=True)
 
 def make_backup_orography(runs, CMIP6_dir='/g/data/oi10/replicas',
@@ -1328,18 +1323,24 @@ def make_backup_orography(runs, CMIP6_dir='/g/data/oi10/replicas',
         backup_orog_dir: The directory for resulting orography files.
         tables: [table, res] pairs to use, in order of preference, for grid_var.
         grid_var: The variable from which to get the grid to interpolate to.
+
+    Returns: The run list with a column 'backup_orography' added.
     """
 
     orog = None
+    runs['backup_orography'] = False
     for i, run in runs.iterrows():
         base_path = CMIP6_dir + '/' + run.desc.replace('.', '/') 
         orog_path = base_path + '/fx/orog/'
+        
         if not os.path.exists(orog_path):
+            runs.loc[i, 'backup_orography'] = True
+            
             _, _, _, mod, exp, ens = run.desc.split('.')
-            out_file = f'{backup_orog_dir}/orog_{mod}.{exp}.{ens}.nc'
+            out_file = f'{backup_orog_dir}/orog_{mod}.{exp}.{ens}.nc'            
             if(os.path.exists(out_file)):
                 continue
-    
+
             print('Producing backup orography for ' + run.desc)
             
             # Open a variable to get the grid to interpolate to.
