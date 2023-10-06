@@ -3,6 +3,19 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Tex stuff
+*.aux
+*.bbl
+*.blg
+*.fdb*
+*.fls
+*.out
+*.pdf
+*.synctex*
+*.tex
+*.cls
+*.bst
+
 # PBS output
 *job_*
 *sched*

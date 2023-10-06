@@ -47,6 +47,10 @@
 \section*{Methods}
 \label{sec:methods}
 
+\subsection*{CMIP6 models}
+
+We used a filtering approach to select the CMIP6 models to use. We selected models from the CMIP6 project that contained variables for air temperature at the surface (\texttt{tas}) and by model level (\texttt{ta}), wind vectors at the surface (\texttt{uas} and \texttt{vas}) and by level (\texttt{ua} and \texttt{va}), specific humidity at the surface (\texttt{huss}) and by level (\texttt{hus}), and surface pressure (\texttt{ps}). We filtered for models with a temperal resolution higher than six-hourly (those with ``table IDs'' of \texttt{3hr} or \texttt{6hrLev}), and that were available for both historical and SSP5-8.5 experiments (``experiment IDs'' of \texttt{historical} or \texttt{ssp585}). The resulting CMIP6 models, that we used here, are detailed in Supplementary Material Table \ref{SM-tab:model_details}.
+
 \backmatter
 
 \bmhead{Data availability}
