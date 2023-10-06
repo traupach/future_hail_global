@@ -32,4 +32,4 @@ dask worker --nworkers 12 --nthreads 4 --memory-limit 0.166 --scheduler-file sch
 sleep 10
 
 # Run the python script to do the work.
-time python3 ../post_process_CMIP.py '3C' 'CNRM-CM6-1' 2057 2076
+time python3 ../post_process_CMIP.py '3C' 'CNRM-CM6-1' 'ssp585' 2057 2076

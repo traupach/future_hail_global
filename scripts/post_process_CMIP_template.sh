@@ -32,4 +32,4 @@ dask worker --nworkers 12 --nthreads 4 --memory-limit 0.166 --scheduler-file sch
 sleep 10
 
 # Run the python script to do the work.
-time python3 ../post_process_CMIP.py 'EPOCH_NAME' 'MODEL_NAME' START_YEAR END_YEAR
+time python3 ../post_process_CMIP.py 'EPOCH_NAME' 'MODEL_NAME' 'EXP' START_YEAR END_YEAR
