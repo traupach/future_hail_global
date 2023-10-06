@@ -16,7 +16,7 @@ out_res = 1                                                             # Output
 assert len(sys.argv) == 6, 'Usage: post_process_CMIP.py <epoch_name> <model_name> <start_year> <end_year>'
 epoch_name = sys.argv[1]
 model_name = sys.argv[2]
-exp = sys.arv[3]
+exp = sys.argv[3]
 epoch_start = int(sys.argv[4])
 epoch_end = int(sys.argv[5])
 

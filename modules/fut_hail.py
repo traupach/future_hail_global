@@ -1118,7 +1118,7 @@ def make_postprocessing_scripts(runs, scripts_dir='scripts/', template='scripts/
             os.mkdir(script_dir)
     
         # Copy the template.
-        script = f'{script_dir}/post_process_{row.model}.sh'
+        script = f'{script_dir}/post_process_{row.model}_{row.epoch_name}.sh'
         os.system(f'cp {template} {script}')
         
         # Adapt the template for the model.
