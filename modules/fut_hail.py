@@ -17,6 +17,7 @@ import cartopy.crs as ccrs
 import matplotlib.pyplot as plt
 from cartopy.io import shapereader
 import matplotlib.ticker as mticker
+import modules.warming_levels as wl
 import modules.parcel_functions as parcel
 import modules.hail_sounding_functions as hs
 from matplotlib.colors import ListedColormap, LinearSegmentedColormap
@@ -196,8 +197,8 @@ def geopotential_height(dat, vert_dim='lev', Rd=287.04749, g=9.80665):
     
     return level_heights, above_surface
 
-def read_all_CMIP_data(model, CMIP6_dir='/g/data/oi10/replicas', orog_path='fx/orog/', 
-                       backup_orog='CMIP6/CMIP/CNRM-CERFACS/CNRM-CM6-1/historical/r1i1p1f2/fx/orog/gr/v20180917/orog_fx_CNRM-CM6-1_historical_r1i1p1f2_gr.nc',
+def read_all_CMIP_data(model, CMIP6_dir='/g/data/oi10/replicas', orog_path='fx/orog/',
+                       backup_orog_path='/g/data/up6/tr2908/future_hail_global/interpolated_orography/',
                        max_year=2100, pressure_var='ta', out_res='6H', chunks={'time': 20}, grid=None,
                        tables=[['6hrLev', '6H'], ['3hr', '3H']],
                        variables=['va', 'ua', 'ta', 'hus', 'ps', 'vas', 'uas', 'huss', 'tas']):
@@ -208,14 +209,14 @@ def read_all_CMIP_data(model, CMIP6_dir='/g/data/oi10/replicas', orog_path='fx/o
         model: Model spec (e.g. CMIP6.ScenarioMIP.MRI.MRI-ESM2-0.ssp585.r1i1p1f1)
         CMIP6_dir: Directory for CMIP6 data.
         orog_path: Path to orography.
-        backup_orog: Path to orography to interpolate to this model's grid, if orography is not 
-                     included. Relative to CMIP6_dir.
+        backup_orog_path: Path to directory containing interpolated orography files for models 
+                          missing orography.
         max_year: Read in data to this year only.
         pressure_var: The variable to use for pressure definition.
         out_res: Output resolution.
         chunks: Chunks to use for opening datasets.
         grid: Grid to use.
-        tables: [path, res] groups to search for variables in.
+        tables: [path, res] groups to search for variables in, in order of preference.
         variables: variables to read.
         
     Returns: An xarray object with all CMIP6 data for the given model at the correct resolution.
@@ -244,7 +245,7 @@ def read_all_CMIP_data(model, CMIP6_dir='/g/data/oi10/replicas', orog_path='fx/o
         version = [os.path.basename(x) for x in sorted(glob(f'{path}/v*'))][-1] # Use latest version.
         path = f'{path}/{version}'
 
-        print(path)
+        print(path, flush=True)
         d = open_CMIP(path=path, res=res, variable=v, chunks=chunks)
         d = d.sel(time=slice(None, f'{max_year-1}-12-31'))
 
@@ -327,16 +328,13 @@ def read_all_CMIP_data(model, CMIP6_dir='/g/data/oi10/replicas', orog_path='fx/o
         dat.orog.attrs['CMIP_grid_spec'] = grids[0]
     else:
         # Otherwise use the backup orography.
-        print('Using backup orography...')
-        orog = xarray.open_mfdataset(f'{CMIP6_dir}/{backup_orog}')
-
-        # Interpolate backup orography to the model grid. 
-        regridder = xe.Regridder(orog, dat, 'bilinear', periodic=True)
-        orog = regridder(orog, keep_attrs=True)
-
-        dat['orog'] = orog.orog
-        dat.orog.attrs['note'] = ('Model orography unavailable, so orography provided by ' + 
-                                  backup_orog + ' and regridded to model grid using xESMF.')
+        print('Using backup orography...', flush=True)
+        orog_file = f'{backup_orog_path}/orog_{model_name}.{exp}.{ensemble}.nc'
+        assert os.path.exists(orog_file), 'Interpolated backup orography is missing.'
+        orog = xarray.open_mfdataset(orog_file).orog
+        assert np.all(orog.lat == dat.lat), 'Coordinate error with backup orog.'
+        assert np.all(orog.lon == dat.lon), 'Coordinate error with backup orog.'
+        dat['orog'] = orog
 
     # Some datasets use NaN in the orography for ocean; set NaNs to zero.
     dat['orog'] = dat.orog.where(~np.isnan(dat.orog), other=0)
@@ -868,19 +866,20 @@ def epoch_stats(d, factors = {'DJF': 90, 'MAM': 92, 'JJA': 92, 'SON': 91}):
     dat = xarray.merge([seasonal, annual])
     return dat
     
-def process_epoch(epoch_name, model_name, exp, epoch_dates, expected_times=365*21*4,
-                  data_dir='/g/data/up6/tr2908/future_hail_global/CMIP_conv/'):
+def process_epoch(epoch_name, model_name, exp, epoch_dates, expected_times=365*20*4,
+                  data_dir='/g/data/up6/tr2908/future_hail_global/CMIP_conv/',
+                  non_na_var='hail_proxy'):
     """
     Process an epoch for a given simulation.
     
     Arguments:
         epoch_name: Name of the epoch.
         model_name: The model name. 
-        exp: Name of the experiment.
+        exp: Name of the experiment (e.g. historical/ssp585).
         epoch_dates: The epoch start/end times as a tuple.
         expected_times: Number of times expected in the epoch.
         data_dir: Base data directory.
-    
+        non_na_var: A variable to check there are no NAs in.     
     """
 
     sim_dir = f'{model_name}/{exp}'
@@ -903,7 +902,10 @@ def process_epoch(epoch_name, model_name, exp, epoch_dates, expected_times=365*2
                f'({d.time.size}) does not match expected size ({expected_times}).')
         print(msg)
         return None
-        
+
+    # Check no NAs in non_na_var.
+    assert not np.any(np.isnan(dat))[non_na_var], f'NaN found in {non_na_var}'
+    
     stats = epoch_stats(d=dat)
     stats = stats.chunk(-1)
     stats = stats.expand_dims({'model': [model_name],
@@ -995,6 +997,25 @@ def ttest(dat, variable, fut_epoch, hist_epoch='historical', sig_level=0.05):
     res.sig.attrs['p-value required'] = sig_level
     return res
 
+def select_all_models(dstore_files=[('/g/data/dk92/catalog/v2/esm/cmip6-oi10/catalog.json', '/g/data/oi10/replicas'),
+                                    ('/g/data/dk92/catalog/v2/esm/cmip6-fs38/catalog.json', '/g/data/fs38/publications')], **kwargs):
+    """
+    Return modules that are suitable for this work, from a list of catalogue files.
+
+    Arguments:
+        datastore_files: Tuples of (catalog_file, data_dir) to use.
+        **kwargs: Extra arguments to select_models().
+
+    Returns: A list of suitable model details.
+    """
+
+    mods = []
+    for [f, d] in dstore_files:
+        mods.append(select_models(datastore_file=f, **kwargs))
+        mods[-1]['CMIP6_dir'] = d
+
+    return pd.concat(mods).reset_index(drop=True)
+
 def select_models(datastore_file='/g/data/dk92/catalog/v2/esm/cmip6-oi10/catalog.json',
                   variables=['tas', 'ta' , 'uas', 'ua', 'vas', 'va', 'huss', 'hus', 'ps'],
                   experiments=['historical', 'ssp585'],
@@ -1044,107 +1065,6 @@ def select_models(datastore_file='/g/data/dk92/catalog/v2/esm/cmip6-oi10/catalog
     
     return subset
 
-def warming_years(future_models, warming_degrees=2, 
-                  warming_levels_file='data/warming_levels/cmip6_warming_levels_one_ens_1850_1900_grid.csv'):
-    """
-    For each model, determine the 20 year period around when that model
-    reaches a certain warming level over pre-industrial temperatures.
-
-    Arguments:
-        future_models: A list of full model descriptions to find years for.
-        warming_degrees: The degrees warming to find the year range for.
-        warming_levels_file: Data file with pre-computed warming ranges.
-
-    Returns: pd.DataFrame with model description, start_year, end_year.
-    """
-
-    # Read warming level data.
-    warming_levels = pd.read_csv(warming_levels_file, comment='#', sep=', ', engine='python')
-
-    # New dataframe for results.
-    all_levels = pd.DataFrame()
-    
-    for mod in future_models:
-        _, _, _, model, exp, ensemble = mod.split('.')
-    
-        levels = warming_levels.loc[warming_levels.model == model]
-        levels = levels.loc[levels.exp == exp]
-        levels = levels.loc[levels.ensemble == ensemble]
-        levels = levels.loc[levels.warming_level == warming_degrees]
-        assert len(levels) == 1, 'Incorrect number of models returned (grid problem?)'
-        levels['desc'] = mod
-        
-        all_levels = pd.concat([all_levels, levels])
-    all_levels = all_levels.reset_index(drop=True)
-
-    return all_levels
-
-def define_runs(models, hist_start=1980, hist_end=1999, warming_degrees=[2, 3],
-                tables=[['6hrLev', '6H'], ['3hr', '3H']], 
-                variables=['va', 'ua', 'ta', 'hus', 'ps', 'vas', 'uas', 'huss', 'tas'],
-                CMIP6_dir='/g/data/oi10/replicas', file=None):
-    """
-    Define model runs with start/end years for the period in which they reached
-    certain warming levels, and a historical period. Exclude models that don't cover
-    the required times.
-    
-    Arguments:
-        models: The models to use.
-        hist_start, hist_end: The historical period to use.
-        warming_degrees: Number of degrees warming.
-        tables, variables: CMIP6 tables and variables required.
-        CMIP6_dir: Base directory for CMIP6 data.
-        file: File to write a CSV of run information to.
-
-    Returns: A DataFrame with one row per run.
-    """
-
-    # Historical models have the same start and end years.
-    hist = models.loc[models.exp == 'historical'].copy()
-    hist['start_year'] = hist_start
-    hist['end_year'] = hist_end
-    
-    # Find start/end dates for future models for various warming levels.
-    all = hist
-    for deg in warming_degrees:
-        future = models.loc[models.exp != 'historical'].copy()
-        warming_period = warming_years(future.desc.values, warming_degrees=deg)
-        warming_period = warming_period.set_index('desc')[['start_year', 'end_year']]
-        future = future.set_index('desc')
-        future = future.join(warming_period).reset_index()
-        future['exp'] = future.exp + f' ({deg}C)'
-        all = pd.concat([all, future])
-    
-    # Exclude models that do not have the temperal coverage required.
-    exclude = []
-    for i, run in all.iterrows():
-        base_path = f'{CMIP6_dir}/{run.desc.replace(".", "/")}'
-    
-        for v in variables:
-            for [p, res] in tables:
-                path = f'{base_path}/{p}/{v}'
-                if os.path.exists(path):
-                    break
-            assert os.path.exists(path), f'Could not find path/res combinations for {v}.'
-    
-            files = sorted(glob(f'{path}/*/*/*.nc'))
-            min_time = times_in_CMIP_file(filename=files[0], res=res, calendar='standard').min()
-            max_time = times_in_CMIP_file(filename=files[-1], res=res, calendar='standard').max()
-    
-            if (min_time > pd.to_datetime(f'{run.start_year}-1-1') or 
-                max_time < pd.to_datetime(f'{run.end_year}-12-31')):
-                print(f'{run.model} {run.exp} requires {run.start_year}-{run.end_year}, but data for {v} covers only {min_time.year}-{max_time.year}. Excluding {run.model}.')
-                exclude.append(run.model)
-                break
-    
-    runs = all.iloc[~np.isin(all.model, exclude)]
-    runs = runs.reset_index(drop=True)
-
-    if not file is None:
-        runs.to_csv(file, index=False)
-    
-    return runs.reset_index(drop=True)
-
 def make_run_scripts(runs, scripts_dir='scripts/', template='scripts/process_CMIP_template.sh', yrs=9):
     """
     Make scripts to produce convective indices for each model run.
@@ -1179,6 +1099,34 @@ def make_run_scripts(runs, scripts_dir='scripts/', template='scripts/process_CMI
             os.system(f'sed -i s/START/{start}/g {script}')
             os.system(f'sed -i s/END/{start+yrs}/g {script}')
 
+def make_postprocessing_scripts(runs, scripts_dir='scripts/', template='scripts/post_process_CMIP_template.sh'):
+    """
+    Make scripts to produce convective indices for each model run.
+    
+    Arguments:
+        runs: As returned by define_runs().
+        scripts_dir: The directory in which to write scripts.
+        template: The script template to copy and modify.
+    """
+    
+    # Make scripts for each run.
+    for index, row in runs.iterrows():
+        
+        # Make scripts directory per model.
+        script_dir = f'{scripts_dir}/{row.model}/'
+        if not os.path.exists(script_dir):
+            os.mkdir(script_dir)
+    
+        # Copy the template.
+        script = f'{script_dir}/post_process_{row.model}.sh'
+        os.system(f'cp {template} {script}')
+        
+        # Adapt the template for the model.
+        os.system(f'sed -i s/MODEL_NAME/{row.model}/g {script}')
+        os.system(f'sed -i s/EPOCH_NAME/{row.epoch_name}/g {script}')
+        os.system(f'sed -i s/START_YEAR/{row.start_year}/g {script}')
+        os.system(f'sed -i s/END_YEAR/{row.end_year}/g {script}')
+
 def plot_run_years(runs, figsize=(10,2.8), legend_y=9.5, file=None, show=True):
     """
     Make a plot to show the (overlapping) run years per model.
@@ -1194,7 +1142,8 @@ def plot_run_years(runs, figsize=(10,2.8), legend_y=9.5, file=None, show=True):
     rename_exps = {'historical': 'Historical',
                    'ssp585 (2C)': 'SSP5-8.5 (2C)',
                    'ssp585 (3C)': 'SSP5-8.5 (3C)'}
-    
+
+    runs = runs.copy()
     for key, val in rename_exps.items():
         runs.loc[runs.exp == key, 'exp'] = val
         
@@ -1211,7 +1160,7 @@ def plot_run_years(runs, figsize=(10,2.8), legend_y=9.5, file=None, show=True):
         axs[i].set_xlim(1980, 2100)
         axs[i].set_ylabel(model, rotation=0, ha='right', va='center')
         
-    plt.legend(loc='upper right', bbox_to_anchor=(1.05, legend_y), framealpha=1)
+    plt.legend(loc='upper right', bbox_to_anchor=(1.08, legend_y), framealpha=1)
 
     if not file is None:
         plt.savefig(fname=file, bbox_inches='tight')
@@ -1222,3 +1171,202 @@ def plot_run_years(runs, figsize=(10,2.8), legend_y=9.5, file=None, show=True):
     else:
         if show:
             plt.show()
+
+def warming_years(future_models, warming_degrees=2, baseline_range=[1980,1999]):
+    """
+    For each model, determine the 20 year period around when that model
+    reaches a certain warming level over pre-industrial temperatures.
+
+    Arguments:
+        future_models: A list of full model descriptions to find years for.
+        warming_degrees: The degrees warming to find the year range for.
+        baseline_range: Baseline year range.
+
+    Returns: pd.DataFrame with model description, start_year, end_year.
+    """
+
+    # Retrieve warming data.
+    warming_levels = wl.warming_window(warming_amount=warming_degrees, project='CMIP6', 
+                                       baseline_range=baseline_range,
+                                       baseline_experiment='historical', 
+                                       future_experiment='ssp585').reset_index()
+
+    # New dataframe for results.
+    all_levels = pd.DataFrame()
+    
+    for mod in future_models:
+        _, _, _, model, exp, ensemble = mod.split('.')
+    
+        levels = warming_levels.loc[warming_levels.model == f'{model}_{ensemble}'].copy()
+        levels['desc'] = mod
+        levels = levels.drop(columns='model')
+        all_levels = pd.concat([all_levels, levels])
+    
+    all_levels = all_levels.reset_index(drop=True)
+
+    return all_levels
+
+def define_runs(models, hist_start=1980, hist_end=1999, warming_degrees=[2, 3],
+                tables=[['6hrLev', '6H'], ['3hr', '3H']], 
+                variables=['va', 'ta', 'hus', 'ps', 'vas', 'huss', 'tas'],
+                file=None):
+    # Define model runs with start/end years for the period in which they reached
+    # certain warming levels, and a historical period. Exclude models that don't cover
+    # the required times.
+    
+    # Arguments:
+    #     models: The models to use.
+    #     hist_start, hist_end: The historical period to use.
+    #     warming_degrees: Number of degrees warming.
+    #     tables, variables: CMIP6 tables and variables to check for temporal coverage.
+    #     file: File to write a CSV of run information to.
+    
+    # Returns: A DataFrame with one row per run.
+    # """
+
+    # Remove duplicate models and keep only the first ensemble_id of duplicate models.
+    unique_models = models[['model', 'ensemble']].drop_duplicates()
+    unique_models = unique_models.groupby('model').first().reset_index()
+    unique_models = unique_models.set_index(['model', 'ensemble'])
+    m = models.set_index(['model', 'ensemble'])
+    models = m.join(unique_models, how='right').reset_index()
+    
+    # Historical models have the same start and end years.
+    hist = models.loc[models.exp == 'historical'].copy()
+    hist['start_year'] = hist_start
+    hist['end_year'] = hist_end
+    hist['exp_name'] = hist.exp
+    hist['epoch_name'] = hist.exp
+    
+    # Find start/end dates for future models for various warming levels.
+    all = hist
+    for deg in warming_degrees:
+        future = models.loc[models.exp != 'historical'].copy()
+        warming_period = warming_years(future_models=future.desc.values, warming_degrees=deg, 
+                                       baseline_range=[hist_start, hist_end])
+        warming_period = warming_period.set_index('desc')[['start_year', 'end_year']]
+        future = future.set_index('desc')
+        future = future.join(warming_period).reset_index()
+        future['epoch_name'] = f'{deg}C'
+        future['exp_name'] = future.exp
+        future['exp'] = future.exp + f' ({deg}C)'
+        all = pd.concat([all, future])
+    all = all.reset_index()
+    
+    # Exclude models that are not on pressure levels or do not have the temperal coverage required.
+    exclude = []
+    for i, run in all.iterrows():
+        if np.isin(run.model, exclude):
+            continue
+        
+        base_path = f'{run.CMIP6_dir}/{run.desc.replace(".", "/")}'
+
+        for v in variables:
+            for [p, res] in tables:
+                path = f'{base_path}/{p}/{v}'
+                if os.path.exists(path):
+                    break
+            assert os.path.exists(path), f'Could not find path/res combinations for {v} under {base_path}.'
+
+            grids = [os.path.basename(x) for x in sorted(glob(f'{path}/*'))]
+            assert len(grids) == 1, f'Multiple grids to choose from for {path}/{v}.'
+            grid = grids[0]
+            
+            path = f'{path}/{grid}'
+            version = [os.path.basename(x) for x in sorted(glob(f'{path}/v*'))][-1] # Use latest version.
+            path = f'{path}/{version}'
+            
+            files = sorted(glob(f'{path}/*.nc'))
+            min_time = times_in_CMIP_file(filename=files[0], res=res, calendar='standard').min()
+            max_time = times_in_CMIP_file(filename=files[-1], res=res, calendar='standard').max()
+            
+            if (min_time > pd.to_datetime(f'{run.start_year}-1-1') or 
+                max_time < pd.to_datetime(f'{run.end_year}-12-31')):
+                print(f'{run.model} {run.exp} requires {run.start_year}-{run.end_year}, but data for {v} covers only {min_time.year}-{max_time.year}. Excluding {run.model}.')
+                exclude.append(run.model)
+                break
+
+            # Check model is on pressure levels.
+            if v == 'ta':
+                ta = xarray.open_dataset(files[0])
+
+                # While we're here, collect some metadata.
+                all.loc[i, 'nominal_resolution'] = ta.attrs['nominal_resolution']
+                all.loc[i, 'vertical_levels'] = int(len(ta.lev.values))
+                
+                sn = ta.lev.attrs['standard_name']
+                ta.close()
+                if sn != 'atmosphere_hybrid_sigma_pressure_coordinate':
+                    print(f'{run.model} {run.exp} is not on pressure levels. Excluding {run.model}.')
+                    exclude.append(run.model)
+                    break
+    
+    runs = all.iloc[~np.isin(all.model, exclude)]
+    runs = runs.reset_index(drop=True)
+    
+    if not file is None:
+        runs.to_csv(file, index=False)
+    
+    return runs.reset_index(drop=True)
+
+def make_backup_orography(runs, CMIP6_dir='/g/data/oi10/replicas',
+                          backup_orog=('CMIP6/CMIP/CNRM-CERFACS/CNRM-CM6-1/historical/' + 
+                                       'r1i1p1f2/fx/orog/gr/v20180917/' + 
+                                       'orog_fx_CNRM-CM6-1_historical_r1i1p1f2_gr.nc'), 
+                          backup_orog_dir = '/g/data/up6/tr2908/future_hail_global/interpolated_orography',
+                          tables = [['6hrLev', '6H'], ['3hr', '3H']],
+                          grid_var = 'tas'):
+    """
+    Make files for backup orography, interpolated from another CMIP6 model, for those models 
+    that have not provided orography.
+
+    Arguments:
+        runs: Runs as from define_runs().
+        CMIP6_dir: Base CMIP6 data directory.
+        backup_orog: The orography file to interpolate from.
+        backup_orog_dir: The directory for resulting orography files.
+        tables: [table, res] pairs to use, in order of preference, for grid_var.
+        grid_var: The variable from which to get the grid to interpolate to.
+    """
+
+    orog = None
+    for i, run in runs.iterrows():
+        base_path = CMIP6_dir + '/' + run.desc.replace('.', '/') 
+        orog_path = base_path + '/fx/orog/'
+        if not os.path.exists(orog_path):
+            _, _, _, mod, exp, ens = run.desc.split('.')
+            out_file = f'{backup_orog_dir}/orog_{mod}.{exp}.{ens}.nc'
+            if(os.path.exists(out_file)):
+                continue
+    
+            print('Producing backup orography for ' + run.desc)
+            
+            # Open a variable to get the grid to interpolate to.
+            for [p, res] in tables:
+                path = f'{base_path}/{p}/{grid_var}'
+                if os.path.exists(path):
+                    break
+            assert os.path.exists(path), f'Could not find path/res combinations for {grid_var}.'
+            grids = [os.path.basename(x) for x in sorted(glob(f'{path}/*'))]
+            assert len(grids) == 1, f'Multiple grids to choose from for {path}/{v}.'
+            grid = grids[0]
+            path = f'{path}/{grid}'
+            version = [os.path.basename(x) for x in sorted(glob(f'{path}/v*'))][-1] # Use latest version.
+            path = f'{path}/{version}'
+            print(path)
+    
+            # Open the existing variable.
+            dat = xarray.open_dataset(sorted(glob(path + '/*.nc'))[0])
+            
+            # Open backup orography if required.
+            if orog is None:
+                orog = xarray.open_dataset(CMIP6_dir + '/' + backup_orog).orog
+    
+            # Interpolate backup orography to the model grid. 
+            regridder = xe.Regridder(orog, dat, 'bilinear', periodic=True)
+            orog = regridder(orog, keep_attrs=True)
+    
+            orog.attrs['note'] = ('Model orography unavailable, so orography provided by ' + 
+                                   backup_orog + ' and regridded to model grid using xESMF.')
+    
+            orog.to_netcdf(out_file)

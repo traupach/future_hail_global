@@ -1,25 +1,25 @@
-model,ensemble,exp,institution_id,desc,start_year,end_year
-CMCC-CM2-SR5,r1i1p1f1,historical,CMCC,CMIP6.CMIP.CMCC.CMCC-CM2-SR5.historical.r1i1p1f1,1980,1999
-CMCC-ESM2,r1i1p1f1,historical,CMCC,CMIP6.CMIP.CMCC.CMCC-ESM2.historical.r1i1p1f1,1980,1999
-CNRM-CM6-1,r1i1p1f2,historical,CNRM-CERFACS,CMIP6.CMIP.CNRM-CERFACS.CNRM-CM6-1.historical.r1i1p1f2,1980,1999
-EC-Earth3,r1i1p1f1,historical,EC-Earth-Consortium,CMIP6.CMIP.EC-Earth-Consortium.EC-Earth3.historical.r1i1p1f1,1980,1999
-GISS-E2-1-G,r1i1p1f2,historical,NASA-GISS,CMIP6.CMIP.NASA-GISS.GISS-E2-1-G.historical.r1i1p1f2,1980,1999
-MIROC6,r1i1p1f1,historical,MIROC,CMIP6.CMIP.MIROC.MIROC6.historical.r1i1p1f1,1980,1999
-MPI-ESM1-2-HR,r1i1p1f1,historical,MPI-M,CMIP6.CMIP.MPI-M.MPI-ESM1-2-HR.historical.r1i1p1f1,1980,1999
-MRI-ESM2-0,r1i1p1f1,historical,MRI,CMIP6.CMIP.MRI.MRI-ESM2-0.historical.r1i1p1f1,1980,1999
-CMCC-CM2-SR5,r1i1p1f1,ssp585 (2C),CMCC,CMIP6.ScenarioMIP.CMCC.CMCC-CM2-SR5.ssp585.r1i1p1f1,2024,2043
-CMCC-ESM2,r1i1p1f1,ssp585 (2C),CMCC,CMIP6.ScenarioMIP.CMCC.CMCC-ESM2.ssp585.r1i1p1f1,2030,2049
-CNRM-CM6-1,r1i1p1f2,ssp585 (2C),CNRM-CERFACS,CMIP6.ScenarioMIP.CNRM-CERFACS.CNRM-CM6-1.ssp585.r1i1p1f2,2031,2050
-EC-Earth3,r1i1p1f1,ssp585 (2C),EC-Earth-Consortium,CMIP6.ScenarioMIP.EC-Earth-Consortium.EC-Earth3.ssp585.r1i1p1f1,2026,2045
-GISS-E2-1-G,r1i1p1f2,ssp585 (2C),NASA-GISS,CMIP6.ScenarioMIP.NASA-GISS.GISS-E2-1-G.ssp585.r1i1p1f2,2020,2039
-MIROC6,r1i1p1f1,ssp585 (2C),MIROC,CMIP6.ScenarioMIP.MIROC.MIROC6.ssp585.r1i1p1f1,2044,2063
-MPI-ESM1-2-HR,r1i1p1f1,ssp585 (2C),DKRZ,CMIP6.ScenarioMIP.DKRZ.MPI-ESM1-2-HR.ssp585.r1i1p1f1,2040,2059
-MRI-ESM2-0,r1i1p1f1,ssp585 (2C),MRI,CMIP6.ScenarioMIP.MRI.MRI-ESM2-0.ssp585.r1i1p1f1,2029,2048
-CMCC-CM2-SR5,r1i1p1f1,ssp585 (3C),CMCC,CMIP6.ScenarioMIP.CMCC.CMCC-CM2-SR5.ssp585.r1i1p1f1,2043,2062
-CMCC-ESM2,r1i1p1f1,ssp585 (3C),CMCC,CMIP6.ScenarioMIP.CMCC.CMCC-ESM2.ssp585.r1i1p1f1,2046,2065
-CNRM-CM6-1,r1i1p1f2,ssp585 (3C),CNRM-CERFACS,CMIP6.ScenarioMIP.CNRM-CERFACS.CNRM-CM6-1.ssp585.r1i1p1f2,2049,2068
-EC-Earth3,r1i1p1f1,ssp585 (3C),EC-Earth-Consortium,CMIP6.ScenarioMIP.EC-Earth-Consortium.EC-Earth3.ssp585.r1i1p1f1,2048,2067
-GISS-E2-1-G,r1i1p1f2,ssp585 (3C),NASA-GISS,CMIP6.ScenarioMIP.NASA-GISS.GISS-E2-1-G.ssp585.r1i1p1f2,2047,2066
-MIROC6,r1i1p1f1,ssp585 (3C),MIROC,CMIP6.ScenarioMIP.MIROC.MIROC6.ssp585.r1i1p1f1,2067,2086
-MPI-ESM1-2-HR,r1i1p1f1,ssp585 (3C),DKRZ,CMIP6.ScenarioMIP.DKRZ.MPI-ESM1-2-HR.ssp585.r1i1p1f1,2064,2083
-MRI-ESM2-0,r1i1p1f1,ssp585 (3C),MRI,CMIP6.ScenarioMIP.MRI.MRI-ESM2-0.ssp585.r1i1p1f1,2055,2074
+index,model,ensemble,exp,institution_id,desc,CMIP6_dir,start_year,end_year,exp_name,epoch_name,nominal_resolution,vertical_levels
+4,CMCC-CM2-SR5,r1i1p1f1,historical,CMCC,CMIP6.CMIP.CMCC.CMCC-CM2-SR5.historical.r1i1p1f1,/g/data/oi10/replicas,1980,1999,historical,historical,100 km,30.0
+6,CMCC-ESM2,r1i1p1f1,historical,CMCC,CMIP6.CMIP.CMCC.CMCC-ESM2.historical.r1i1p1f1,/g/data/oi10/replicas,1980,1999,historical,historical,100 km,30.0
+8,CNRM-CM6-1,r1i1p1f2,historical,CNRM-CERFACS,CMIP6.CMIP.CNRM-CERFACS.CNRM-CM6-1.historical.r1i1p1f2,/g/data/oi10/replicas,1980,1999,historical,historical,250 km,91.0
+10,EC-Earth3,r1i1p1f1,historical,EC-Earth-Consortium,CMIP6.CMIP.EC-Earth-Consortium.EC-Earth3.historical.r1i1p1f1,/g/data/oi10/replicas,1980,1999,historical,historical,100 km,91.0
+12,GISS-E2-1-G,r1i1p1f2,historical,NASA-GISS,CMIP6.CMIP.NASA-GISS.GISS-E2-1-G.historical.r1i1p1f2,/g/data/oi10/replicas,1980,1999,historical,historical,250 km,40.0
+14,MIROC6,r1i1p1f1,historical,MIROC,CMIP6.CMIP.MIROC.MIROC6.historical.r1i1p1f1,/g/data/oi10/replicas,1980,1999,historical,historical,250 km,81.0
+16,MPI-ESM1-2-HR,r1i1p1f1,historical,MPI-M,CMIP6.CMIP.MPI-M.MPI-ESM1-2-HR.historical.r1i1p1f1,/g/data/oi10/replicas,1980,1999,historical,historical,100 km,95.0
+18,MRI-ESM2-0,r1i1p1f1,historical,MRI,CMIP6.CMIP.MRI.MRI-ESM2-0.historical.r1i1p1f1,/g/data/oi10/replicas,1980,1999,historical,historical,100 km,80.0
+2,CMCC-CM2-SR5,r1i1p1f1,ssp585 (2C),CMCC,CMIP6.ScenarioMIP.CMCC.CMCC-CM2-SR5.ssp585.r1i1p1f1,/g/data/oi10/replicas,2037,2056,ssp585,2C,100 km,30.0
+3,CMCC-ESM2,r1i1p1f1,ssp585 (2C),CMCC,CMIP6.ScenarioMIP.CMCC.CMCC-ESM2.ssp585.r1i1p1f1,/g/data/oi10/replicas,2041,2060,ssp585,2C,100 km,30.0
+4,CNRM-CM6-1,r1i1p1f2,ssp585 (2C),CNRM-CERFACS,CMIP6.ScenarioMIP.CNRM-CERFACS.CNRM-CM6-1.ssp585.r1i1p1f2,/g/data/oi10/replicas,2042,2061,ssp585,2C,250 km,91.0
+5,EC-Earth3,r1i1p1f1,ssp585 (2C),EC-Earth-Consortium,CMIP6.ScenarioMIP.EC-Earth-Consortium.EC-Earth3.ssp585.r1i1p1f1,/g/data/oi10/replicas,2031,2050,ssp585,2C,100 km,91.0
+6,GISS-E2-1-G,r1i1p1f2,ssp585 (2C),NASA-GISS,CMIP6.ScenarioMIP.NASA-GISS.GISS-E2-1-G.ssp585.r1i1p1f2,/g/data/oi10/replicas,2028,2047,ssp585,2C,250 km,40.0
+7,MIROC6,r1i1p1f1,ssp585 (2C),MIROC,CMIP6.ScenarioMIP.MIROC.MIROC6.ssp585.r1i1p1f1,/g/data/oi10/replicas,2051,2070,ssp585,2C,250 km,81.0
+8,MPI-ESM1-2-HR,r1i1p1f1,ssp585 (2C),DKRZ,CMIP6.ScenarioMIP.DKRZ.MPI-ESM1-2-HR.ssp585.r1i1p1f1,/g/data/oi10/replicas,2053,2072,ssp585,2C,100 km,95.0
+9,MRI-ESM2-0,r1i1p1f1,ssp585 (2C),MRI,CMIP6.ScenarioMIP.MRI.MRI-ESM2-0.ssp585.r1i1p1f1,/g/data/oi10/replicas,2038,2057,ssp585,2C,100 km,80.0
+2,CMCC-CM2-SR5,r1i1p1f1,ssp585 (3C),CMCC,CMIP6.ScenarioMIP.CMCC.CMCC-CM2-SR5.ssp585.r1i1p1f1,/g/data/oi10/replicas,2054,2073,ssp585,3C,100 km,30.0
+3,CMCC-ESM2,r1i1p1f1,ssp585 (3C),CMCC,CMIP6.ScenarioMIP.CMCC.CMCC-ESM2.ssp585.r1i1p1f1,/g/data/oi10/replicas,2056,2075,ssp585,3C,100 km,30.0
+4,CNRM-CM6-1,r1i1p1f2,ssp585 (3C),CNRM-CERFACS,CMIP6.ScenarioMIP.CNRM-CERFACS.CNRM-CM6-1.ssp585.r1i1p1f2,/g/data/oi10/replicas,2057,2076,ssp585,3C,250 km,91.0
+5,EC-Earth3,r1i1p1f1,ssp585 (3C),EC-Earth-Consortium,CMIP6.ScenarioMIP.EC-Earth-Consortium.EC-Earth3.ssp585.r1i1p1f1,/g/data/oi10/replicas,2052,2071,ssp585,3C,100 km,91.0
+6,GISS-E2-1-G,r1i1p1f2,ssp585 (3C),NASA-GISS,CMIP6.ScenarioMIP.NASA-GISS.GISS-E2-1-G.ssp585.r1i1p1f2,/g/data/oi10/replicas,2055,2074,ssp585,3C,250 km,40.0
+7,MIROC6,r1i1p1f1,ssp585 (3C),MIROC,CMIP6.ScenarioMIP.MIROC.MIROC6.ssp585.r1i1p1f1,/g/data/oi10/replicas,2072,2091,ssp585,3C,250 km,81.0
+8,MPI-ESM1-2-HR,r1i1p1f1,ssp585 (3C),DKRZ,CMIP6.ScenarioMIP.DKRZ.MPI-ESM1-2-HR.ssp585.r1i1p1f1,/g/data/oi10/replicas,2075,2094,ssp585,3C,100 km,95.0
+9,MRI-ESM2-0,r1i1p1f1,ssp585 (3C),MRI,CMIP6.ScenarioMIP.MRI.MRI-ESM2-0.ssp585.r1i1p1f1,/g/data/oi10/replicas,2062,2081,ssp585,3C,100 km,80.0

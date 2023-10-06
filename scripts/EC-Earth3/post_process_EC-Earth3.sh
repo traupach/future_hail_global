@@ -1,22 +1,21 @@
 #!/bin/bash
 # 
-# Process CMIP6 data to get convective indices.
+# Post-process CMIP6 convective data.
 #
 # Author: Tim Raupach <t.raupach@unsw.edu.au>
 
 #PBS -q normal
-#PBS -P li18
+#PBS -P up6
 #PBS -l storage=gdata/hh5+gdata/up6+gdata/oi10+gdata/dk92+gdata/w42
 #PBS -l ncpus=48
-#PBS -l walltime=07:00:00
+#PBS -l walltime=03:00:00
 #PBS -l mem=192GB
 #PBS -j oe
 #PBS -W umask=0022
 #PBS -l wd
 #PBS -l jobfs=100GB
-#PBS -N job_CNRM-CM6-1_1980-1989
+#PBS -N job_post_process_CMIP
 #PBS -r y
-#PBS -J 1980-1989
 
 module use /g/data3/hh5/public/modules
 module load conda/analysis3-22.10
@@ -27,10 +26,10 @@ export PYTHONPATH=$PYTHONPATH:../../modules:../../../xarray_parcel/:../../../aus
 dask scheduler --scheduler-file sched_"${PBS_JOBID}".json &
 while ! [[ -f sched_"${PBS_JOBID}".json ]]; do sleep 10; done
 
-# Use mpirun to run six dask workers in this environment.
-dask worker --nworkers 6 --nthreads 8 --memory-limit 0.166 --scheduler-file sched_"${PBS_JOBID}".json &
+# Use mpirun to run dask workers in this environment.
+dask worker --nworkers 12 --nthreads 4 --memory-limit 0.166 --scheduler-file sched_"${PBS_JOBID}".json &
 
 sleep 10
 
 # Run the python script to do the work.
-time python3 ../process_CMIP.py 'CMIP6.CMIP.CNRM-CERFACS.CNRM-CM6-1.historical.r1i1p1f2' ${PBS_ARRAY_INDEX}
+time python3 ../post_process_CMIP.py '3C' 'EC-Earth3' 2052 2071
