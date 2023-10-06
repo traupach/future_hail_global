@@ -14,9 +14,9 @@
 #PBS -W umask=0022
 #PBS -l wd
 #PBS -l jobfs=100GB
-#PBS -N job_CNRM-CM6-1_1980-1989
+#PBS -N job_EC-Earth3_2062-2071
 #PBS -r y
-#PBS -J 1980-1989
+#PBS -J 2062-2071
 
 module use /g/data3/hh5/public/modules
 module load conda/analysis3-22.10
@@ -33,4 +33,4 @@ dask worker --nworkers 6 --nthreads 8 --memory-limit 0.166 --scheduler-file sche
 sleep 10
 
 # Run the python script to do the work.
-time python3 ../process_CMIP.py 'CMIP6.CMIP.CNRM-CERFACS.CNRM-CM6-1.historical.r1i1p1f2' ${PBS_ARRAY_INDEX}
+time python3 ../process_CMIP.py 'CMIP6.ScenarioMIP.EC-Earth-Consortium.EC-Earth3.ssp585.r1i1p1f1' ${PBS_ARRAY_INDEX}
