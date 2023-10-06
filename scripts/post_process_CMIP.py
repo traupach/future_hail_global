@@ -13,11 +13,12 @@ outdir = '/g/data/up6/tr2908/future_hail_global/CMIP_conv_annual_stats' # Proces
 out_res = 1                                                             # Output resolution (degrees).
 
 # Command line arguments.
-assert len(sys.argv) == 5, 'Usage: post_process_CMIP.py <epoch_name> <model_name> <start_year> <end_year>'
+assert len(sys.argv) == 6, 'Usage: post_process_CMIP.py <epoch_name> <model_name> <start_year> <end_year>'
 epoch_name = sys.argv[1]
 model_name = sys.argv[2]
-epoch_start = int(sys.argv[3])
-epoch_end = int(sys.argv[4])
+exp = sys.arv[3]
+epoch_start = int(sys.argv[4])
+epoch_end = int(sys.argv[5])
 
 # Skip if outfile exists.
 out_file = f'{outdir}/{model_name}_{epoch_name}_{epoch_start}-{epoch_end}_native_grid.nc'
@@ -34,6 +35,7 @@ else:
 
     # Process epoch.
     stats = fh.process_epoch(epoch_name=epoch_name,
+                             exp=exp,
                              model_name=model_name,
                              epoch_dates=(epoch_start, epoch_end))
     

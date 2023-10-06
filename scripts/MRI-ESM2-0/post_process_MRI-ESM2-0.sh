@@ -32,4 +32,4 @@ dask worker --nworkers 12 --nthreads 4 --memory-limit 0.166 --scheduler-file sch
 sleep 10
 
 # Run the python script to do the work.
-time python3 ../post_process_CMIP.py '3C' 'MRI-ESM2-0' 2062 2081
+time python3 ../post_process_CMIP.py '3C' 'MRI-ESM2-0' 'ssp585' 2062 2081

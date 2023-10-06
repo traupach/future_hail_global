@@ -1124,6 +1124,7 @@ def make_postprocessing_scripts(runs, scripts_dir='scripts/', template='scripts/
         # Adapt the template for the model.
         os.system(f'sed -i s/MODEL_NAME/{row.model}/g {script}')
         os.system(f'sed -i s/EPOCH_NAME/{row.epoch_name}/g {script}')
+        os.system(f'sed -i s/EXP/{row.exp_name}/g {script}')
         os.system(f'sed -i s/START_YEAR/{row.start_year}/g {script}')
         os.system(f'sed -i s/END_YEAR/{row.end_year}/g {script}')
 
@@ -1292,7 +1293,7 @@ def define_runs(models, hist_start=1980, hist_end=1999, warming_degrees=[2, 3],
 
                 # While we're here, collect some metadata.
                 all.loc[i, 'nominal_resolution'] = ta.attrs['nominal_resolution']
-                all.loc[i, 'vertical_levels'] = int(len(ta.lev.values))
+                all.loc[i, 'vertical_levels'] = str(int(len(ta.lev.values)))
                 
                 sn = ta.lev.attrs['standard_name']
                 ta.close()
