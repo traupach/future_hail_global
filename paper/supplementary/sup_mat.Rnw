@@ -6,6 +6,7 @@
 \usepackage{times}
 \usepackage{parskip}
 \usepackage{url}
+\usepackage{booktabs}
 
 \urlstyle{same}
 \newcommand{\todo}[1]{\textcolor{red}{\textbf{(#1)}}}
@@ -27,22 +28,34 @@
 
 \maketitle
 
-<<loadResults, echo=FALSE, results=FALSE>>=
+<<loadResults, echo=FALSE, results=FALSE, message=FALSE>>=
 #library(rjson)
-#library(data.table)
 #results = fromJSON(file='../../results/results.json')
+library(tidyverse)
+library(xtable)
 @
 
 <<runsTable, echo=FALSE, results="asis">>=
-
+runs = read_csv('../../results/runs_list.csv', col_types='cccccii')
+runs = runs %>% arrange(model) %>% select(Model=model, 
+                                          Institution=institution_id,
+                                          Experiment=exp,
+                                          Ensemble=ensemble, 
+                                          Start=start_year, 
+                                          End=end_year) 
+tab = xtable(runs, label='tab:model_details',
+             caption='\\textbf{CMIP6 model details}.')
+print(tab, booktabs=TRUE, include.rownames=FALSE, size='footnotesize')
 @
 
-% \begin{figure*}[p]
-%     \centering
-%     \includegraphics[width=\textwidth]{file}
-%     \caption{\textbf{Heading.} Caption.}
-%     \label{fig:domain}
-% \end{figure*}
+\begin{figure*}[p]
+    \centering
+    \includegraphics[width=\textwidth]{../../results/run_years}
+    \caption{\textbf{CMIP6 models and per-degree-framework date ranges.} The reference period from 
+    historical simulations is shown in blue while periods with 2 and 3 degrees C warming over 
+    the reference period, in SSP5-8.5 simulations, are in orange and green, respectively.}
+    \label{fig:domain}
+\end{figure*}
 
 \clearpage
 \footnotesize
