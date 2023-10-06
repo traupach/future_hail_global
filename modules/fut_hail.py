@@ -1250,7 +1250,7 @@ def define_runs(models, hist_start=1980, hist_end=1999, warming_degrees=[2, 3],
         future['exp_name'] = future.exp
         future['exp'] = future.exp + f' ({deg}C)'
         all = pd.concat([all, future])
-    all = all.reset_index()
+    all = all.reset_index(drop=True)
     
     # Exclude models that are not on pressure levels or do not have the temperal coverage required.
     exclude = []
