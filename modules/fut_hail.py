@@ -402,7 +402,7 @@ def conv_CMIP(dat, year, proxy_results_file, proxy_conds_file,
         dat: The CMIP6 data to process.
         year: The year to process.
         proxy_results_file: Proxy results file to use with apply_trained_proxy.
-        proxy_conds_file: Proxy extra conditions file.
+        proxy_conds_file: Proxy extra  conditions file.
         outdir: Output directory minus model name.
         days_per_outfile:
     """
@@ -888,7 +888,8 @@ def process_epoch(epoch_name, model_name, exp, epoch_dates, expected_times=365*2
         print(f'No files available for {sim_dir}.')
         return None
 
-    dat = xarray.open_mfdataset(sorted(files), parallel=True, chunks={'time': 1000})
+    dat = xarray.open_mfdataset(sorted(files), parallel=True, chunks={'time': 1000}, 
+                                combine='nested', concat_dim='time').sortby('time')
     dat = dat.sel(time=slice(f'{epoch_dates[0]}-01-01', f'{epoch_dates[1]}-12-31'))
 
     # Convert from longitude 0-360 to -180-180.
@@ -899,7 +900,7 @@ def process_epoch(epoch_name, model_name, exp, epoch_dates, expected_times=365*2
 
     if dat.time.size != expected_times:
         msg = (f'Warning: {sim_dir} epoch {epoch_name}: number of times returned ' + 
-               f'({d.time.size}) does not match expected size ({expected_times}).')
+               f'({dat.time.size}) does not match expected size ({expected_times}).')
         print(msg)
         return None
 
