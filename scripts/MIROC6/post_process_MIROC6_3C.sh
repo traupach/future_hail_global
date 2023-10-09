@@ -27,7 +27,7 @@ dask scheduler --scheduler-file sched_"${PBS_JOBID}".json &
 while ! [[ -f sched_"${PBS_JOBID}".json ]]; do sleep 10; done
 
 # Use mpirun to run dask workers in this environment.
-dask worker --nworkers 12 --nthreads 4 --memory-limit 0.166 --scheduler-file sched_"${PBS_JOBID}".json &
+dask worker --nworkers 8 --nthreads 4 --memory-limit 0.125 --scheduler-file sched_"${PBS_JOBID}".json &
 
 sleep 10
 
