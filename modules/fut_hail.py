@@ -364,13 +364,15 @@ def write_output(dat, file, attrs):
     dat.attrs = attrs
     dat.to_netcdf(file, encoding=encoding)
     
-def regrid_global(path, out_res=1):
+def regrid_global(path, out_res=1, rename=None, output_file=lambda x: x.replace('native_grid', 'common_grid'), isel=None):
     """
     Regrid all (global) files in a directory to a common grid.
     
     Arguments:
         path: Path to match files to regrid.
         out_res: Output resolution in degrees.
+        rename: Rename variables before saving?
+        output_file: Function to convert input filename to output filename.
     """
     
     files = glob(path)
@@ -383,13 +385,19 @@ def regrid_global(path, out_res=1):
                                       'lon_b': out_lon})
 
     for file in files:
-        outfile = file.replace('native_grid', 'common_grid')
+        outfile = output_file(file)
         if not os.path.exists(outfile):
             print(f'Regridding {file}.')
             d = xarray.open_dataset(file)
             regridder = xe.Regridder(d, out_grid, 'bilinear', periodic=True)
             d = regridder(d, keep_attrs=True)
             attrs = {'history': f'Regridded to {out_res} x {out_res} degree grid using xESMF.'}
+
+            if not rename is None:
+                d = d.rename(rename)
+            if not isel is None:
+                d = d.isel(isel)
+            
             write_output(dat=d, file=outfile, attrs=attrs)
 
 def conv_CMIP(dat, year, proxy_results_file, proxy_conds_file,
@@ -668,7 +676,9 @@ def plot_map(dat, dat_proj=ccrs.PlateCarree(), disp_proj=ccrs.PlateCarree(), fig
              file=None, scale_label='', share_axes=False, ticks_left=True,
              ticks_bottom=True, wspace=0.05, hspace=0.05, stippling=None,
              cbar_adjust=0.862, cbar_pad=0.015, col_labels=None, row_labels=None, 
-             xlims=None, ylims=None, show=True, shared_scale_quantiles=(0,1), **kwargs):
+             xlims=None, ylims=None, show=True, shared_scale_quantiles=(0,1), 
+             row_label_rotation=90, row_label_scale=1.33, row_label_offset=0.03,
+             row_label_adjust=0.02, **kwargs):
     """
     Plot data on a map.
     
@@ -695,6 +705,10 @@ def plot_map(dat, dat_proj=ccrs.PlateCarree(), disp_proj=ccrs.PlateCarree(), fig
         - col_labels/row_labels: Labels for each column/row; overwrites individial plot titles.
         - xlims, ylims: x and y limits.
         - show: Show the map?
+        - row_label_rotation: Rotation for row labels.
+        - row_label_scale: Scale factor for gap between row labels.
+        - row_label_offset: Offset for first row label.
+        - row_label_adjust: Adjust setting for row label space on left of plot.
         - kwargs: Extra arguments to plot_map_to_ax.
         
     Return: 
@@ -774,13 +788,13 @@ def plot_map(dat, dat_proj=ccrs.PlateCarree(), disp_proj=ccrs.PlateCarree(), fig
                     a.set_title(lab, fontsize=plt.rcParams['font.size'])
 
             if row_labels is not None:
-                fig.subplots_adjust(left=0.02)
-                lab_ax = fig.add_axes([0, 0.11, 0.02, 0.78], autoscale_on=True)
+                fig.subplots_adjust(left=row_label_adjust)
+                lab_ax = fig.add_axes([0, 0.11, row_label_adjust, 0.78], autoscale_on=True)
                 lab_ax.axis('off')
                 
                 for i, lab in enumerate(row_labels):
-                    p = 0.03 + (i/len(row_labels))*1.33
-                    lab_ax.annotate(lab, xy=(0.5, 1-p), rotation=90,
+                    p = row_label_offset + (i/len(row_labels))*row_label_scale
+                    lab_ax.annotate(lab, xy=(0.5, 1-p), rotation=row_label_rotation,
                                     xycoords='axes fraction', ha='center')
 
     if not file is None:
@@ -1373,3 +1387,41 @@ def make_backup_orography(runs, CMIP6_dir='/g/data/oi10/replicas',
                                    backup_orog + ' and regridded to model grid using xESMF.')
     
             orog.to_netcdf(out_file)
+            
+def read_processed_data(data_dir='/g/data/up6/tr2908/future_hail_global/CMIP_conv_annual_stats/', 
+                        data_exp='*common_grid.nc', 
+                        rename_models={'EC-Earth_Consortium.EC-Earth3': 'EC-Earth3'}):
+    """
+    Read all processed data, regridding to a common grid on the way. 
+
+    Arguments:
+        data_dir: The data directory to read from.
+        data_exp: Expression to match for data.
+        rename_models: Models to shorten the names of.
+
+    Returns: Dataset.
+    """
+    
+    # Regrid native grids to common grids.
+    regrid_global(path=f'{data_dir}/*native_grid.nc')
+    
+    # Open all data.
+    dat = xarray.open_mfdataset(f'{data_dir}/{data_exp}')
+
+    # Shorten model names if required.
+    dat = dat.assign_coords({'model': [rename_models[x] if x in rename_models else x for x in dat.model.values]})
+
+    # Open landsea mask.
+    lsm = make_landsea_mask()
+    
+    # Mask to land area only.
+    dat_land = dat.where(lsm.land == 1)
+    
+    # Load for speed.
+    dat = dat.persist()
+    dat_land = dat_land.persist()
+    
+    # Transpose - for the ttest the axis over which the t-test should be applied ('year_num') must be first after model/epoch selection.
+    dat = dat.transpose('model', 'epoch', 'year_num', 'season', 'lat', 'lon')
+
+    return dat
