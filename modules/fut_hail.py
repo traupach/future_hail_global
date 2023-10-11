@@ -1529,3 +1529,65 @@ def plot_diffs_by_epoch(dat, models, var, scale_label, figsize=(12, 9.5), ncols=
                  col_labels=['2C', '3C'], row_labels=models, row_label_rotation=0, colour_scale=colour_scale,
                  row_label_scale=row_label_scale, row_label_offset=row_label_offset, 
                  row_label_adjust=row_label_adjust, file=file, scale_label=scale_label)
+
+def plot_mean_diffs_for_epoch(diffs, sigs, variable, scale_label, epoch, figsize=(12,6), file=None):
+    """
+    Plot differences in ensemble means between two epochs with stippling showing model agreement and significance of differences.
+
+    Arguments:
+        diffs: The differences data.
+        sigs: Significance infomration.
+        variable: The variable to plot.
+        scale_label: Label for the scale.
+        epoch: The epoch to plot differences for. 
+        figsize: Figure size.
+        file: Output plot file.
+    """
+    
+    seasons=diffs.season.values
+    mean_diffs = diffs[variable].mean(['model'])
+    
+    mean_sign = np.sign(mean_diffs)
+    
+    significance = np.logical_and(sigs[variable+'_sig'].sum('model') >= len(diffs.model)*0.75,
+                                  (np.sign(diffs[variable]) == mean_sign).sum('model') > len(diffs.model)*0.75)
+    
+    stippling = [significance.sel(season=s, epoch=epoch) for s in seasons]
+    differences = [mean_diffs.sel(season=s, epoch=epoch) for s in seasons]
+    
+    _ = plot_map(differences, stippling=stippling,
+                 title=seasons, share_scale=True, share_axes=True, grid=False,
+                 ncols=2, nrows=2, figsize=figsize, disp_proj=ccrs.Robinson(), 
+                 contour=True, cmap='RdBu_r', divergent=True, scale_label=scale_label,
+                 file=file)
+
+def plot_mean_diffs_for_season(diffs, sigs, variable, scale_label, season, figsize=(12,6), file=None):
+    """
+    Plot differences in ensemble means between epochs with stippling showing model agreement and significance of differences.
+
+    Arguments:
+        diffs: The differences data.
+        sigs: Significance infomration.
+        variable: The variable to plot.
+        scale_label: Label for the scale.
+        season: The season to plot for.
+        figsize: Figure size.
+        file: Output plot file.
+    """
+    
+    epochs=diffs.epoch.values
+    mean_diffs = diffs[variable].mean(['model'])
+    
+    mean_sign = np.sign(mean_diffs)
+    
+    significance = np.logical_and(sigs[variable+'_sig'].sum('model') >= len(diffs.model)*0.75,
+                                  (np.sign(diffs[variable]) == mean_sign).sum('model') > len(diffs.model)*0.75)
+    
+    stippling = [significance.sel(season=season, epoch=e) for e in epochs]
+    differences = [mean_diffs.sel(season=season, epoch=e) for e in epochs]
+    
+    _ = plot_map(differences, stippling=stippling,
+                 title=epochs, share_scale=True, share_axes=True, grid=False,
+                 ncols=1, nrows=2, figsize=figsize, disp_proj=ccrs.Robinson(), 
+                 contour=True, cmap='RdBu_r', divergent=True, scale_label=scale_label,
+                 file=file)
