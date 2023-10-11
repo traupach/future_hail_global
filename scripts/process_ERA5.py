@@ -17,6 +17,7 @@ proxy_results_file = '../../aus400_hail/results/results_era5.json'           # T
 proxy_conds_file = '../../aus400_hail/results/era5_proxy_extra_conds.csv'    # Extra proxy conditions file.
 ERA5_dir = '/g/data/up6/tr2908/future_hail_global/era5_1deg/'                # ERA5 data directory.
 height_file = '/g/data/up6/tr2908/future_hail_global/era5_1deg/era5_surface_height.nc' # File with geopotential heights of surface.
+attrs = {'history': 'ERA5 data interpolated onto 1 degree grid, then convective indices and hail proxy calculated.'}
 
 # Command line arguments.
 assert len(sys.argv) == 3, 'Usage: process_ERA5.py <process_num> <total_processes>.'
@@ -42,19 +43,19 @@ surface_height = surface_height.load()
 files = sorted(glob(ERA5_dir + '/era5*.nc'))
 files_per_process = len(files) // total
 files_from = (num-1) * files_per_process
-files_to = num * files_per_process - 1
+files_to = num * files_per_process
 if files_to > len(files) - files_per_process:
-    files_to = len(files) - 1
-print(f'Processing files from index {files_from} to index {files_to}.')
+    files_to = len(files)
+print(f'Processing files from index {files_from} to index {files_to-1}.')
 files = files[files_from:files_to]
 
 # Process ERA5 files.
 for file in files:
     out_file = f'{outdir}/{os.path.basename(file).replace(".nc", "_conv.nc")}'
     if os.path.exists(out_file):
-        print(f'Skipping existing output {out_file}.')
-        continue
-
+            print(f'Skipping existing output {out_file}.')
+            continue
+    
     print(f'Reading {file}...')
     era5 = xarray.open_dataset(file)
     
@@ -63,15 +64,10 @@ for file in files:
     era5 = era5.sortby(['level', 'latitude', 'longitude'])
     era5.pressure.attrs['units'] = 'hPa'
     
-    # Rename fields.
-    era5['surface_wind_u'] = era5.u.isel(level=0)
-    era5['surface_wind_v'] = era5.v.isel(level=0)
-    era5 = era5.rename({'u': 'wind_u', 'v': 'wind_v'})
-    
     # Convert to a noleap calendar.
     era5 = era5.convert_calendar('noleap')
 
-    # Process each day in turn.
+    # Process each day in turn and write output for each day.
     from_date = era5.time.min().dt.floor('1D').item()
     to_date = era5.time.max().dt.floor('1D').item()
     days = xarray.cftime_range(from_date, to_date, freq='D', calendar='noleap')
@@ -79,14 +75,18 @@ for file in files:
     conv = []
     for day in days:
         print(day)
-        day_dat = era5.sel(time=f'{day.year}-{day.month:02}-{day.day:02}').load()
+        day_string = f'{day.year}-{day.month:02}-{day.day:02}'
+        day_dat = era5.sel(time=day_string).load()
 
         print('Calculating heights and subsetting to above surface...')
         day_dat['height_asl'] = day_dat.z/9.81
         day_dat['height_above_surface'] = day_dat.height_asl - surface_height
         day_dat = day_dat.where(day_dat.height_above_surface >= 0)
         day_dat['wind_height_above_surface'] = day_dat.height_above_surface
-
+        day_dat['surface_wind_u'] = era5.u.isel(level=0)
+        day_dat['surface_wind_v'] = era5.v.isel(level=0)
+        day_dat = day_dat.rename({'u': 'wind_u', 'v': 'wind_v'})
+        
         # Shift out NaNs.
         day_dat = parcel.shift_out_nans(x=day_dat, name='pressure', dim='level')
 
@@ -110,10 +110,10 @@ for file in files:
                                                    extra_conds_file=proxy_conds_file)
         res['hail_proxy_noconds'] = hs.apply_trained_proxy(dat=res, results_file=proxy_results_file, 
                                                            extra_conds_file=None)
+        
         conv.append(res.load())
         del res, day_dat
 
-    conv = xarray.merge(conv)
-    attrs = {'history': 'ERA5 data interpolated onto 1 degree grid, then convective indices and hail proxy calculated.'}
-    fh.write_output(conv, attrs=attrs, file=out_file)
+    fh.write_output(xarray.merge(conv), attrs=attrs, file=out_file)
     era5.close()
+    del era5, conv
