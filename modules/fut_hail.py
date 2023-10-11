@@ -1425,3 +1425,33 @@ def read_processed_data(data_dir='/g/data/up6/tr2908/future_hail_global/CMIP_con
     dat = dat.transpose('model', 'epoch', 'year_num', 'season', 'lat', 'lon')
 
     return dat
+
+def era5_climatology(era5_dir = '/g/data/up6/tr2908/future_hail_global/era5_conv/',
+                     cache_file = '/g/data/up6/tr2908/future_hail_global/era5_climatology.nc'):
+    """
+    Calculate the ERA5 climatology of mean annual hail-prone days.
+
+    Arguments:
+        era5_dir: Processed convective files directory for ERA5.
+        cache_file: A cache file to write/read to/from.
+
+    Returns: Mean annual hail-prone days from ERA5.
+    """
+    
+    if os.path.exists(cache_file):
+        return xarray.open_dataset(cache_file)
+
+    era5 = xarray.open_mfdataset(f'{era5_dir}/*.nc', parallel=True)
+
+    assert len(era5.time) == 365*20*4, 'Incorrect number of times in ERA5 historic period.'
+    assert not np.any(np.isnan(era5.hail_proxy)), 'NaNs in ERA5 hail proxy.'
+
+    daily = era5.hail_proxy.resample(time='D').max(keep_attrs=True)
+    with xarray.set_options(keep_attrs=True):
+        days = daily.groupby('time.year').mean(keep_attrs=True) * 365
+        days = days.chunk(-1)
+
+    res = days.mean('year')
+
+    write_output(xarray.Dataset({'annual_mean_hail_proxy': res}), attrs={}, file=cache_file)
+    return xarray.open_dataset(cache_file)
