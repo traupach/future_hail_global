@@ -616,9 +616,6 @@ def plot_map_to_ax(dat, ax, coastlines=True, grid=True, dat_proj=ccrs.PlateCarre
     if not stippling is None:
         ax.autoscale(False)
         pts = stippling.where(stippling).to_dataframe().dropna().reset_index()
-        #ax.scatter(x=pts[stippling.dims[1]], 
-        #           y=pts[stippling.dims[0]], marker='.', color='black',
-        #           transform=dat_proj, s=stipple_size) 
         stippling.plot.contourf(transform=dat_proj, ax=ax, add_colorbar=False,
                     levels=3, colors='none', hatches=[None, '\\\\\\'])
         
@@ -731,12 +728,12 @@ def plot_map(dat, dat_proj=ccrs.PlateCarree(), disp_proj=ccrs.PlateCarree(), fig
     else:
         assert ncols*nrows >= len(dat), 'Not enough cols/rows to fit all plots.'
       
-        if share_scale:
+        if share_scale and colour_scale is None:
             all_vals = np.array([])
             
             for d in dat:
                 all_vals = np.concatenate([all_vals, np.array(d.values.flat)])
-                
+            
             colour_scale = (np.nanquantile(all_vals, shared_scale_quantiles[0]), 
                             np.nanquantile(all_vals, shared_scale_quantiles[1]))
             assert not (np.isnan(colour_scale[0]) or np.isnan(colour_scale[1])), 'share_scale cannot be used with subplots missing data.'
@@ -982,34 +979,35 @@ def plot_seasonal_maps(dat, variable, lat_range=slice(None, None), lon_range=sli
                  ncols=dat.season.size, nrows=dat.model.size, share_scale=True, share_axes=True, 
                  col_labels=dat.season.values, row_labels=dat.model.values, **kwargs)
     
-def ttest(dat, variable, fut_epoch, hist_epoch='historical', sig_level=0.05):
+def ttest(dat, variables, fut_epoch, hist_epoch='historical', sig_level=0.05):
     """
     Apply a t test for related data across a given axis between epochs for each model.
     
     Arguments:
         dat: The data to work on.
-        variable: The variable to apply the t test to. 
+        variables: The variables to apply the t test to. 
         fut_epoch: The future epoch to compare historical data to.
         hist_epoch: Name of the historical epoch.
         sig_level: The p value to require for significance.
         
-    Returns: the t test statistic and the significance result
+    Returns: the t test statistic and the significance result.
     """
     
     res = []
-    for model in dat.model.values:
-        statres, pval = sp.stats.ttest_rel(a=dat.sel(epoch=fut_epoch, model=model)[variable].values, 
-                                           b=dat.sel(epoch=hist_epoch, model=model)[variable].values)
-
-        res_dims = list(dat.sel(epoch=fut_epoch, model=model)[variable].dims)[1:]
-        r = xarray.Dataset({'ttest_stat': (res_dims, statres),
-                            'sig': (res_dims, pval < sig_level)},
-                           coords={x: dat[x].values for x in res_dims})
-        r = r.expand_dims({'model': [model]})
-        res.append(r)
+    for variable in variables:
+        for model in dat.model.values:
+            statres, pval = sp.stats.ttest_rel(a=dat.sel(epoch=fut_epoch, model=model)[variable].values, 
+                                               b=dat.sel(epoch=hist_epoch, model=model)[variable].values)
+    
+            res_dims = list(dat.sel(epoch=fut_epoch, model=model)[variable].dims)[1:]
+            r = xarray.Dataset({variable+'_ttest_stat': (res_dims, statres),
+                                variable+'_sig': (res_dims, pval < sig_level)},
+                               coords={x: dat[x].values for x in res_dims})
+            r = r.expand_dims({'model': [model]})
+            res.append(r)
 
     res = xarray.merge(res)
-    res.sig.attrs['p-value required'] = sig_level
+    res.attrs['p-value for significance'] = sig_level
     return res
 
 def select_all_models(dstore_files=[('/g/data/dk92/catalog/v2/esm/cmip6-oi10/catalog.json', '/g/data/oi10/replicas'),
@@ -1168,7 +1166,7 @@ def plot_run_years(runs, figsize=(10,2.8), legend_y=9.5, file=None, show=True):
     for i, model in enumerate(np.unique(runs.model)):
         mod_runs = runs.loc[runs.model == model]
         for _, run in mod_runs.iterrows():
-            axs[i].fill_betweenx([0, 1], run.start_year, run.end_year, label=run.exp, alpha=0.5, zorder=1)
+            axs[i].fill_betweenx([0, 1], run.start_year, run.end_year+1, label=run.exp, alpha=0.5, zorder=1)
     
         if i < len(np.unique(runs.model)) - 1:
             axs[i].set_xticks([])
@@ -1176,7 +1174,7 @@ def plot_run_years(runs, figsize=(10,2.8), legend_y=9.5, file=None, show=True):
         axs[i].set_xlim(1980, 2100)
         axs[i].set_ylabel(model, rotation=0, ha='right', va='center')
         
-    plt.legend(loc='upper right', bbox_to_anchor=(1.08, legend_y), framealpha=1)
+    plt.legend(loc='upper right', bbox_to_anchor=(1.1, legend_y), framealpha=1)
 
     if not file is None:
         plt.savefig(fname=file, bbox_inches='tight')
@@ -1455,3 +1453,79 @@ def era5_climatology(era5_dir = '/g/data/up6/tr2908/future_hail_global/era5_conv
 
     write_output(xarray.Dataset({'annual_mean_hail_proxy': res}), attrs={}, file=cache_file)
     return xarray.open_dataset(cache_file)
+
+def calc_epoch_differences(dat, variables, epochs=['2C', '3C']):
+    """
+    Calculate differences between historical epoch and warming epochs.
+
+    Arguments:
+        dat: The data to work on.
+        variables: Which variables to select.
+        epochs: The future epochs to test.
+
+    Returns: mean differences, relative mean differences (relative to overall mean per model), 
+             values added where the historical period had zeros, and difference significances.
+    """
+    
+    reference = dat.sel(epoch='historical')
+    reference_mean = reference.mean(['year_num']).load()
+    
+    mean_diffs = []
+    mean_diffs_rel = []
+    new_areas = []
+    sigs = []
+    
+    for e in epochs:
+        # Select the epoch.
+        epoch = dat.sel(epoch=e)
+        epoch_mean = epoch.mean(['year_num']).load()
+    
+        # Difference in means between reference and epoch.
+        mean_diff = epoch_mean - reference_mean
+        mean_diff_rel = mean_diff / reference_mean.mean(['lat', 'lon']) * 100
+        new_area = np.logical_and(epoch_mean > 0,
+                                  reference_mean == 0)
+        new_area = mean_diff.where(new_area == True)
+    
+        # Significance of differences.
+        tt = ttest(dat=dat, fut_epoch=e, variables=variables)
+        
+        mean_diffs.append(mean_diff.expand_dims({'epoch': [e]}))
+        mean_diffs_rel.append(mean_diff_rel.expand_dims({'epoch': [e]}))
+        new_areas.append(new_area.expand_dims({'epoch': [e]}))
+        sigs.append(tt.expand_dims({'epoch': [e]}))
+    
+    mean_diffs = xarray.merge(mean_diffs)
+    mean_diffs_rel = xarray.merge(mean_diffs_rel)
+    new_areas = xarray.merge(new_areas)
+    sigs = xarray.merge(sigs)
+
+    return mean_diffs, mean_diffs_rel, new_areas, sigs
+
+def plot_diffs_by_epoch(dat, models, var, scale_label, figsize=(12, 9.5), ncols=2, nrows=4,
+                        row_label_scale=1.3, row_label_offset=0.015, row_label_adjust=0.15, file=None):
+    """
+    Plot a grid with differences by epoch (columns) and model (rows).
+
+    Arguments:
+        dat: The data to plot.
+        models: The list of models to include.
+        var: The variable to plot differences for.
+        cbar_label: The label for the scale.
+        figsize: Figure size width x height.
+        ncols, nrows: Grid definition.
+        row*: Arguments to plot_map() for row label positions.
+        file: Output file for plot.
+    """
+
+    colour_scale = (dat[var].min(),
+                    dat[var].max())
+    
+    diffs = list(itertools.chain(*zip([dat[var].sel(model=m, epoch='2C') for m in models], 
+                                      [dat[var].sel(model=m, epoch='3C') for m in models])))
+
+    _ = plot_map(diffs, ncols=ncols, nrows=nrows, figsize=figsize, disp_proj=ccrs.Robinson(),
+                 cmap='RdBu_r', divergent=True, share_scale=True, share_axes=True, grid=False, contour=True,
+                 col_labels=['2C', '3C'], row_labels=models, row_label_rotation=0, colour_scale=colour_scale,
+                 row_label_scale=row_label_scale, row_label_offset=row_label_offset, 
+                 row_label_adjust=row_label_adjust, file=file, scale_label=scale_label)
