@@ -1587,7 +1587,7 @@ def plot_mean_diffs_for_season(diffs, sigs, variable, scale_label, season, figsi
     differences = [mean_diffs.sel(season=season, epoch=e) for e in epochs]
     
     _ = plot_map(differences, stippling=stippling,
-                 title=epochs, share_scale=True, share_axes=True, grid=False,
+                 title=[f'{season}, {e}' for e in epochs], share_scale=True, share_axes=True, grid=False,
                  ncols=1, nrows=2, figsize=figsize, disp_proj=ccrs.Robinson(), 
                  contour=True, cmap='RdBu_r', divergent=True, scale_label=scale_label,
                  file=file)
