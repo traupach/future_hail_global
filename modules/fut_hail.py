@@ -1614,3 +1614,23 @@ def multi_model_mean_diffs(diffs, sigs):
     significance = sig.sum('model') > len(diffs.model)*0.5
 
     return mean_diffs, significance
+
+def plot_ing_changes(diffs, sigs, epoch, variables, file, seasons=['DJF', 'JJA']):
+    """
+    Plot changes in ingredients by season.
+
+    Arguments:
+        diffs: Differences to plot.
+        sigs: Significance information for the differences.
+        epoch: The epoch to plot for.
+        variables: Which variables to include as a {variable: name} dictionary.
+        file: Prefix for the file to save in; will have variable name appended.
+        seasons: Seasons to plot for.
+    """
+
+    
+    for var, var_name in variables.items():
+        plot_mean_diffs_for_epoch(diffs=diffs, sigs=sigs, variable=var, seasons=seasons, 
+                                  scale_label='', epoch=epoch, ncols=2, nrows=1, figsize=(12,3.5),
+                                  row_labels=[var_name], row_label_offset=0.65, row_label_adjust=0.03,
+                                  col_labels=seasons, file=file + '_' + var_name.replace(' ', '_').replace('%', 'p') + '.pdf')
