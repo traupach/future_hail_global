@@ -981,7 +981,7 @@ def plot_seasonal_maps(dat, variable, lat_range=slice(None, None), lon_range=sli
     
 def ttest(dat, variables, fut_epoch, hist_epoch='historical', sig_level=0.05):
     """
-    Apply a t test for related data across a given axis between epochs for each model.
+    Apply Welch's t-test for across a given axis between epochs for each model.
     
     Arguments:
         dat: The data to work on.
@@ -996,8 +996,9 @@ def ttest(dat, variables, fut_epoch, hist_epoch='historical', sig_level=0.05):
     res = []
     for variable in variables:
         for model in dat.model.values:
-            statres, pval = sp.stats.ttest_rel(a=dat.sel(epoch=fut_epoch, model=model)[variable].values, 
-                                               b=dat.sel(epoch=hist_epoch, model=model)[variable].values)
+            statres, pval = sp.stats.ttest_ind(a=dat.sel(epoch=fut_epoch, model=model)[variable].values, 
+                                               b=dat.sel(epoch=hist_epoch, model=model)[variable].values,
+                                               equal_var=False)
     
             res_dims = list(dat.sel(epoch=fut_epoch, model=model)[variable].dims)[1:]
             r = xarray.Dataset({variable+'_ttest_stat': (res_dims, statres),
@@ -1467,7 +1468,7 @@ def calc_epoch_differences(dat, variables, epochs=['2C', '3C']):
              values added where the historical period had zeros, and difference significances.
     """
     
-    reference = dat.sel(epoch='historical')
+    reference = dat.sel(epoch='historical')[variables]
     reference_mean = reference.mean(['year_num']).load()
     
     mean_diffs = []
@@ -1477,7 +1478,7 @@ def calc_epoch_differences(dat, variables, epochs=['2C', '3C']):
     
     for e in epochs:
         # Select the epoch.
-        epoch = dat.sel(epoch=e)
+        epoch = dat.sel(epoch=e)[variables]
         epoch_mean = epoch.mean(['year_num']).load()
     
         # Difference in means between reference and epoch.
@@ -1530,9 +1531,7 @@ def plot_diffs_by_epoch(dat, models, var, scale_label, figsize=(12, 9.5), ncols=
                  row_label_scale=row_label_scale, row_label_offset=row_label_offset, 
                  row_label_adjust=row_label_adjust, file=file, scale_label=scale_label)
 
-
-
-def plot_mean_diffs_for_epoch(diffs, sigs, variable, scale_label, epoch, figsize=(12,6), file=None):
+def plot_mean_diffs_for_epoch(diffs, sigs, variable, scale_label, epoch, figsize=(12,6), file=None, ncols=2, nrows=2, seasons=None, **kwargs):
     """
     Plot differences in ensemble means between two epochs with stippling showing model agreement and significance of differences.
 
@@ -1544,17 +1543,21 @@ def plot_mean_diffs_for_epoch(diffs, sigs, variable, scale_label, epoch, figsize
         epoch: The epoch to plot differences for. 
         figsize: Figure size.
         file: Output plot file.
+        ncols/nrows: columns/rows to use.
+        seasons: List of seasons to include.
+        **kwargs: Extra arguments to plot_map.
     """
-    
-    seasons=diffs.season.values
+
+    if seasons is None:
+        seasons = diffs.season.values
     stippling = [sigs.sel(season=s, epoch=epoch)[variable] for s in seasons]
     differences = [diffs.sel(season=s, epoch=epoch)[variable] for s in seasons]
     
     _ = plot_map(differences, stippling=stippling,
                  title=seasons, share_scale=True, share_axes=True, grid=False,
-                 ncols=2, nrows=2, figsize=figsize, disp_proj=ccrs.Robinson(), 
+                 ncols=ncols, nrows=nrows, figsize=figsize, disp_proj=ccrs.Robinson(), 
                  contour=True, cmap='RdBu_r', divergent=True, scale_label=scale_label,
-                 file=file)
+                 file=file, **kwargs)
 
 def plot_mean_diffs_for_season(diffs, sigs, variable, scale_label, season, figsize=(12,6), file=None):
     """
