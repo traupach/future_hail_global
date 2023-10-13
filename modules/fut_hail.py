@@ -1530,13 +1530,15 @@ def plot_diffs_by_epoch(dat, models, var, scale_label, figsize=(12, 9.5), ncols=
                  row_label_scale=row_label_scale, row_label_offset=row_label_offset, 
                  row_label_adjust=row_label_adjust, file=file, scale_label=scale_label)
 
+
+
 def plot_mean_diffs_for_epoch(diffs, sigs, variable, scale_label, epoch, figsize=(12,6), file=None):
     """
     Plot differences in ensemble means between two epochs with stippling showing model agreement and significance of differences.
 
     Arguments:
-        diffs: The differences data.
-        sigs: Significance infomration.
+        diffs: The multi-model mean differences data.
+        sigs: Significance information.
         variable: The variable to plot.
         scale_label: Label for the scale.
         epoch: The epoch to plot differences for. 
@@ -1545,15 +1547,8 @@ def plot_mean_diffs_for_epoch(diffs, sigs, variable, scale_label, epoch, figsize
     """
     
     seasons=diffs.season.values
-    mean_diffs = diffs[variable].mean(['model'])
-    
-    mean_sign = np.sign(mean_diffs)
-    
-    significance = np.logical_and(sigs[variable+'_sig'].sum('model') >= len(diffs.model)*0.75,
-                                  (np.sign(diffs[variable]) == mean_sign).sum('model') > len(diffs.model)*0.75)
-    
-    stippling = [significance.sel(season=s, epoch=epoch) for s in seasons]
-    differences = [mean_diffs.sel(season=s, epoch=epoch) for s in seasons]
+    stippling = [sigs.sel(season=s, epoch=epoch)[variable] for s in seasons]
+    differences = [diffs.sel(season=s, epoch=epoch)[variable] for s in seasons]
     
     _ = plot_map(differences, stippling=stippling,
                  title=seasons, share_scale=True, share_axes=True, grid=False,
@@ -1566,8 +1561,8 @@ def plot_mean_diffs_for_season(diffs, sigs, variable, scale_label, season, figsi
     Plot differences in ensemble means between epochs with stippling showing model agreement and significance of differences.
 
     Arguments:
-        diffs: The differences data.
-        sigs: Significance infomration.
+        diffs: The multi-model mean differences data.
+        sigs: Significance information.
         variable: The variable to plot.
         scale_label: Label for the scale.
         season: The season to plot for.
@@ -1576,18 +1571,43 @@ def plot_mean_diffs_for_season(diffs, sigs, variable, scale_label, season, figsi
     """
     
     epochs=diffs.epoch.values
-    mean_diffs = diffs[variable].mean(['model'])
-    
-    mean_sign = np.sign(mean_diffs)
-    
-    significance = np.logical_and(sigs[variable+'_sig'].sum('model') >= len(diffs.model)*0.75,
-                                  (np.sign(diffs[variable]) == mean_sign).sum('model') > len(diffs.model)*0.75)
-    
-    stippling = [significance.sel(season=season, epoch=e) for e in epochs]
-    differences = [mean_diffs.sel(season=season, epoch=e) for e in epochs]
+    stippling = [sigs.sel(season=season, epoch=e)[variable] for e in epochs]
+    differences = [diffs.sel(season=season, epoch=e)[variable] for e in epochs]
     
     _ = plot_map(differences, stippling=stippling,
                  title=[f'{season}, {e}' for e in epochs], share_scale=True, share_axes=True, grid=False,
                  ncols=1, nrows=2, figsize=figsize, disp_proj=ccrs.Robinson(), 
                  contour=True, cmap='RdBu_r', divergent=True, scale_label=scale_label,
                  file=file)
+
+def multi_model_mean_diffs(diffs, sigs):
+    """
+    Calculate the multi-model mean difference and indicator of significance. 
+    A difference is considered significant if more than 50% of the models have
+    both a) significant differences in the mean and b) their mean difference has
+    the same sign as the multi-model mean difference.
+
+    Arguments:
+        diffs: The differences per model.
+        sigs: Significance of differences per model.
+
+    Return the mean differences and significance indicator for each point. 
+    """
+    
+    # Calculate mean difference across models.
+    mean_diffs = diffs.mean(['model'])
+    mean_sign = np.sign(mean_diffs)
+    
+    # Where does the sign of the per-model difference agree with the mean sign?
+    sign_agrees = np.sign(diffs) == mean_sign
+    
+    # Where are the differences significant AND the sign matches the mean differences?
+    varlist = [x for x in list(sign_agrees.keys()) if np.isin(x + '_sig', list(sigs.keys()))]
+    s = sigs.rename({k + '_sig': k for k in varlist})
+    sig = np.logical_and(sign_agrees, s)
+    
+    # How many models have both sig diffs and matching sign? Consider mean difference significant 
+    # if more than 75% of models have both these conditions true.
+    significance = sig.sum('model') > len(diffs.model)*0.5
+
+    return mean_diffs, significance
