@@ -1561,7 +1561,8 @@ def plot_era5_anomalies(anoms, year, lats, lons, figsize=(12,9), ncols=3, nrows=
     _ = plot_map([anoms.sel(year=year, month=m, lat=lats, lon=lons).monthly_hail_proxy for m in months], 
                  title=[f'{month_names[m]} {year}' for m in months], ncols=ncols, nrows=nrows, figsize=figsize,
                  hspace=0.22, wspace=0.01, cmap='RdBu_r', divergent=True, share_scale=True, 
-                 share_axes=True, grid=False, contour=False, scale_label=scale_label, **kwargs)
+                 share_axes=True, grid=False, contour=False, scale_label=scale_label, 
+                 nan_colour='white', **kwargs)
 
 def calc_epoch_differences(dat, variables, epochs=['2C', '3C']):
     """
