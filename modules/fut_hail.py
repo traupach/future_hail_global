@@ -491,7 +491,8 @@ def plot_map_to_ax(dat, ax, coastlines=True, grid=True, dat_proj=ccrs.PlateCarre
                    cbar_shrink=0.4, cbar_pad=0.015, cbar_label=None, cbar_orientation='vertical', 
                    coastlines_colour='black', xlims=None, ylims=None, num_ticks=None, divergent=False, 
                    cbar_inset=False, title_inset=False, discrete=False, log_scale=False, nan_colour='#eeeeee',
-                   axis_off=False, country=None, annotations=None, num_contours=len(cmap_colours)+1):
+                   axis_off=False, country=None, annotations=None, num_contours=len(cmap_colours)+1,
+                   left_title=None):
     """
     Plot data on a map to a specified plot axis object.
     
@@ -537,6 +538,7 @@ def plot_map_to_ax(dat, ax, coastlines=True, grid=True, dat_proj=ccrs.PlateCarre
                        x, y are position of text, xadj, yadj give offsets to the label, ha is 'left' or 
                        'right' for horizontal anchor. 
         - num_contours: The number of contours to use in a contour plot.
+        - left_title: Left-hand title to put on the plot.
         
     """
     
@@ -626,6 +628,11 @@ def plot_map_to_ax(dat, ax, coastlines=True, grid=True, dat_proj=ccrs.PlateCarre
     if not tick_labels is None:
         assert len(tick_labels) == len(cbar_ticks), 'Labels and ticks must have same length'
         res.colorbar.ax.set_yticklabels(tick_labels)
+    if not left_title is None:
+        if title_inset:
+            title = f'{left_title} {title}'
+        else:
+            ax.set_title(left_title, fontsize=plt.rcParams['font.size'], loc='left')
     if not title is None:
         if title_inset:
             ax.annotate(text=title, xy=(0.05, 0.9), xycoords='axes fraction',
@@ -675,7 +682,7 @@ def plot_map(dat, dat_proj=ccrs.PlateCarree(), disp_proj=ccrs.PlateCarree(), fig
              cbar_adjust=0.862, cbar_pad=0.015, col_labels=None, row_labels=None, 
              xlims=None, ylims=None, show=True, shared_scale_quantiles=(0,1), 
              row_label_rotation=90, row_label_scale=1.33, row_label_offset=0.03,
-             row_label_adjust=0.02, **kwargs):
+             row_label_adjust=0.02, letter_labels=False, **kwargs):
     """
     Plot data on a map.
     
@@ -706,6 +713,7 @@ def plot_map(dat, dat_proj=ccrs.PlateCarree(), disp_proj=ccrs.PlateCarree(), fig
         - row_label_scale: Scale factor for gap between row labels.
         - row_label_offset: Offset for first row label.
         - row_label_adjust: Adjust setting for row label space on left of plot.
+        - letter_labels: Use a letter to label each subplot?
         - kwargs: Extra arguments to plot_map_to_ax.
         
     Return: 
@@ -718,6 +726,10 @@ def plot_map(dat, dat_proj=ccrs.PlateCarree(), disp_proj=ccrs.PlateCarree(), fig
                            gridspec_kw={'wspace': wspace,
                                         'hspace': hspace})
     fig.subplots_adjust(left=0, right=1, bottom=0, top=1)
+
+    letters = ['a)', 'b)', 'c)', 'd)', 'e)', 'f)', 'g)', 'h)', 'i)', 
+               'j)', 'k)', 'l)', 'm)', 'n)', 'o)', 'p)', 'q)', 'r)', 
+               's)', 't)', 'u)', 'v)', 'w)', 'x)', 'y)', 'z)']
     
     if not isinstance(dat, list):
         im = plot_map_to_ax(dat=dat, ax=ax, grid=grid, dat_proj=dat_proj, 
@@ -755,14 +767,19 @@ def plot_map(dat, dat_proj=ccrs.PlateCarree(), disp_proj=ccrs.PlateCarree(), fig
             proj = dat_proj if not isinstance(dat_proj, list) else dat_proj[i]
             xlim = xlims if not isinstance(xlims, list) else xlims[i]
             ylim = ylims if not isinstance(ylims, list) else ylims[i]
-            
+
+            left_title = None
+            if letter_labels:
+                left_title = letters.pop(0)
+                
             im = plot_map_to_ax(dat=d, ax=ax.flat[i], grid=grid, 
                                 dat_proj=proj, disp_proj=disp_proj, title=ax_title,
                                 colour_scale=colour_scale, cbar_pad=cbar_pad,
                                 cbar_ticks=cbar_ticks, tick_labels=tick_labels,
                                 colourbar=(not share_scale),
                                 stippling=stipple, xlims=xlim, ylims=ylim,
-                                ticks_left=tl, ticks_bottom=tb, **kwargs)
+                                ticks_left=tl, ticks_bottom=tb, left_title=left_title, 
+                                **kwargs)
             
         while i+1 < len(ax.flat):
             fig.delaxes(ax.flat[i+1])
