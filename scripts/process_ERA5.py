@@ -40,10 +40,13 @@ surface_height = xarray.open_dataset(height_file).z/9.81
 surface_height = surface_height.load()
 
 # Determine which files to process.
-files = sorted(glob(ERA5_dir + '/era5*.nc'))
-files_per_process = len(files) // total
+files = sorted(glob(ERA5_dir + '/era5_1deg*.nc'))
+files_per_process = int(np.ceil(len(files) / total))
 files_from = (num-1) * files_per_process
 files_to = num * files_per_process
+if files_from >= len(files):
+    print('No files left to process.')
+    exit()
 if files_to > len(files) - files_per_process:
     files_to = len(files)
 print(f'Processing files from index {files_from} to index {files_to-1}.')

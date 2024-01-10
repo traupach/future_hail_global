@@ -22,7 +22,7 @@ era5_dir = '/g/data/rt52/era5/pressure-levels/reanalysis/'   # Directory with ER
 variables = '[t,q,u,v,z]'                                    # ERA5 variables to read.
 num_vars = 5                                                 # No. variables to expect.       
 rename_map = {'t': 'temperature', 'q': 'specific_humidity'}  # Rename map for variables.
-years = np.arange(1980, 2000)
+years = list(np.arange(1980, 2000)) + [2015, 2022]           # Years to process. Historic 1980-2000, plus case study years (2015, 2022).
 
 # Start a dask cluster.
 print('Starting cluster...')
