@@ -836,25 +836,30 @@ def annual_stats(d, factor, day_vars = ['hail_proxy', 'hail_proxy_noconds'],
         days = days.chunk(-1)
     
     # Annual ingredient means.
-    means = d[mean_vars].groupby('time.year').mean(keep_attrs=True)
-    for v in mean_vars:
-        means = means.rename({v: f'mean_{v}'})
+    means = xarray.Dataset()
+    if not mean_vars is None:
+        means = d[mean_vars].groupby('time.year').mean(keep_attrs=True)
+        for v in mean_vars:
+            means = means.rename({v: f'mean_{v}'})
     
     # Annual ingredient extremes.
     extremes = xarray.Dataset()
-    for q in quantile_vars:
-        quants = d[quantile_vars[q]].chunk(chunks).groupby('time.year').quantile(q, keep_attrs=True).drop('quantile')
-        extremes = xarray.merge([extremes, quants])
-        for v in quantile_vars[q]:
-            extremes[v].attrs['description'] = f'Percentile {q}'
-            extremes = extremes.rename({v: f'extreme_{v}'})
+    if not quantile_vars is None:
+        for q in quantile_vars:
+            quants = d[quantile_vars[q]].chunk(chunks).groupby('time.year').quantile(q, keep_attrs=True).drop('quantile')
+            extremes = xarray.merge([extremes, quants])
+            for v in quantile_vars[q]:
+                extremes[v].attrs['description'] = f'Percentile {q}'
+                extremes = extremes.rename({v: f'extreme_{v}'})
             
     ret = xarray.merge([days, means, extremes])
     return ret
 
-def epoch_stats(d, factors = {'DJF': 90, 'MAM': 92, 'JJA': 92, 'SON': 91}):
+def epoch_stats(d, season_factors={'DJF': 90, 'MAM': 92, 'JJA': 92, 'SON': 91},
+                month_factors={1: 31, 2: 28, 3: 31, 4: 30, 5: 31, 6: 30, 7: 31,
+                               8: 31, 9: 30, 10: 31, 11: 30, 12: 31}):
     """
-    Calculate annual and seasonal statistics.
+    Calculate annual, seasonal, and monthly statistics.
     
     Arguments:
         d: Data to work on.
@@ -862,19 +867,29 @@ def epoch_stats(d, factors = {'DJF': 90, 'MAM': 92, 'JJA': 92, 'SON': 91}):
         
     Returns: A single xarray object with annual and seasonal stats.
     """
+
+    print('Monthly...')
+    monthly = []
+    for m in np.arange(12)+1:
+        print(f'Month {m}...')
+        monthly.append(annual_stats(d.where(d.time.dt.month == m), factor=month_factors[m],
+                                    mean_vars=None, quantile_vars=None).expand_dims({'month': [m]}))
+    monthly = xarray.combine_nested(monthly, concat_dim='month', combine_attrs='no_conflicts')
+    monthly = monthly.rename({n: f'monthly_{n}' for n in monthly.data_vars})
     
+    print('Seasonal...')
+    seasonal = []
+    for s in ['DJF', 'MAM', 'JJA', 'SON']:
+        print(f'{s}...')
+        seasonal.append(annual_stats(d.where(d.time.dt.season == s), factor=season_factors[s]).expand_dims({'season': [s]}))
+    seasonal = xarray.combine_nested(seasonal, concat_dim='season', combine_attrs='no_conflicts')
+    seasonal = seasonal.rename({n: f'seasonal_{n}' for n in seasonal.data_vars})
+
     print('Annual...')
     annual = annual_stats(d=d, factor=365)
     annual = annual.rename({n: f'annual_{n}' for n in annual.data_vars})
 
-    seasonal = []
-    for s in ['DJF', 'MAM', 'JJA', 'SON']:
-        print(f'{s}...')
-        seasonal.append(annual_stats(d.where(d.time.dt.season == s), factor=factors[s]).expand_dims({'season': [s]}))
-
-    seasonal = xarray.combine_nested(seasonal, concat_dim='season', combine_attrs='no_conflicts')
-    seasonal = seasonal.rename({n: f'seasonal_{n}' for n in seasonal.data_vars})
-    dat = xarray.merge([seasonal, annual])
+    dat = xarray.merge([seasonal, annual, monthly])
     return dat
     
 def process_epoch(epoch_name, model_name, exp, epoch_dates, expected_times=365*20*4,
@@ -1304,8 +1319,10 @@ def define_runs(models, hist_start=1980, hist_end=1999, warming_degrees=[2, 3],
                 ta = xarray.open_dataset(files[0])
 
                 # While we're here, collect some metadata.
+                all['nominal_resolution'] = np.nan
+                all['nominal_resolution'] = all['nominal_resolution'].astype('str')
                 all.loc[i, 'nominal_resolution'] = ta.attrs['nominal_resolution']
-                all.loc[i, 'vertical_levels'] = str(int(len(ta.lev.values)))
+                all.loc[i, 'vertical_levels'] = len(ta.lev.values)
                 
                 sn = ta.lev.attrs['standard_name']
                 ta.close()
@@ -1425,35 +1442,126 @@ def read_processed_data(data_dir='/g/data/up6/tr2908/future_hail_global/CMIP_con
 
     return dat
 
-def era5_climatology(era5_dir = '/g/data/up6/tr2908/future_hail_global/era5_conv/',
-                     cache_file = '/g/data/up6/tr2908/future_hail_global/era5_climatology.nc'):
+def era5_climatology_calc(era5):
     """
-    Calculate the ERA5 climatology of mean annual hail-prone days.
+    Calculate era5 climatology information.
 
-    Arguments:
-        era5_dir: Processed convective files directory for ERA5.
-        cache_file: A cache file to write/read to/from.
+    Argumnets:
+        era5: ERA5 data ready to use.
 
-    Returns: Mean annual hail-prone days from ERA5.
+    Returns: monthly and annual normalised hail proxy climatology.
     """
-    
-    if os.path.exists(cache_file):
-        return xarray.open_dataset(cache_file)
 
-    era5 = xarray.open_mfdataset(f'{era5_dir}/*.nc', parallel=True)
-
-    assert len(era5.time) == 365*20*4, 'Incorrect number of times in ERA5 historic period.'
-    assert not np.any(np.isnan(era5.hail_proxy)), 'NaNs in ERA5 hail proxy.'
-
-    daily = era5.hail_proxy.resample(time='D').max(keep_attrs=True)
+    # Calculate daily true/false hail proxy results.
+    daily = era5[['hail_proxy', 'hail_proxy_noconds']].resample(time='D').max(keep_attrs=True)
     with xarray.set_options(keep_attrs=True):
         days = daily.groupby('time.year').mean(keep_attrs=True) * 365
         days = days.chunk(-1)
 
     res = days.mean('year')
+    res = res.rename({'hail_proxy': 'annual_mean_hail_proxy',
+                      'hail_proxy_noconds': 'annual_mean_hail_proxy_noconds'})
 
-    write_output(xarray.Dataset({'annual_mean_hail_proxy': res}), attrs={}, file=cache_file)
-    return xarray.open_dataset(cache_file)
+    months = daily.groupby('time.month').mean(keep_attrs=True)
+    months['month_factor'] = ('month', [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31])
+    res['monthly_hail_proxy'] = months['hail_proxy'] * months['month_factor']
+    res['monthly_hail_proxy_noconds'] = months['hail_proxy_noconds'] * months['month_factor']
+
+    # Rename latitude/longitude for consistency with other data.
+    res = res.rename({'latitude': 'lat', 'longitude': 'lon'})
+    
+    return res
+
+def era5_climatology(era5_dir='/g/data/up6/tr2908/future_hail_global/era5_conv/',
+                     era5_file_def='era5_1deg_19*.nc',
+                     cache_file='/g/data/up6/tr2908/future_hail_global/era5_climatology.nc',
+                     landmask=None):
+    """
+    Calculate the ERA5 climatology of mean annual hail-prone days.
+
+    Arguments:
+        era5_dir: Processed convective files directory for ERA5.
+        erae5_file_def: The definition of files to read in for the climatology.
+        cache_file: A cache file to write/read to/from.
+        landmask: Optionally mask for land regions using landmask.lsm.
+
+    Returns: Mean annual hail-prone days from ERA5.
+    """
+    
+    if not os.path.exists(cache_file):
+        era5 = xarray.open_mfdataset(f'{era5_dir}/{era5_file_def}', parallel=True)
+    
+        assert len(era5.time) == 365*20*4, 'Incorrect number of times in ERA5 historic period.'
+        assert not np.any(np.isnan(era5.hail_proxy)), 'NaNs in ERA5 hail proxy.'
+    
+        res = era5_climatology_calc(era5)
+        write_output(res, attrs={}, file=cache_file)
+
+    dat = xarray.open_dataset(cache_file)
+
+    if not landmask is None:
+        dat = dat.where(landmask.lsm == True).load()
+        
+    return(dat)
+
+def monthly_era5_anoms(era5, era5_dir='/g/data/up6/tr2908/future_hail_global/era5_conv/',
+                       anomaly_years=[2015, 2022]):
+    """
+    Calculate ERA5 hail proxy anomalies on a monthly basis.
+
+    Arguments:
+        era5: ERA5 climatology data from era5_climatology().
+        era5_dir: The ERA5 data directory.
+        anomaly_years: The years for which to find anomalies.
+    """
+    
+    anoms = []
+    for year in anomaly_years:
+        year_dat = xarray.open_mfdataset(f'{era5_dir}/*{year}*.nc', parallel=True)
+        assert np.unique(year_dat.time.dt.year) == year, 'Erroneous years included.'
+    
+        year_clim = era5_climatology_calc(year_dat)
+        year_anoms = year_clim - era5
+        year_anoms = year_anoms.expand_dims({'year': [year]})
+        anoms.append(year_anoms)
+    
+    anoms = xarray.merge(anoms).load()
+    return anoms
+
+def plot_era5_anomalies(anoms, year, lats, lons, figsize=(12,9), ncols=3, nrows=4,
+                        scale_label='Hail-prone day anomaly compared to 1980-1999 climatology',
+                        **kwargs):
+    """
+    Plot maps of monthly ERA5 hail proxy anomalies over a selected region.
+
+    Arguments:
+        anoms: Anomalies to plot.
+        lats: Slice of latitudes to include.
+        lons: Slice of longitudes to include.
+        figsize: Figure width x height.
+        ncols, nrows: Number of rows, columns.
+        scale_label: Legend key.
+        **kwargs: Arguments to plot_map().
+    """
+
+    months = np.arange(12)+1
+    month_names = {1: 'January', 
+                   2: 'February',
+                   3: 'March',
+                   4: 'April', 
+                   5: 'May',
+                   6: 'June', 
+                   7: 'July',
+                   8: 'August',
+                   9: 'September',
+                   10: 'October',
+                   11: 'November',
+                   12: 'December'}
+    
+    _ = plot_map([anoms.sel(year=year, month=m, lat=lats, lon=lons).monthly_hail_proxy for m in months], 
+                 title=[f'{month_names[m]} {year}' for m in months], ncols=ncols, nrows=nrows, figsize=figsize,
+                 hspace=0.22, wspace=0.01, cmap='RdBu_r', divergent=True, share_scale=True, 
+                 share_axes=True, grid=False, contour=False, scale_label=scale_label, **kwargs)
 
 def calc_epoch_differences(dat, variables, epochs=['2C', '3C']):
     """
@@ -1634,3 +1742,27 @@ def plot_ing_changes(diffs, sigs, epoch, variables, file, seasons=['DJF', 'JJA']
                                   scale_label='', epoch=epoch, ncols=2, nrows=1, figsize=(12,3.5),
                                   row_labels=[var_name], row_label_offset=0.65, row_label_adjust=0.03,
                                   col_labels=seasons, file=file + '_' + var_name.replace(' ', '_').replace('%', 'p') + '.pdf')
+
+def gen_land_mask(out_dat, landsea_file='/g/data/rt52/era5/single-levels/reanalysis/lsm/1979/lsm_era5_oper_sfc_19790101-19790131.nc',
+                  cache_file='/g/data/up6/tr2908/future_hail_global/era5_1deg/era5_landmask.nc'):
+    """
+    Interpolate ERA5 data to get a land mask. 
+
+    Arguments:
+        out_dat: The example output data, to match the resolution of.
+        landsea_file: The landsea file to interpolate (the first time step will be used).
+        cache_file: The output file to write. If it exists, just read from this file.
+
+    Returns: Landsea mask as lsm > 0 at the required resolution.
+    """
+    
+    if not os.path.exists(cache_file):
+        ls = xarray.open_dataset(landsea_file).isel(time=0)
+        regridder = xe.Regridder(ls, out_dat, 'bilinear', periodic=True)
+        attrs = {'history': f'ERA5 regridded data using xESMF.'}
+        ls = regridder(ls, keep_attrs=True)
+        land = (ls.lsm > 0).load().reset_coords(drop=True)
+        land.attrs = attrs
+        land.to_netcdf(cache_file)
+
+    return xarray.open_dataset(cache_file)
