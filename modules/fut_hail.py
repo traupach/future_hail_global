@@ -1774,7 +1774,7 @@ def gen_land_mask(out_dat, landsea_file='/g/data/rt52/era5/single-levels/reanaly
         regridder = xe.Regridder(ls, out_dat, 'bilinear', periodic=True)
         attrs = {'history': f'ERA5 regridded data using xESMF.'}
         ls = regridder(ls, keep_attrs=True)
-        land = (ls.lsm > 0).load().reset_coords(drop=True)
+        land = (ls.lsm >= 0.5).load().reset_coords(drop=True)
         land.attrs = attrs
         land.to_netcdf(cache_file)
 
