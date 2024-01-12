@@ -12,8 +12,10 @@ import xesmf as xe
 import numpy as np
 import pandas as pd
 from glob import glob
+import geopandas as gp
 from matplotlib import cm
 import cartopy.crs as ccrs
+from functools import reduce
 import matplotlib.pyplot as plt
 from cartopy.io import shapereader
 import matplotlib.ticker as mticker
@@ -828,7 +830,7 @@ def annual_stats(d, factor, day_vars = ['hail_proxy', 'hail_proxy_noconds'],
                               'temp_500', 'melting_level', 'shear_magnitude'],
                  quantile_vars = {0.01: ['mixed_100_cin', 'mixed_100_lifted_index', 'lapse_rate_700_500'],
                                   0.99: ['mixed_100_cape', 'temp_500', 'melting_level', 'shear_magnitude']},
-                 chunks={'time': -1, 'lat': 30, 'lon': 30},
+                 chunks={'time': -1, 'lat': 10, 'lon': 10},
                  time_chunk=500):
     """
     Calculate annual statistics for a dataset.
@@ -872,11 +874,9 @@ def annual_stats(d, factor, day_vars = ['hail_proxy', 'hail_proxy_noconds'],
     ret = xarray.merge([days, means, extremes])
     return ret
 
-def epoch_stats(d, season_factors={'DJF': 90, 'MAM': 92, 'JJA': 92, 'SON': 91},
-                month_factors={1: 31, 2: 28, 3: 31, 4: 30, 5: 31, 6: 30, 7: 31,
-                               8: 31, 9: 30, 10: 31, 11: 30, 12: 31}):
+def epoch_stats(d, season_factors={'DJF': 90, 'MAM': 92, 'JJA': 92, 'SON': 91}):
     """
-    Calculate annual, seasonal, and monthly statistics.
+    Calculate annual and seasonal statistics.
     
     Arguments:
         d: Data to work on.
@@ -885,15 +885,9 @@ def epoch_stats(d, season_factors={'DJF': 90, 'MAM': 92, 'JJA': 92, 'SON': 91},
     Returns: A single xarray object with annual and seasonal stats.
     """
 
-    print('Monthly...')
-    monthly = []
-    for m in np.arange(12)+1:
-        print(f'Month {m}...')
-        monthly.append(annual_stats(d.where(d.time.dt.month == m), factor=month_factors[m],
-                                    mean_vars=None, quantile_vars=None).expand_dims({'month': [m]}))
-    monthly = xarray.combine_nested(monthly, concat_dim='month', combine_attrs='no_conflicts')
-    monthly = monthly.rename({n: f'monthly_{n}' for n in monthly.data_vars})
-    
+    print('Per crop...')
+    crop_results = crop_hail_stats(dat=d)
+
     print('Seasonal...')
     seasonal = []
     for s in ['DJF', 'MAM', 'JJA', 'SON']:
@@ -906,7 +900,7 @@ def epoch_stats(d, season_factors={'DJF': 90, 'MAM': 92, 'JJA': 92, 'SON': 91},
     annual = annual_stats(d=d, factor=365)
     annual = annual.rename({n: f'annual_{n}' for n in annual.data_vars})
 
-    dat = xarray.merge([seasonal, annual, monthly])
+    dat = xarray.merge([seasonal, annual, crop_results])
     return dat
     
 def process_epoch(epoch_name, model_name, exp, epoch_dates, expected_times=365*20*4,
@@ -931,7 +925,7 @@ def process_epoch(epoch_name, model_name, exp, epoch_dates, expected_times=365*2
         print(f'No files available for {sim_dir}.')
         return None
 
-    dat = xarray.open_mfdataset(sorted(files), parallel=True, chunks={'time': 1000}, 
+    dat = xarray.open_mfdataset(sorted(files), parallel=True, chunks={'time': 500}, 
                                 combine='nested', concat_dim='time').sortby('time')
     dat = dat.sel(time=slice(f'{epoch_dates[0]}-01-01', f'{epoch_dates[1]}-12-31'))
 
@@ -949,7 +943,8 @@ def process_epoch(epoch_name, model_name, exp, epoch_dates, expected_times=365*2
 
     # Check no NAs in non_na_var.
     assert not np.any(np.isnan(dat))[non_na_var], f'NaN found in {non_na_var}'
-    
+
+    # Get annual/seasonal stats for the epoch.
     stats = epoch_stats(d=dat)
     stats = stats.chunk(-1)
     stats = stats.expand_dims({'model': [model_name],
@@ -1421,7 +1416,7 @@ def make_backup_orography(runs, CMIP6_dir='/g/data/oi10/replicas',
     
             orog.to_netcdf(out_file)
             
-def read_processed_data(data_dir='/g/data/up6/tr2908/future_hail_global/CMIP_conv_annual_stats/', 
+def read_processed_data(data_dir='/g/data/up6/tr2908/future_hail_global/CMIP_conv_annual_stats/complete/', 
                         data_exp='*common_grid.nc', 
                         rename_models={'EC-Earth_Consortium.EC-Earth3': 'EC-Earth3'}):
     """
@@ -1455,7 +1450,7 @@ def read_processed_data(data_dir='/g/data/up6/tr2908/future_hail_global/CMIP_con
     dat_land = dat_land.persist()
     
     # Transpose - for the ttest the axis over which the t-test should be applied ('year_num') must be first after model/epoch selection.
-    dat = dat.transpose('model', 'epoch', 'year_num', 'season', 'lat', 'lon')
+    dat = dat.transpose('model', 'epoch', 'year_num', 'season', 'crop', 'month', 'lat', 'lon')
 
     return dat
 
@@ -1784,3 +1779,160 @@ def gen_land_mask(out_dat, landsea_file='/g/data/rt52/era5/single-levels/reanaly
         land.to_netcdf(cache_file)
 
     return xarray.open_dataset(cache_file)
+
+def crop_months_array(x):
+    """
+    Given a start month and an end month in x, return an array of length 12 with 1s where cropping occurs and 0 where it does not.
+
+    Arguments;
+        x: Should contain start and end months.
+
+    Returns: 12-length binary array.
+    """
+    
+    start = x['start']
+    end = x['end']
+
+    assert start != end, 'start == end'
+    if start < end:
+        months = np.arange(start, end+1)
+    else:
+        months = np.concatenate([np.arange(1, end+1),
+                                 np.arange(start, 13)])
+
+    month_array = np.repeat(0, 12)
+    month_array[months-1] = 1
+    
+    return month_array
+
+def crop_periods(crop_periods_file='/g/data/up6/tr2908/future_hail_global/MIRCA2000/growing_periods_listed/CELL_SPECIFIC_CROPPING_CALENDARS_30MN.TXT.gz',
+                 crop_codes = {1: 'Wheat', 
+                               2: 'Maize', 
+                               3: 'Rice',
+                               4: 'Barley',
+                               5: 'Rye',
+                               6: 'Millet',
+                               7: 'Sorghum',
+                               8: 'Soybeans',
+                               9: 'Sunflower', 
+                               10: 'Potatoes', 
+                               11: 'Cassava',
+                               12: 'Sugar cane',
+                               13: 'Sugar beet',
+                               14: 'Oil palm', 
+                               15: 'Rapeseed / Canola',
+                               16: 'Groundnuts / Peanuts',
+                               17: 'Pulses',
+                               18: 'Citrus',
+                               19: 'Date palm',
+                               20: 'Grapes / Vine',
+                               21: 'Cotton',
+                               22: 'Cocoa',
+                               23: 'Coffee',
+                               24: 'Others perennial',
+                               25: 'Fodder grasses',
+                               26: 'Others annual'}):
+    """
+    Open cropping periods from MIRCA data.
+
+    Arguments:
+        crop_periods_file: The MIRCA data file to open.
+        crop_codes: Codes for each crop type.
+
+    Returns: A pandas table with crop periods per latitude/longitude/crop.
+    """
+    
+    crop_periods = pd.read_csv(crop_periods_file, sep='\t')
+    
+    # Irrigated crops have crop number from 1-26. 
+    # Rain-fed crops have crop number from 27-52.
+    
+    crop_periods['crop_type'] = str(np.nan)
+    crop_periods['crop_name'] = np.nan
+    crop_periods.loc[crop_periods.crop <= 26, 'crop_type'] = 'Irrigated'
+    crop_periods.loc[crop_periods.crop >= 27, 'crop_type'] = 'Rainfed'
+    crop_periods['crop_name'] = crop_periods.crop % 26
+    crop_periods.loc[crop_periods.crop_name == 0, 'crop_name'] = 26
+    crop_periods.crop_name = [crop_codes[x] for x in crop_periods.crop_name]
+    
+    return crop_periods
+
+def crop_hail_stats(dat, cp=crop_periods(), crop_res=0.5):
+    """
+    Calculate hail proxy stats for cropping months by location.
+    
+    Arguments:
+        dat: Data to work on - should contain 'hail_proxy'.
+        crop_res: Resolution of crop data in degrees.
+
+    Returns: DataSet with hail prone days per cropping period per year and average proportion of 
+    cropping time that was hail prone, per year and per crop.
+    """
+
+    # Load data to analyse. Variables are assumed to be true/false for hail conditions.
+    d = dat.reset_coords()[['hail_proxy']].load()
+
+    # Resample to daily true/false hail-prone conditions per location.
+    daily = d.resample(time='D').max(keep_attrs=True)
+
+    # Resample to number of hail-prone days per month.
+    days_per_month = daily.resample(time='M').sum(keep_attrs=True)
+    days_per_month['year'] = days_per_month.time.dt.year
+    days_per_month['month'] = days_per_month.time.dt.month
+    days_per_month = days_per_month.set_index(time=['year', 'month']).unstack('time')
+
+    crop_results = []
+    for crop in cp.crop_name.unique()[5:]:
+        print(crop)
+    
+        periods = cp.loc[cp.crop_name == crop]
+    
+        # For each location, keep unique start/end months for the cropping period. Remove duplicates 
+        # (caused by eg. both rainfed and irrigated crops being present).
+        periods = periods.loc[~periods.duplicated(['lat', 'lon', 'start', 'end'])]
+    
+        # Make a list of all the cropping months for each location.
+        periods['cropping_months'] = periods[['start', 'end']].apply(crop_months_array, axis=1)
+    
+        # Find the union of all crop months for each location.
+        crop_months = periods.groupby(['lat', 'lon']).cropping_months.apply(lambda x: np.amax(np.stack(x), 0)).reset_index()
+    
+        # Convert to a geopandas object with polygons
+        crop_months = gp.GeoDataFrame(crop_months, geometry=gp.points_from_xy(crop_months.lon, crop_months.lat))
+        crop_months = crop_months.set_geometry(crop_months.buffer(distance=crop_res, cap_style=3))
+    
+        # Get the data grid locations as points.
+        dat_grid = dat.reset_coords()[['lat', 'lon']].to_dataframe().reset_index()
+        dat_grid = gp.GeoDataFrame(dat_grid, geometry=gp.points_from_xy(dat_grid.lon, dat_grid.lat))
+        
+        # Find data points within each cropping region polygon and create a lookup table.
+        lookup = gp.sjoin(dat_grid, crop_months, how='inner')
+        lookup = lookup.drop(columns=['geometry', 'index_right', 'lat_right', 'lon_right'])
+        lookup = lookup.rename(columns={'lat_left': 'lat', 'lon_left': 'lon'})
+    
+        # Generate a mask for this crop, of the same shape as the yearly data.
+        mask = xarray.full_like(days_per_month.isel(year=0).hail_proxy, np.nan)
+        mask.name = 'cropping'
+    
+        # Assign mask values.
+        lats = xarray.DataArray(lookup['lat'], dims='pt')
+        lons = xarray.DataArray(lookup['lon'], dims='pt')
+        months = xarray.DataArray(np.stack(lookup.cropping_months), dims=['pt', 'month'],
+                                  coords={'month': np.arange(12)+1})
+        mask.loc[{'lat': lats, 'lon': lons}] = months
+    
+        # Subset to crop months for each location.
+        res = days_per_month.where(mask == 1)
+        res = res.rename({'hail_proxy': 'crop_hail_prone_days'})
+        res['crop_hail_prone_proportion'] = res.crop_hail_prone_days.mean('month', keep_attrs=True)
+    
+        res.crop_hail_prone_days.attrs['long_name'] = 'Total hail-prone days during cropping period'
+        res.crop_hail_prone_days.attrs['units'] = 'days per period'
+        res.crop_hail_prone_proportion.attrs['long_name'] = 'Annual mean hail-prone proportion of cropping period'
+        res.crop_hail_prone_proportion.attrs['units'] = ''
+    
+        res = res.expand_dims({'crop': [crop]})
+        crop_results.append(res)
+    
+    crop_results = xarray.merge(crop_results)
+    return crop_results
