@@ -18,7 +18,7 @@
 #PBS -r y
 
 module use /g/data3/hh5/public/modules
-module load conda/analysis3-22.10
+module load conda/analysis3
 
 export PYTHONPATH=$PYTHONPATH:../../modules:../../../xarray_parcel/:../../../aus400_hail/:../../../warming_levels/
 

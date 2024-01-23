@@ -21,6 +21,7 @@ from cartopy.io import shapereader
 import matplotlib.ticker as mticker
 import modules.warming_levels as wl
 import modules.parcel_functions as parcel
+from matplotlib.colors import BoundaryNorm
 import modules.hail_sounding_functions as hs
 from matplotlib.colors import ListedColormap, LinearSegmentedColormap
 
@@ -393,7 +394,8 @@ def regrid_global(path, out_res=1, rename=None, output_file=lambda x: x.replace(
             d = xarray.open_dataset(file)
             regridder = xe.Regridder(d, out_grid, 'bilinear', periodic=True)
             d = regridder(d, keep_attrs=True)
-            attrs = {'history': f'Regridded to {out_res} x {out_res} degree grid using xESMF.'}
+            attrs = d.attrs
+            attrs.update({'history': f'Regridded to {out_res} x {out_res} degree grid using xESMF.'})
 
             if not rename is None:
                 d = d.rename(rename)
@@ -612,7 +614,7 @@ def plot_map_to_ax(dat, ax, coastlines=True, grid=True, dat_proj=ccrs.PlateCarre
             l = np.linspace(col_min, col_max, num_contours, dtype=np.int64)
         else:
             l = num_contours
-        
+
         res = dat.plot.contourf(ax=ax, transform=dat_proj, vmin=col_min, vmax=col_max, 
                                 cmap=cmap, norm=norm, cbar_kwargs=cbar_args,
                                 add_colorbar=colourbar, levels=l)
@@ -627,9 +629,10 @@ def plot_map_to_ax(dat, ax, coastlines=True, grid=True, dat_proj=ccrs.PlateCarre
         ax.set_xlim(xlims)
     if ylims is not None:
         ax.set_ylim(ylims)
-    if not tick_labels is None:
-        assert len(tick_labels) == len(cbar_ticks), 'Labels and ticks must have same length'
-        res.colorbar.ax.set_yticklabels(tick_labels)
+    if colourbar == True:
+        if not tick_labels is None:
+            assert len(tick_labels) == len(cbar_ticks), 'Labels and ticks must have same length'
+            res.colorbar.ax.set_yticklabels(tick_labels)
     if not left_title is None:
         if title_inset:
             title = f'{left_title} {title}'
@@ -793,6 +796,9 @@ def plot_map(dat, dat_proj=ccrs.PlateCarree(), disp_proj=ccrs.PlateCarree(), fig
             fmt = mticker.ScalarFormatter(useOffset=False, useMathText=True)
             fmt.set_powerlimits((-4, 6))
             cb = fig.colorbar(im, ax=ax, cax=cbar_ax, ticks=cbar_ticks, label=scale_label, format=fmt)
+            if not tick_labels is None:
+                assert len(tick_labels) == len(cbar_ticks), 'Labels and ticks must have same length'
+                cb.ax.set_yticklabels(tick_labels)
             
         if col_labels is not None or row_labels is not None:
             for a in ax.flat:
@@ -830,7 +836,7 @@ def annual_stats(d, factor, day_vars = ['hail_proxy', 'hail_proxy_noconds'],
                               'temp_500', 'melting_level', 'shear_magnitude'],
                  quantile_vars = {0.01: ['mixed_100_cin', 'mixed_100_lifted_index', 'lapse_rate_700_500'],
                                   0.99: ['mixed_100_cape', 'temp_500', 'melting_level', 'shear_magnitude']},
-                 chunks={'time': -1, 'lat': 10, 'lon': 10},
+                 chunks={'time': -1, 'lat': 15, 'lon': 15},
                  time_chunk=500):
     """
     Calculate annual statistics for a dataset.
@@ -865,12 +871,14 @@ def annual_stats(d, factor, day_vars = ['hail_proxy', 'hail_proxy_noconds'],
     extremes = xarray.Dataset()
     if not quantile_vars is None:
         for q in quantile_vars:
-            quants = d[quantile_vars[q]].chunk(chunks).groupby('time.year').quantile(q, keep_attrs=True).drop('quantile')
-            extremes = xarray.merge([extremes, quants])
             for v in quantile_vars[q]:
+                quant_dat = d[v].chunk(chunks)
+                quant_dat = quant_dat.persist()
+                quants = quant_dat.groupby('time.year').quantile(q, keep_attrs=True).drop('quantile').load()
+                extremes = xarray.merge([extremes, quants])
                 extremes[v].attrs['description'] = f'Percentile {q}'
                 extremes = extremes.rename({v: f'extreme_{v}'})
-            
+
     ret = xarray.merge([days, means, extremes])
     return ret
 
@@ -895,10 +903,12 @@ def epoch_stats(d, season_factors={'DJF': 90, 'MAM': 92, 'JJA': 92, 'SON': 91}):
         seasonal.append(annual_stats(d.where(d.time.dt.season == s), factor=season_factors[s]).expand_dims({'season': [s]}))
     seasonal = xarray.combine_nested(seasonal, concat_dim='season', combine_attrs='no_conflicts')
     seasonal = seasonal.rename({n: f'seasonal_{n}' for n in seasonal.data_vars})
+    seasonal = seasonal.chunk(-1)
 
     print('Annual...')
     annual = annual_stats(d=d, factor=365)
     annual = annual.rename({n: f'annual_{n}' for n in annual.data_vars})
+    annual = annual.chunk(-1)
 
     dat = xarray.merge([seasonal, annual, crop_results])
     return dat
@@ -946,7 +956,6 @@ def process_epoch(epoch_name, model_name, exp, epoch_dates, expected_times=365*2
 
     # Get annual/seasonal stats for the epoch.
     stats = epoch_stats(d=dat)
-    stats = stats.chunk(-1)
     stats = stats.expand_dims({'model': [model_name],
                                'epoch': [epoch_name]})
     stats.attrs['epoch_dates'] = f'{epoch_dates[0]}-{epoch_dates[1]}'
@@ -966,7 +975,7 @@ def make_landsea_mask(lsm_file='/g/data/oi10/replicas/CMIP6/CMIP/MRI/MRI-ESM2-0/
     Returns: A land-sea mask.
     """
     
-    lsm = xarray.open_mfdataset(lsm_file)
+    lsm = xarray.open_mfdataset(lsm_file).load()
     
     # Regrid to output resolution.
     out_lon = np.arange(-180.0, 180.0 + out_res, out_res)
@@ -984,7 +993,7 @@ def make_landsea_mask(lsm_file='/g/data/oi10/replicas/CMIP6/CMIP/MRI/MRI-ESM2-0/
     lsm.land.attrs['long_name'] = 'Land mask'
     lsm.land.attrs['description'] = f'Defined as sftlf > 50 in {lsm_file}.'
     
-    return lsm
+    return lsm.land.load()
 
 def plot_seasonal_maps(dat, variable, lat_range=slice(None, None), lon_range=slice(None, None), figsize=(12,8), cmap=hail_cmap, **kwargs):
     """
@@ -1008,10 +1017,10 @@ def plot_seasonal_maps(dat, variable, lat_range=slice(None, None), lon_range=sli
     
 def ttest(dat, variables, fut_epoch, hist_epoch='historical', sig_level=0.05):
     """
-    Apply Welch's t-test for across a given axis between epochs for each model.
+    Apply Welch's t-test for across a given axis between epochs.
     
     Arguments:
-        dat: The data to work on.
+        dat: The data to work on - for one model.
         variables: The variables to apply the t test to. 
         fut_epoch: The future epoch to compare historical data to.
         hist_epoch: Name of the historical epoch.
@@ -1022,17 +1031,15 @@ def ttest(dat, variables, fut_epoch, hist_epoch='historical', sig_level=0.05):
     
     res = []
     for variable in variables:
-        for model in dat.model.values:
-            statres, pval = sp.stats.ttest_ind(a=dat.sel(epoch=fut_epoch, model=model)[variable].values, 
-                                               b=dat.sel(epoch=hist_epoch, model=model)[variable].values,
-                                               equal_var=False)
-    
-            res_dims = list(dat.sel(epoch=fut_epoch, model=model)[variable].dims)[1:]
-            r = xarray.Dataset({variable+'_ttest_stat': (res_dims, statres),
-                                variable+'_sig': (res_dims, pval < sig_level)},
-                               coords={x: dat[x].values for x in res_dims})
-            r = r.expand_dims({'model': [model]})
-            res.append(r)
+        statres, pval = sp.stats.ttest_ind(a=dat.sel(epoch=fut_epoch)[variable].values, 
+                                           b=dat.sel(epoch=hist_epoch)[variable].values,
+                                           equal_var=False)
+
+        res_dims = list(dat.sel(epoch=fut_epoch)[variable].dims)[1:]
+        r = xarray.Dataset({variable+'_ttest_stat': (res_dims, statres),
+                            variable+'_sig': (res_dims, pval < sig_level)},
+                           coords={x: dat[x].values for x in res_dims})
+        res.append(r)
 
     res = xarray.merge(res)
     res.attrs['p-value for significance'] = sig_level
@@ -1202,7 +1209,7 @@ def plot_run_years(runs, figsize=(10,2.8), legend_y=9.5, file=None, show=True):
         axs[i].set_xlim(1980, 2100)
         axs[i].set_ylabel(model, rotation=0, ha='right', va='center')
         
-    plt.legend(loc='upper right', bbox_to_anchor=(1.1, legend_y), framealpha=1)
+    plt.legend(loc='upper right', bbox_to_anchor=(1.15, legend_y), framealpha=1)
 
     if not file is None:
         plt.savefig(fname=file, bbox_inches='tight')
@@ -1416,25 +1423,25 @@ def make_backup_orography(runs, CMIP6_dir='/g/data/oi10/replicas',
     
             orog.to_netcdf(out_file)
             
-def read_processed_data(data_dir='/g/data/up6/tr2908/future_hail_global/CMIP_conv_annual_stats/complete/', 
+def read_processed_data(data_dir='/g/data/up6/tr2908/future_hail_global/CMIP_conv_annual_stats/', 
                         data_exp='*common_grid.nc', 
                         rename_models={'EC-Earth_Consortium.EC-Earth3': 'EC-Earth3'}):
     """
-    Read all processed data, regridding to a common grid on the way. 
+    Read all processed data, regridding to a common grid on the way and applying a land mask.
 
     Arguments:
         data_dir: The data directory to read from.
         data_exp: Expression to match for data.
         rename_models: Models to shorten the names of.
 
-    Returns: Dataset.
+    Returns: Dataset, landsea mask.
     """
     
     # Regrid native grids to common grids.
     regrid_global(path=f'{data_dir}/*native_grid.nc')
     
     # Open all data.
-    dat = xarray.open_mfdataset(f'{data_dir}/{data_exp}')
+    dat = xarray.open_mfdataset(f'{data_dir}/{data_exp}', parallel=True)
 
     # Shorten model names if required.
     dat = dat.assign_coords({'model': [rename_models[x] if x in rename_models else x for x in dat.model.values]})
@@ -1443,16 +1450,12 @@ def read_processed_data(data_dir='/g/data/up6/tr2908/future_hail_global/CMIP_con
     lsm = make_landsea_mask()
     
     # Mask to land area only.
-    dat_land = dat.where(lsm.land == 1)
-    
-    # Load for speed.
-    dat = dat.persist()
-    dat_land = dat_land.persist()
+    dat = dat.where(lsm == 1)
     
     # Transpose - for the ttest the axis over which the t-test should be applied ('year_num') must be first after model/epoch selection.
     dat = dat.transpose('model', 'epoch', 'year_num', 'season', 'crop', 'month', 'lat', 'lon')
 
-    return dat
+    return dat, lsm
 
 def era5_climatology_calc(era5):
     """
@@ -1512,7 +1515,7 @@ def era5_climatology(era5_dir='/g/data/up6/tr2908/future_hail_global/era5_conv/'
     dat = xarray.open_dataset(cache_file)
 
     if not landmask is None:
-        dat = dat.where(landmask.lsm == True).load()
+        dat = dat.where(landmask == True).load()
         
     return(dat)
 
@@ -1576,7 +1579,8 @@ def plot_era5_anomalies(anoms, year, lats, lons, figsize=(12,9), ncols=3, nrows=
                  share_axes=True, grid=False, contour=False, scale_label=scale_label, 
                  nan_colour='white', **kwargs)
 
-def calc_epoch_differences(dat, variables, epochs=['2C', '3C']):
+def epoch_differences(dat, variables, epochs=['2C', '3C'], 
+                      cache_dir='/g/data/up6/tr2908/future_hail_global/CMIP_changes/'):
     """
     Calculate differences between historical epoch and warming epochs.
 
@@ -1584,46 +1588,65 @@ def calc_epoch_differences(dat, variables, epochs=['2C', '3C']):
         dat: The data to work on.
         variables: Which variables to select.
         epochs: The future epochs to test.
+        cache_dir: The cache directory to write changes to.
 
     Returns: mean differences, relative mean differences (relative to overall mean per model), 
              values added where the historical period had zeros, and difference significances.
     """
+
+    res = []
+    for model in dat.model.values:
+        print(f'Processing {model}...')
+        out_file = f'{cache_dir}/{model}_epoch_diffs.nc'
+        if not os.path.exists(out_file):
     
-    reference = dat.sel(epoch='historical')[variables]
-    reference_mean = reference.mean(['year_num']).load()
-    
-    mean_diffs = []
-    mean_diffs_rel = []
-    new_areas = []
-    sigs = []
-    
-    for e in epochs:
-        # Select the epoch.
-        epoch = dat.sel(epoch=e)[variables]
-        epoch_mean = epoch.mean(['year_num']).load()
-    
-        # Difference in means between reference and epoch.
-        mean_diff = epoch_mean - reference_mean
-        mean_diff_rel = mean_diff / reference_mean.mean(['lat', 'lon']) * 100
-        new_area = np.logical_and(epoch_mean > 0,
-                                  reference_mean == 0)
-        new_area = mean_diff.where(new_area == True)
-    
-        # Significance of differences.
-        tt = ttest(dat=dat, fut_epoch=e, variables=variables)
+            d = dat.sel(model=model).chunk({'lat': 50, 'lon': 50})
+            reference = d.sel(epoch='historical')[variables]
+            reference_mean = reference.mean(['year_num']).load()
+            
+            mean_diffs = []
+            mean_diffs_rel = []
+            new_areas = []
+            sigs = []
         
-        mean_diffs.append(mean_diff.expand_dims({'epoch': [e]}))
-        mean_diffs_rel.append(mean_diff_rel.expand_dims({'epoch': [e]}))
-        new_areas.append(new_area.expand_dims({'epoch': [e]}))
-        sigs.append(tt.expand_dims({'epoch': [e]}))
+            for e in epochs:
+                # Select the epoch.
+                epoch = d.sel(epoch=e)[variables]
+                epoch_mean = epoch.mean(['year_num']).load()
+            
+                # Difference in means between reference and epoch.
+                mean_diff = epoch_mean - reference_mean
+                mean_diff_rel = mean_diff / reference_mean.mean(['lat', 'lon']) * 100
+                new_area = np.logical_and(epoch_mean > 0,
+                                          reference_mean == 0)
+                new_area = mean_diff.where(new_area == True)
+            
+                # Significance of differences.
+                tt = ttest(dat=d, fut_epoch=e, variables=variables)
+                
+                mean_diffs.append(mean_diff.expand_dims({'epoch': [e]}))
+                mean_diffs_rel.append(mean_diff_rel.expand_dims({'epoch': [e]}))
+                new_areas.append(new_area.expand_dims({'epoch': [e]}))
+                sigs.append(tt.expand_dims({'epoch': [e]}))
+            
+            mean_diffs = xarray.merge(mean_diffs)
+            mean_diffs_rel = xarray.merge(mean_diffs_rel)
+            new_areas = xarray.merge(new_areas)
+            sigs = xarray.merge(sigs)
+        
+            for v in [i for i in mean_diffs.data_vars]:
+                mean_diffs = mean_diffs.rename({v: f'{v}_mean_diff'})
+                mean_diffs_rel = mean_diffs_rel.rename({v: f'{v}_mean_diff_rel'})
+                new_areas = new_areas.rename({v: f'{v}_new_areas'})
     
-    mean_diffs = xarray.merge(mean_diffs)
-    mean_diffs_rel = xarray.merge(mean_diffs_rel)
-    new_areas = xarray.merge(new_areas)
-    sigs = xarray.merge(sigs)
-
-    return mean_diffs, mean_diffs_rel, new_areas, sigs
-
+            out = xarray.merge([mean_diffs, mean_diffs_rel, new_areas, sigs])
+            write_output(dat=out, file=out_file, attrs=out.attrs)
+        
+        res.append(xarray.open_dataset(out_file).expand_dims({'model': [model]}))
+   
+    res = xarray.concat(res, dim='model')
+    return res
+    
 def plot_diffs_by_epoch(dat, models, var, scale_label, figsize=(12, 9.5), ncols=2, nrows=4,
                         row_label_scale=1.3, row_label_offset=0.015, row_label_adjust=0.15, file=None):
     """
@@ -1704,38 +1727,6 @@ def plot_mean_diffs_for_season(diffs, sigs, variable, scale_label, season, figsi
                  contour=True, cmap='RdBu_r', divergent=True, scale_label=scale_label,
                  file=file)
 
-def multi_model_mean_diffs(diffs, sigs):
-    """
-    Calculate the multi-model mean difference and indicator of significance. 
-    A difference is considered significant if more than 50% of the models have
-    both a) significant differences in the mean and b) their mean difference has
-    the same sign as the multi-model mean difference.
-
-    Arguments:
-        diffs: The differences per model.
-        sigs: Significance of differences per model.
-
-    Return the mean differences and significance indicator for each point. 
-    """
-    
-    # Calculate mean difference across models.
-    mean_diffs = diffs.mean(['model'])
-    mean_sign = np.sign(mean_diffs)
-    
-    # Where does the sign of the per-model difference agree with the mean sign?
-    sign_agrees = np.sign(diffs) == mean_sign
-    
-    # Where are the differences significant AND the sign matches the mean differences?
-    varlist = [x for x in list(sign_agrees.keys()) if np.isin(x + '_sig', list(sigs.keys()))]
-    s = sigs.rename({k + '_sig': k for k in varlist})
-    sig = np.logical_and(sign_agrees, s)
-    
-    # How many models have both sig diffs and matching sign? Consider mean difference significant 
-    # if more than 75% of models have both these conditions true.
-    significance = sig.sum('model') > len(diffs.model)*0.5
-
-    return mean_diffs, significance
-
 def plot_ing_changes(diffs, sigs, epoch, variables, file, seasons=['DJF', 'JJA']):
     """
     Plot changes in ingredients by season.
@@ -1755,30 +1746,6 @@ def plot_ing_changes(diffs, sigs, epoch, variables, file, seasons=['DJF', 'JJA']
                                   scale_label='', epoch=epoch, ncols=2, nrows=1, figsize=(12,3.5),
                                   row_labels=[var_name], row_label_offset=0.65, row_label_adjust=0.03,
                                   col_labels=seasons, file=file + '_' + var_name.replace(' ', '_').replace('%', 'p') + '.pdf')
-
-def gen_land_mask(out_dat, landsea_file='/g/data/rt52/era5/single-levels/reanalysis/lsm/1979/lsm_era5_oper_sfc_19790101-19790131.nc',
-                  cache_file='/g/data/up6/tr2908/future_hail_global/era5_1deg/era5_landmask.nc'):
-    """
-    Interpolate ERA5 data to get a land mask. 
-
-    Arguments:
-        out_dat: The example output data, to match the resolution of.
-        landsea_file: The landsea file to interpolate (the first time step will be used).
-        cache_file: The output file to write. If it exists, just read from this file.
-
-    Returns: Landsea mask as lsm > 0 at the required resolution.
-    """
-    
-    if not os.path.exists(cache_file):
-        ls = xarray.open_dataset(landsea_file).isel(time=0)
-        regridder = xe.Regridder(ls, out_dat, 'bilinear', periodic=True)
-        attrs = {'history': f'ERA5 regridded data using xESMF.'}
-        ls = regridder(ls, keep_attrs=True)
-        land = (ls.lsm >= 0.5).load().reset_coords(drop=True)
-        land.attrs = attrs
-        land.to_netcdf(cache_file)
-
-    return xarray.open_dataset(cache_file)
 
 def crop_months_array(x):
     """
@@ -1863,6 +1830,7 @@ def crop_hail_stats(dat, cp=crop_periods(), crop_res=0.5):
     
     Arguments:
         dat: Data to work on - should contain 'hail_proxy'.
+        cp: Crop period information.
         crop_res: Resolution of crop data in degrees.
 
     Returns: DataSet with hail prone days per cropping period per year and average proportion of 
@@ -1880,9 +1848,10 @@ def crop_hail_stats(dat, cp=crop_periods(), crop_res=0.5):
     days_per_month['year'] = days_per_month.time.dt.year
     days_per_month['month'] = days_per_month.time.dt.month
     days_per_month = days_per_month.set_index(time=['year', 'month']).unstack('time')
+    days_per_month['month_days'] = ('month', [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31])
 
     crop_results = []
-    for crop in cp.crop_name.unique()[5:]:
+    for crop in cp.crop_name.unique():
         print(crop)
     
         periods = cp.loc[cp.crop_name == crop]
@@ -1921,18 +1890,106 @@ def crop_hail_stats(dat, cp=crop_periods(), crop_res=0.5):
                                   coords={'month': np.arange(12)+1})
         mask.loc[{'lat': lats, 'lon': lons}] = months
     
-        # Subset to crop months for each location.
+        # Subset to crop months for each location, leaving number of hail days per crop month.
         res = days_per_month.where(mask == 1)
         res = res.rename({'hail_proxy': 'crop_hail_prone_days'})
-        res['crop_hail_prone_proportion'] = res.crop_hail_prone_days.mean('month', keep_attrs=True)
-    
-        res.crop_hail_prone_days.attrs['long_name'] = 'Total hail-prone days during cropping period'
+
+        # Sum all the hail days for each year and divide by the number of days in the cropping season; all per point.
+        res['crop_hail_prone_proportion'] = res.crop_hail_prone_days.sum('month') / res.month_days.sum('month')
+        res = res.drop('month_days')
+        
+        res.crop_hail_prone_days.attrs['long_name'] = 'Hail-prone days during cropping period month'
         res.crop_hail_prone_days.attrs['units'] = 'days per period'
-        res.crop_hail_prone_proportion.attrs['long_name'] = 'Annual mean hail-prone proportion of cropping period'
+        res.crop_hail_prone_proportion.attrs['long_name'] = 'Hail-prone proportion of cropping period'
         res.crop_hail_prone_proportion.attrs['units'] = ''
     
         res = res.expand_dims({'crop': [crop]})
-        crop_results.append(res)
-    
-    crop_results = xarray.merge(crop_results)
+        res = res.chunk({'crop': 1})
+        crop_results.append(res.load())
+
+    print('Merging...')
+    crop_results = xarray.concat(crop_results, dim='crop')
     return crop_results
+
+def assert_epochs(runs, data_dir='/g/data/up6/tr2908/future_hail_global/CMIP_conv_annual_stats/', data_exp='*common_grid.nc'):
+    """
+    Ensure all data files have the correct epoch.
+
+    Arguments:
+        runs: Run definition from define_runs().
+        data_dir/data_exp: The data files to read.
+    """
+
+    for file in glob(f'{data_dir}/{data_exp}'):
+        d = xarray.open_dataset(file)
+        line = np.logical_and(runs.desc == d.attrs['CMIP_model_spec'], runs.epoch_name == d.epoch)
+        assert len(runs.loc[line]) == 1, 'Multiple or no lines selected'
+        assert d.attrs['epoch_dates'] == f'{runs.loc[line, "start_year"].values[0]}-{runs.loc[line, "end_year"].values[0]}', f'Incorrect epoch in {file}.'
+        d.close()
+        del d
+
+def multi_model_mean_diffs(dat, variables, completion):
+    """
+    Calculate the multi-model mean difference and indicator of significance. 
+    A difference is considered significant if more than 50% of the models have
+    both a) significant differences in the mean and b) their mean difference has
+    the same sign as the multi-model mean difference.
+
+    Arguments:
+        dat: Data to work on (differences per model, significance of differences).
+        variables: Variables to process.
+        completion: Completion of variables to select which mean to use, '_mean_rel_diff' for example.
+
+    Return the mean differences and significance indicator for each point. 
+    """
+
+    diffs = dat[[f'{x}{completion}' for x in variables]]
+    sigs = dat[[f'{x}_sig' for x in variables]]
+    
+    diffs = diffs.rename({f'{x}{completion}': x for x in variables})
+    sigs = sigs.rename({f'{x}_sig': x for x in variables})
+    
+    # Mean differences across all models.
+    mean_diffs = diffs.mean('model')
+    mean_sign = np.sign(mean_diffs)
+    
+    # Where does the sign of the per-model difference agree with the mean sign?
+    sign_agrees = np.sign(diffs) == mean_sign
+    
+    # Where are the differences significant AND the sign matches the mean differences?
+    sig = np.logical_and(sign_agrees, sigs)
+    
+    # How many models have both sig diffs and matching sign? Consider mean difference significant 
+    # if more than 75% of models have both these conditions true.
+    significance = sig.sum('model') > len(diffs.model)*0.5
+    
+    return mean_diffs, significance
+
+def plot_relative_changes_crops(ch, cmap_colours=['cornflowerblue', 'greenyellow', 'indianred'], panelsize=(12,4)):
+    """
+    Plot changes in three classes (zero, increase, decrease) by crop.
+
+    Arguments:
+        ch: Crop data to plot, usually crop_hail_prone_proportion.
+        cmap_colours: Colours to use in the discrete colourmap.
+    """
+    
+    mask = ~np.isnan(ch)
+    zero_changes = xarray.full_like(other=ch, fill_value=0).where(ch == 0).where(mask)
+    positive_changes = xarray.full_like(other=ch, fill_value=1).where(ch > 0).where(mask)
+    negative_changes = xarray.full_like(other=ch, fill_value=-1).where(ch < 0).where(mask)
+    
+    changes = positive_changes.where(np.isnan(zero_changes), other=zero_changes)
+    changes = changes.where(np.isnan(negative_changes), other=negative_changes)
+    
+    # Make a colour map to use.
+    tri_cmap = LinearSegmentedColormap.from_list("", cmap_colours)
+    norm = BoundaryNorm(boundaries=[-1, -0.5, 0.5, 1], ncolors=tri_cmap.N)
+
+    for crop in changes.crop.values:
+        _ = plot_map([changes.sel(crop=crop, epoch=e) for e in changes.epoch.values], norm=norm, cbar_ticks=[-0.75, 0, 0.75], 
+                     tick_labels=['Decrease', 'No change', 'Increase'], title=[f'{crop}, {e}' for e in changes.epoch.values], 
+                     figsize=panelsize, nan_colour='white', grid=False, share_scale=True,
+                     nrows=1, ncols=2, disp_proj=ccrs.Robinson(), cmap=tri_cmap, divergent=True)
+
+    return changes

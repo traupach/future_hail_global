@@ -13,7 +13,7 @@ outdir = '/g/data/up6/tr2908/future_hail_global/CMIP_conv_annual_stats' # Proces
 out_res = 1                                                             # Output resolution (degrees).
 
 # Command line arguments.
-assert len(sys.argv) == 6, 'Usage: post_process_CMIP.py <epoch_name> <model_name> <start_year> <end_year>'
+assert len(sys.argv) == 6, 'Usage: post_process_CMIP.py <epoch_name> <model_name> <exp> <start_year> <end_year>'
 epoch_name = sys.argv[1]
 model_name = sys.argv[2]
 exp = sys.argv[3]
@@ -43,6 +43,6 @@ else:
     stats['year_num'] = ('year', np.arange(1, stats.year.size+1))
     stats = stats.swap_dims({'year': 'year_num'}).reset_coords()
 
-    comp = dict(zlib=True, shuffle=True, complevel=4)
+    comp = dict(zlib=True, shuffle=True, complevel=3)
     encoding = {var: comp for var in stats.data_vars}
     stats.to_netcdf(out_file, encoding=encoding)            
