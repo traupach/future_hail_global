@@ -47,7 +47,7 @@ files_to = num * files_per_process
 if files_from >= len(files):
     print('No files left to process.')
     exit()
-if files_to > len(files) - files_per_process:
+if files_to > len(files) - 1:
     files_to = len(files)
 print(f'Processing files from index {files_from} to index {files_to-1}.')
 files = files[files_from:files_to]
@@ -97,23 +97,20 @@ for file in files:
         day_dat = day_dat.chunk({'time': 1, 'level': -1, 'latitude': -1, 'longitude': -1})
         
         # Calculate hail-proxy indices.
-        print('Calculating convective properties...')
-        res = parcel.min_conv_properties(dat=day_dat, vert_dim='level')
-    
-        print('Finding ERA5 physical mask...')
-        mask = day_dat.specific_humidity.min('level') > 0
-        mask.name = 'physical_mask'
-        mask.attrs['long_name'] = 'Physical mask for ERA5 data.'
-        mask.attrs['description'] = ('Indicates 0 where data is invalid because there' + 
-                                     ' were negative values of q in the column.')
-        res = xarray.merge([res, mask])
-    
+        print('Calculating extra convective properties...')
+        c = fh.conv_properties(dat=day_dat, vert_dim='level')
+
         # Add hail proxies.
-        res['hail_proxy'] = hs.apply_trained_proxy(dat=res, results_file=proxy_results_file, 
-                                                   extra_conds_file=proxy_conds_file)
-        res['hail_proxy_noconds'] = hs.apply_trained_proxy(dat=res, results_file=proxy_results_file, 
-                                                           extra_conds_file=None)
-        
+        c['hail_proxy'] = hs.apply_trained_proxy(dat=c, results_file=proxy_results_file, 
+                                                 extra_conds_file=proxy_conds_file)
+        c['hail_proxy_noconds'] = hs.apply_trained_proxy(dat=c, results_file=proxy_results_file, 
+                                                         extra_conds_file=None)
+
+        # Add extra hail proxies.
+        prox = fh.storm_proxies(dat=c)
+
+        # Merge for saving.
+        res = xarray.merge([c, prox])
         conv.append(res.load())
         del res, day_dat
 

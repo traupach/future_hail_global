@@ -4,12 +4,12 @@
 #
 # Author: Tim Raupach <t.raupach@unsw.edu.au>
 
-#PBS -q normal
-#PBS -P up6
+#PBS -q hugemem
+#PBS -P li18
 #PBS -l storage=gdata/hh5+gdata/up6+gdata/oi10+gdata/dk92+gdata/w42
 #PBS -l ncpus=48
 #PBS -l walltime=04:00:00
-#PBS -l mem=192GB
+#PBS -l mem=384GB
 #PBS -j oe
 #PBS -W umask=0022
 #PBS -l wd
@@ -27,7 +27,7 @@ dask scheduler --scheduler-file sched_"${PBS_JOBID}".json &
 while ! [[ -f sched_"${PBS_JOBID}".json ]]; do sleep 10; done
 
 # Use mpirun to run dask workers in this environment.
-dask worker --nworkers 8 --nthreads 4 --memory-limit 0.125 --scheduler-file sched_"${PBS_JOBID}".json &
+dask worker --nworkers 4 --nthreads 4 --memory-limit 0.125 --scheduler-file sched_"${PBS_JOBID}".json &
 
 sleep 10
 

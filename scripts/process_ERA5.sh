@@ -1,6 +1,6 @@
 #!/bin/bash
 # 
-# Process CMIP6 data to get convective indices.
+# Process CMIP6 data to get extra convective indices.
 #
 # Author: Tim Raupach <t.raupach@unsw.edu.au>
 
@@ -14,7 +14,7 @@
 #PBS -W umask=0022
 #PBS -l wd
 #PBS -l jobfs=100GB
-#PBS -N job_process_ERA5
+#PBS -N job_process_ERA5_extras
 #PBS -r y
 #PBS -J 1-10
 
