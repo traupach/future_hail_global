@@ -5,7 +5,7 @@
 # Author: Tim Raupach <t.raupach@unsw.edu.au>
 
 #PBS -q normal
-#PBS -P up6
+#PBS -P li18
 #PBS -l storage=gdata/hh5+gdata/up6+gdata/oi10+gdata/dk92+gdata/w42
 #PBS -l ncpus=48
 #PBS -l walltime=04:00:00
