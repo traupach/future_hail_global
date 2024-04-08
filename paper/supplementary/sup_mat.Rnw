@@ -14,7 +14,7 @@
 \renewcommand{\figurename}{Supplementary Figure}
 \renewcommand\refname{Supplementary References}
 
-\title{Projected global changes in hail hazard: supplementary information}
+\title{Shifting hail hazard under global warming: supplementary information}
 \author{Timothy H. Raupach$^{1,2}$, Raphael Portmann$^{3}$, Christian Siderius$^{4}$, \\and Steven C. Sherwood$^{1,2}$ \\
  \\
  \footnotesize 1: Climate Change Research Centre, The University of New South Wales, Sydney, Australia \\
@@ -36,25 +36,131 @@ library(xtable)
 @
 
 <<runsTable, echo=FALSE, results="asis">>=
-runs = read_csv('../../results/runs_list.csv', col_types='cccccii')
+runs = read_csv('../../results/runs_list.csv', col_types='cccccciiccccc')
 runs = runs %>% arrange(model) %>% select(Model=model, 
                                           Institution=institution_id,
                                           Experiment=exp,
                                           Ensemble=ensemble, 
                                           Start=start_year, 
-                                          End=end_year) 
+                                          End=end_year,
+                                          Res=nominal_resolution,
+                                          Vert=vertical_levels,
+                                          Orog=backup_orography) %>%
+                                          mutate(Orog=case_when(Orog=='False'~'', Orog=='True'~'X'))
 tab = xtable(runs, label='tab:model_details',
-             caption='\\textbf{CMIP6 model details}.')
+             caption='\\textbf{CMIP6 model details}. ``Res\'\' is nominal model resolution, ``Vert\'\' is the number of vertical levels in the model. An X in the column ``Orog\'\' indicates models for which no orography was provided; in these cases the orography for the historical run of CNRM-CM6-1 was interpolated to the model grid for use here.')
 print(tab, booktabs=TRUE, include.rownames=FALSE, size='footnotesize')
 @
 
 \begin{figure*}[p]
     \centering
+    \includegraphics[width=\textwidth]{../../results/monthly_anoms_India_2015.pdf}
+    \caption{\textbf{Monthly proxy-based hail-prone day anomalies for the Indian region in 2015.} Anomalies are calculated using ERA5 data with respect to the monthly ERA5 historical climatology (1980-1999).}
+    \label{fig:anoms_India_2015}
+\end{figure*}
+
+\begin{figure*}[p]
+    \centering
+    \includegraphics[width=\textwidth]{../../results/monthly_anoms_France_2022.pdf}
+    \caption{\textbf{Monthly proxy-based hail-prone day anomalies for the European region in 2022.} As for Figure \ref{fig:anoms_India_2015} but for Europe in 2022.}
+    \label{fig:anoms_Europe_2022}
+\end{figure*}
+
+\begin{figure*}[p]
+    \centering
     \includegraphics[width=\textwidth]{../../results/run_years}
     \caption{\textbf{CMIP6 models and per-degree-framework date ranges.} The reference period from 
-    historical simulations is shown in blue while periods with 2 and 3 degrees C warming over 
-    the reference period, in SSP5-8.5 simulations, are in orange and green, respectively.}
-    \label{fig:domain}
+    historical simulations is shown in blue, while periods with 2 and 3 degrees C warming over 
+    the reference period, in SSP5-8.5 simulations, are in orange and green respectively.}
+    \label{fig:epochs}
+\end{figure*}
+
+\begin{figure*}[p]
+    \centering
+    \includegraphics[width=\textwidth]{../../results/historical_by_model}
+    \caption{\textbf{Mean annual hail-prone days in historical (1980-1999) runs.} Plots are by CMIP6 model and for ERA5 reanalysis data.}
+    \label{fig:historical_annual_means}
+\end{figure*}
+
+\begin{figure*}[p]
+    \centering
+    \includegraphics[width=\textwidth]{../../results/hail_diffs_by_model_1}
+    \caption{\textbf{Differences in mean annual hail-prone days by model and epoch, part 1.}}
+    \label{fig:hail_diffs_by_model_1}
+\end{figure*}
+
+\begin{figure*}[p]
+    \centering
+    \includegraphics[width=\textwidth]{../../results/hail_diffs_by_model_2}
+    \caption{\textbf{Differences in mean annual hail-prone days by model and epoch, part 2.}}
+    \label{fig:hail_diffs_by_model_2}
+\end{figure*}
+
+\begin{figure*}[p]
+    \centering
+    \includegraphics[width=\textwidth]{../../results/hail_changes_by_season_2C}
+    \caption{\textbf{Differences in mean annual hail-prone days by season, for 2 C warming.} Stippling shows regions for which the difference between scenario means (across models) was statistically significant ($p <$ 0.05 using Welch's t-test) and for which more than half of the models agreed on the sign of the change.}
+    \label{fig:hail_changes_by_season_2C}
+\end{figure*}
+
+\begin{figure*}[p]
+    \centering
+    \includegraphics[width=\textwidth]{../../results/hail_changes_by_season_3C}
+    \caption{\textbf{Differences in mean annual hail-prone days by season, for 3 C warming.} Stippling as for Figure \ref{fig:hail_changes_by_season_2C}.}
+    \label{fig:hail_changes_by_season_3C}
+\end{figure*}
+
+\begin{figure*}[p]
+    \centering
+    \includegraphics[width=0.95\textwidth]{../../results/ingredient_changes_2C_99p_CAPE}
+    \includegraphics[width=0.95\textwidth]{../../results/ingredient_changes_2C_Mean_CAPE}
+    \includegraphics[width=0.95\textwidth]{../../results/ingredient_changes_2C_99p_S06}
+    \includegraphics[width=0.95\textwidth]{../../results/ingredient_changes_2C_Mean_S06}
+    \includegraphics[width=0.95\textwidth]{../../results/ingredient_changes_2C_Mean_MLH}
+    \caption{\textbf{Multi-model mean relative differences in hail ingredients for 2 C warming.}  Stippling as for Figure \ref{fig:hail_changes_by_season_2C}.}
+    \label{fig:ingredients_changes_2C}
+\end{figure*}
+
+\begin{figure*}[p]
+    \centering
+    \includegraphics[width=\textwidth]{../../results/crop_changes_north_america.pdf}
+    \caption{\textbf{Multi-model mean change in hail-prone proportion of growing season, for 2 C warming, for North America.} Stippling as for Figure \ref{fig:hail_changes_by_season_2C}. Crops for which there were no significant changes are not shown.}
+    \label{fig:crop_changes_north_america}
+\end{figure*}
+
+\begin{figure*}[p]
+    \centering
+    \includegraphics[width=\textwidth]{../../results/crop_changes_south_america.pdf}
+    \caption{As for Figure \ref{fig:crop_changes_north_america} but for South America.}
+    \label{fig:crop_changes_south_america}
+\end{figure*}
+
+\begin{figure*}[p]
+    \centering
+    \includegraphics[width=\textwidth]{../../results/crop_changes_europe.pdf}
+    \caption{As for Figure \ref{fig:crop_changes_north_america} but for Europe.}
+    \label{fig:crop_changes_europe}
+\end{figure*}
+
+\begin{figure*}[p]
+    \centering
+    \includegraphics[width=\textwidth]{../../results/crop_changes_africa.pdf}
+    \caption{As for Figure \ref{fig:crop_changes_north_america} but for central and southern Africa.}
+    \label{fig:crop_changes_africa}
+\end{figure*}
+
+\begin{figure*}[p]
+    \centering
+    \includegraphics[width=\textwidth]{../../results/crop_changes_asia.pdf}
+    \caption{As for Figure \ref{fig:crop_changes_north_america} but for central and southeast Asia.}
+    \label{fig:crop_changes_asia}
+\end{figure*}
+
+\begin{figure*}[p]
+    \centering
+    \includegraphics[width=\textwidth]{../../results/crop_changes_oceania.pdf}
+    \caption{As for Figure \ref{fig:crop_changes_north_america} but for the Maritime Continent, Australia and New Zealand.}
+    \label{fig:crop_changes_oceania}
 \end{figure*}
 
 \clearpage
