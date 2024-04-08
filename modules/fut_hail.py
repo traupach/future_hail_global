@@ -36,12 +36,20 @@ parcel.load_moist_adiabat_lookups(base_dir=lookup_dir, chunks=-1)
 proxies = ['hail_proxy', 'hail_proxy_noconds', 'proxy_Kunz2007', 'proxy_Eccel2012', 
            'proxy_Mohr2013', 'proxy_SHIP_0.1', 'proxy_SHIP_0.5']
 proxy_names = {'hail_proxy': 'Raupach 2023',
-               'hail_proxy_noconds': 'Raupach 2023 (no extra conds)',
+               'hail_proxy_noconds': 'Raupach 2023\n(no extra conds)',
                'proxy_Kunz2007': 'Kunz 2007',
                'proxy_Eccel2012': 'Eccel 2012',
                'proxy_Mohr2013': 'Mohr 2013', 
                'proxy_SHIP_0.1': 'SHIP > 0.1', 
                'proxy_SHIP_0.5': 'SHIP > 0.5'}
+
+proxy_dims = {'Raupach2023': 'Raupach 2023',
+              'Raupach2023_noconds': 'Raupach 2023\n(no extra conds)',
+              'Kunz2007': 'Kunz 2007',
+              'Eccel2012': 'Eccel 2012',
+              'Mohr2013': 'Mohr 2013', 
+              'SHIP_0.1': 'SHIP > 0.1', 
+              'SHIP_0.5': 'SHIP > 0.5'}
 
 # Pretty colors for hail maps.
 cmap_colours = [
@@ -1469,7 +1477,13 @@ def make_backup_orography(runs, CMIP6_dir='/g/data/oi10/replicas',
 def read_processed_data(data_dir='/g/data/up6/tr2908/future_hail_global/CMIP_conv_annual_stats/', 
                         data_exp='*common_grid.nc', 
                         rename_models={'EC-Earth_Consortium.EC-Earth3': 'EC-Earth3'},
-                        rename_vars={}):
+                        rename_vars={'hail_proxy': 'proxy_Raupach2023',
+                                     'hail_proxy_noconds': 'proxy_Raupach2023_noconds',
+                                     'seasonal_hail_proxy': 'seasonal_proxy_Raupach2023',
+                                     'seasonal_hail_proxy_noconds': 'seasonal_proxy_Raupach2023_noconds',
+                                     'annual_hail_proxy': 'annual_proxy_Raupach2023',
+                                     'annual_hail_proxy_noconds': 'annual_proxy_Raupach2023_noconds'},
+                        apply_landmask=True):
     """
     Read all processed data, regridding to a common grid on the way and applying a land mask.
 
@@ -1495,14 +1509,27 @@ def read_processed_data(data_dir='/g/data/up6/tr2908/future_hail_global/CMIP_con
     lsm = make_landsea_mask()
     
     # Mask to land area only.
-    dat = dat.where(lsm == 1)
+    if apply_landmask == True:
+        dat = dat.where(lsm == 1)
     
     # Transpose - for the ttest the axis over which the t-test should be applied ('year_num') must be first after model/epoch selection.
     dat = dat.transpose('model', 'epoch', 'year_num', 'season', 'month', 'lat', 'lon')
 
     # Rename variables.
+    dat = dat.rename({f'annual_mean_{p}': f'annual_{p}' for p in proxies})
     dat = dat.rename(rename_vars)
+
+    # Re-arrange the data so that the seaonal/annual/monthly hail days are organised with proxy as a dimension.
+    seasonal_proxies = [x for x in list(dat.keys()) if 'seasonal_proxy' in x]
+    annual_proxies = [x for x in list(dat.keys()) if 'annual_proxy_' in x]
+    prox = [x for x in list(dat.keys()) if 'proxy_' in x and x not in seasonal_proxies and x not in annual_proxies]
+    rest = [x for x in list(dat.keys()) if x not in seasonal_proxies and x not in annual_proxies and x not in prox]
     
+    seasonal = dat[seasonal_proxies].rename({f'{p}': f'{p[15:None]}' for p in seasonal_proxies}).to_dataarray(dim='proxy', name='seasonal_hail_days')
+    annual = dat[annual_proxies].rename({f'{p}': f'{p[13:None]}' for p in annual_proxies}).to_dataarray(dim='proxy', name='annual_hail_days')
+    prox = dat[prox].rename({f'{p}': f'{p[6:None]}' for p in prox}).to_dataarray(dim='proxy', name='monthly_hail_days')
+    
+    dat = xarray.merge([dat[rest], seasonal, annual, prox])
     return dat, lsm
 
 def era5_climatology_calc(era5, proxy_vars=proxies, proxy_names=proxy_names):
@@ -1532,13 +1559,17 @@ def era5_climatology_calc(era5, proxy_vars=proxies, proxy_names=proxy_names):
         
     # Rename latitude/longitude for consistency with other data.
     res = res.rename({'latitude': 'lat', 'longitude': 'lon'})
-    
+
     return res
 
 def era5_climatology(era5_dir='/g/data/up6/tr2908/future_hail_global/era5_conv/',
                      era5_file_def='era5_1deg_19*.nc',
                      cache_file='/g/data/up6/tr2908/future_hail_global/era5_climatology.nc',
-                     landmask=None):
+                     landmask=None, 
+                     rename={'hail_proxy': 'proxy_Raupach2023',
+                             'hail_proxy_noconds': 'proxy_Raupach2023_noconds',
+                             'monthly_hail_proxy': 'monthly_proxy_Raupach2023',
+                             'monthly_hail_proxy_noconds': 'monthly_proxy_Raupach2023_noconds'}):
     """
     Calculate the ERA5 climatology of mean annual hail-prone days.
 
@@ -1547,6 +1578,7 @@ def era5_climatology(era5_dir='/g/data/up6/tr2908/future_hail_global/era5_conv/'
         erae5_file_def: The definition of files to read in for the climatology.
         cache_file: A cache file to write/read to/from.
         landmask: Optionally mask for land regions using landmask.lsm.
+        rename: Variables to rename.
 
     Returns: Mean annual hail-prone days from ERA5.
     """
@@ -1564,7 +1596,15 @@ def era5_climatology(era5_dir='/g/data/up6/tr2908/future_hail_global/era5_conv/'
 
     if not landmask is None:
         dat = dat.where(landmask == True).load()
-        
+
+    # Reorganise so proxy is a dimension.
+    dat = dat.rename(rename)
+    monthly = [x for x in dat.keys() if 'monthly' in x]
+    prox = [x for x in dat.keys() if x not in monthly]
+    prox = dat[prox].rename({f: f[6:None] for f in prox}).to_dataarray(name='annual_hail_days', dim='proxy')
+    monthly = dat[monthly].rename({f: f[14:None] for f in monthly}).to_dataarray(name='monthly_hail_days', dim='proxy')
+    dat = xarray.merge([prox, monthly])
+    
     return(dat)
 
 def monthly_era5_anoms(era5, era5_dir='/g/data/up6/tr2908/future_hail_global/era5_conv/',
@@ -1621,7 +1661,7 @@ def plot_era5_anomalies(anoms, year, lats, lons, figsize=(12,9), ncols=3, nrows=
                    11: 'November',
                    12: 'December'}
     
-    _ = plot_map([anoms.sel(year=year, month=m, lat=lats, lon=lons).monthly_hail_proxy for m in months], 
+    _ = plot_map([anoms.sel(year=year, month=m, lat=lats, lon=lons).monthly_hail_days for m in months], 
                  title=[f'{month_names[m]} {year}' for m in months], ncols=ncols, nrows=nrows, figsize=figsize,
                  hspace=0.22, wspace=0.01, cmap='RdBu_r', divergent=True, share_scale=True, 
                  share_axes=True, grid=False, contour=False, scale_label=scale_label, 
