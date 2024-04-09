@@ -54,6 +54,13 @@ print(tab, booktabs=TRUE, include.rownames=FALSE, size='footnotesize')
 
 \begin{figure*}[p]
     \centering
+    \includegraphics[width=\textwidth]{../../results/historical_by_model}
+    \caption{\textbf{Mean annual hail-prone days in historical (1980-1999) runs.} Plots are by CMIP6 model and for ERA5 reanalysis data.}
+    \label{fig:historical_annual_means}
+\end{figure*}
+
+\begin{figure*}[p]
+    \centering
     \includegraphics[width=\textwidth]{../../results/monthly_anoms_India_2015.pdf}
     \caption{\textbf{Monthly proxy-based hail-prone day anomalies for the Indian region in 2015.} Anomalies are calculated using ERA5 data with respect to the monthly ERA5 historical climatology (1980-1999).}
     \label{fig:anoms_India_2015}
@@ -77,10 +84,14 @@ print(tab, booktabs=TRUE, include.rownames=FALSE, size='footnotesize')
 
 \begin{figure*}[p]
     \centering
-    \includegraphics[width=\textwidth]{../../results/historical_by_model}
-    \caption{\textbf{Mean annual hail-prone days in historical (1980-1999) runs.} Plots are by CMIP6 model and for ERA5 reanalysis data.}
-    \label{fig:historical_annual_means}
+    \includegraphics[width=\textwidth]{../../results/era5_all_proxies}
+    \caption{\textbf{Mean annual hail-prone days for ERA5 reanalysis (1980-1999) for all applied hail proxies.}}
+    \label{fig:historical_all_proxies}
 \end{figure*}
+
+
+
+
 
 \begin{figure*}[p]
     \centering
