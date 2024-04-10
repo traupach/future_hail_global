@@ -8,7 +8,7 @@ import intake
 import cftime
 import itertools
 import geopandas
-import scipy as sp
+import scipy as spf
 import xesmf as xe
 import numpy as np
 import pandas as pd
@@ -1544,6 +1544,9 @@ def era5_climatology_calc(era5, proxy_vars=proxies, proxy_names=proxy_names):
     Returns: monthly and annual normalised hail proxy climatology.
     """
 
+    for p in proxy_vars:
+        assert not np.any(np.isnan(era5[p])), f'NaNs in ERA5 proxy {p}.'
+
     # Calculate daily true/false hail proxy results.
     daily = era5[proxy_vars].resample(time='D').max(keep_attrs=True)
     with xarray.set_options(keep_attrs=True):
@@ -1569,31 +1572,34 @@ def era5_climatology(era5_dir='/g/data/up6/tr2908/future_hail_global/era5_conv/'
                      rename={'hail_proxy': 'proxy_Raupach2023',
                              'hail_proxy_noconds': 'proxy_Raupach2023_noconds',
                              'monthly_hail_proxy': 'monthly_proxy_Raupach2023',
-                             'monthly_hail_proxy_noconds': 'monthly_proxy_Raupach2023_noconds'}):
+                             'monthly_hail_proxy_noconds': 'monthly_proxy_Raupach2023_noconds'},
+                     yrs=20):
     """
     Calculate the ERA5 climatology of mean annual hail-prone days.
 
     Arguments:
         era5_dir: Processed convective files directory for ERA5.
         erae5_file_def: The definition of files to read in for the climatology.
-        cache_file: A cache file to write/read to/from.
+        cache_file: A cache file to write/read to/from (or None for no cache).
         landmask: Optionally mask for land regions using landmask.lsm.
         rename: Variables to rename.
+        yrs: Years of data to expect.
 
     Returns: Mean annual hail-prone days from ERA5.
     """
-    
-    if not os.path.exists(cache_file):
-        era5 = xarray.open_mfdataset(f'{era5_dir}/{era5_file_def}', parallel=True)
-    
-        assert len(era5.time) == 365*20*4, 'Incorrect number of times in ERA5 historic period.'
-        assert not np.any(np.isnan(era5.hail_proxy)), 'NaNs in ERA5 Raupach hail proxy.'
-    
-        res = era5_climatology_calc(era5)
-        write_output(res, attrs={}, file=cache_file)
 
-    dat = xarray.open_dataset(cache_file)
+    if cache_file is None or not os.path.exists(cache_file):
+        dat = xarray.open_mfdataset(f'{era5_dir}/{era5_file_def}', parallel=True)
+        assert len(dat.time) == 365*yrs*4, 'Incorrect number of times in ERA5 historic period.'
+    
+        dat = era5_climatology_calc(dat)
 
+        if not cache_file is None:
+            write_output(dat, attrs={}, file=cache_file)
+
+    if not cache_file is None:
+        dat = xarray.open_dataset(cache_file)
+        
     if not landmask is None:
         dat = dat.where(landmask == True).load()
 
@@ -1610,21 +1616,21 @@ def era5_climatology(era5_dir='/g/data/up6/tr2908/future_hail_global/era5_conv/'
 def monthly_era5_anoms(era5, era5_dir='/g/data/up6/tr2908/future_hail_global/era5_conv/',
                        anomaly_years=[2015, 2022]):
     """
-    Calculate ERA5 hail proxy anomalies on a monthly basis.
+    Calculate ERA5 hail proxy anomalies on a monthly basis, taking the mean over all proxies.
 
     Arguments:
         era5: ERA5 climatology data from era5_climatology().
         era5_dir: The ERA5 data directory.
         anomaly_years: The years for which to find anomalies.
     """
+
+    era5_mean_clim = era5.mean('proxy')
     
     anoms = []
     for year in anomaly_years:
-        year_dat = xarray.open_mfdataset(f'{era5_dir}/*{year}*.nc', parallel=True)
-        assert np.unique(year_dat.time.dt.year) == year, 'Erroneous years included.'
-    
-        year_clim = era5_climatology_calc(year_dat)
-        year_anoms = year_clim - era5
+        year_dat = era5_climatology(era5_dir=era5_dir, era5_file_def=f'*{year}*.nc', yrs=1, cache_file=None)
+        year_dat = year_dat.sel(proxy=era5.proxy).mean('proxy')
+        year_anoms = year_dat - era5_mean_clim
         year_anoms = year_anoms.expand_dims({'year': [year]})
         anoms.append(year_anoms)
     
