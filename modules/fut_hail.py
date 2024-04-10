@@ -8,7 +8,7 @@ import intake
 import cftime
 import itertools
 import geopandas
-import scipy as spf
+import scipy as sp
 import xesmf as xe
 import numpy as np
 import pandas as pd
@@ -1511,9 +1511,6 @@ def read_processed_data(data_dir='/g/data/up6/tr2908/future_hail_global/CMIP_con
     # Mask to land area only.
     if apply_landmask == True:
         dat = dat.where(lsm == 1)
-    
-    # Transpose - for the ttest the axis over which the t-test should be applied ('year_num') must be first after model/epoch selection.
-    dat = dat.transpose('model', 'epoch', 'year_num', 'season', 'month', 'lat', 'lon')
 
     # Rename variables.
     dat = dat.rename({f'annual_mean_{p}': f'annual_{p}' for p in proxies})
@@ -1530,6 +1527,10 @@ def read_processed_data(data_dir='/g/data/up6/tr2908/future_hail_global/CMIP_con
     prox = dat[prox].rename({f'{p}': f'{p[6:None]}' for p in prox}).to_dataarray(dim='proxy', name='monthly_hail_days')
     
     dat = xarray.merge([dat[rest], seasonal, annual, prox])
+
+    # Transpose - for the ttest the axis over which the t-test should be applied ('year_num') must be first after model/epoch selection.
+    dat = dat.transpose('model', 'epoch', 'year_num', 'proxy', 'season', 'month', 'lat', 'lon')
+    
     return dat, lsm
 
 def era5_climatology_calc(era5, proxy_vars=proxies, proxy_names=proxy_names):
@@ -1741,33 +1742,31 @@ def epoch_differences(dat, variables, epochs=['2C', '3C'],
     res = xarray.concat(res, dim='model')
     return res
     
-def plot_diffs_by_epoch(dat, models, var, scale_label, figsize=(12, 9.5), ncols=2, nrows=4,
-                        row_label_scale=1.3, row_label_offset=0.015, row_label_adjust=0.15, file=None):
+def plot_diffs_for_epoch(diffs, epoch, file=None, var='annual_hail_days_mean_diff', 
+                         scale_label='Mean annual hail-prone days', figsize=(12,11),
+                         row_label_adjust=0.16, row_label_scale=1.28, row_label_offset=-0.056):
     """
-    Plot a grid with differences by epoch (columns) and model (rows).
+    Plot a grid with differences by proxy (columns) and model (rows).
 
     Arguments:
-        dat: The data to plot.
-        models: The list of models to include.
-        var: The variable to plot differences for.
-        cbar_label: The label for the scale.
-        figsize: Figure size width x height.
-        ncols, nrows: Grid definition.
-        row*: Arguments to plot_map() for row label positions.
+        diffs: The data to plot.
+        epoch: The epoch to plot for.
         file: Output file for plot.
+        var: The variable to plot differences for.
+        scale_label: The label for the scale.
+        figsize: Figure size width x height.
+        row*: Arguments to plot_map() for row label positions.
     """
 
-    colour_scale = (dat[var].min(),
-                    dat[var].max())
-    
-    diffs = list(itertools.chain(*zip([dat[var].sel(model=m, epoch='2C') for m in models], 
-                                      [dat[var].sel(model=m, epoch='3C') for m in models])))
+    d = diffs.sel(epoch=epoch)
 
-    _ = plot_map(diffs, ncols=ncols, nrows=nrows, figsize=figsize, disp_proj=ccrs.Robinson(),
-                 cmap='RdBu_r', divergent=True, share_scale=True, share_axes=True, grid=False, contour=True,
-                 col_labels=['2C', '3C'], row_labels=models, row_label_rotation=0, colour_scale=colour_scale,
-                 row_label_scale=row_label_scale, row_label_offset=row_label_offset, 
-                 row_label_adjust=row_label_adjust, file=file, scale_label=scale_label)
+    _ = plot_map([d.sel(model=m, proxy=p)[var] for m, p in itertools.product(d.model.values, d.proxy.values)],
+                 title=[f'{m}, {proxy_dims[p]}' for m, p in itertools.product(d.model.values, d.proxy.values)],
+                 figsize=figsize, disp_proj=ccrs.Robinson(), ncols=len(d.proxy), nrows=len(d.model), 
+                 share_scale=True, share_axes=True, grid=False, contour=True, 
+                 col_labels=[proxy_dims[f] for f in list(d.proxy.values)], row_labels=list(d.model.values),
+                 row_label_rotation=0, row_label_adjust=row_label_adjust, row_label_scale=row_label_scale, 
+                 row_label_offset=row_label_offset,cmap='RdBu_r', divergent=True, scale_label=scale_label, file=file)
 
 def plot_mean_diffs_for_epoch(diffs, sigs, variable, scale_label, epoch, figsize=(12,6), file=None, ncols=2, nrows=2, seasons=None, **kwargs):
     """
@@ -2006,10 +2005,10 @@ def assert_epochs(runs, data_dir='/g/data/up6/tr2908/future_hail_global/CMIP_con
 
 def multi_model_mean_diffs(dat, variables, completion):
     """
-    Calculate the multi-model mean difference and indicator of significance. 
-    A difference is considered significant if more than 50% of the models have
-    both a) significant differences in the mean and b) their mean difference has
-    the same sign as the multi-model mean difference.
+    Calculate the multi-model, multi-proxy mean difference and indicator of significance. 
+    A difference is considered significant if more than 50% of the models and proxy 
+    combinations have both a) significant differences in the mean and b) their mean 
+    difference has the same sign as the multi-model mean difference.
 
     Arguments:
         dat: Data to work on (differences per model, significance of differences).
