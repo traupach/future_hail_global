@@ -1685,8 +1685,7 @@ def epoch_differences(dat, variables, epochs=['2C', '3C'],
         epochs: The future epochs to test.
         cache_dir: The cache directory to write changes to.
 
-    Returns: mean differences, relative mean differences (relative to historical mean across models), 
-             values added where the historical period had zeros, and difference significances.
+    Returns: mean differences, significances of differences, and historical mean for each model.
     """
 
     res = []
@@ -1700,8 +1699,6 @@ def epoch_differences(dat, variables, epochs=['2C', '3C'],
             reference_mean = reference.mean(['year_num']).load()
             
             mean_diffs = []
-            mean_diffs_rel = []
-            new_areas = []
             sigs = []
         
             for e in epochs:
@@ -1711,30 +1708,21 @@ def epoch_differences(dat, variables, epochs=['2C', '3C'],
             
                 # Difference in means between reference and epoch.
                 mean_diff = epoch_mean - reference_mean
-                mean_diff_rel = mean_diff / reference_mean * 100
-                new_area = np.logical_and(epoch_mean > 0,
-                                          reference_mean == 0)
-                new_area = mean_diff.where(new_area == True)
             
                 # Significance of differences.
                 tt = ttest(dat=d, fut_epoch=e, variables=variables)
                 
                 mean_diffs.append(mean_diff.expand_dims({'epoch': [e]}))
-                mean_diffs_rel.append(mean_diff_rel.expand_dims({'epoch': [e]}))
-                new_areas.append(new_area.expand_dims({'epoch': [e]}))
                 sigs.append(tt.expand_dims({'epoch': [e]}))
             
             mean_diffs = xarray.merge(mean_diffs)
-            mean_diffs_rel = xarray.merge(mean_diffs_rel)
-            new_areas = xarray.merge(new_areas)
             sigs = xarray.merge(sigs)
         
             for v in [i for i in mean_diffs.data_vars]:
                 mean_diffs = mean_diffs.rename({v: f'{v}_mean_diff'})
-                mean_diffs_rel = mean_diffs_rel.rename({v: f'{v}_mean_diff_rel'})
-                new_areas = new_areas.rename({v: f'{v}_new_areas'})
-    
-            out = xarray.merge([mean_diffs, mean_diffs_rel, new_areas, sigs])
+                reference_mean = reference_mean.rename({v: f'{v}_mean_reference'})
+                
+            out = xarray.merge([mean_diffs, sigs, reference_mean])
             write_output(dat=out, file=out_file, attrs=out.attrs)
         
         res.append(xarray.open_dataset(out_file).expand_dims({'model': [model]}))
@@ -1742,7 +1730,7 @@ def epoch_differences(dat, variables, epochs=['2C', '3C'],
     res = xarray.concat(res, dim='model')
     return res
     
-def plot_diffs_for_epoch(diffs, epoch, file=None, var='annual_hail_days_mean_diff', 
+def plot_diffs_for_epoch(diffs, epoch, file=None, var='annual_hail_days_mean_diff', stipple_var='annual_hail_days_sig',
                          scale_label='Mean annual hail-prone days', figsize=(12,11),
                          row_label_adjust=0.16, row_label_scale=1.28, row_label_offset=-0.056):
     """
@@ -1753,6 +1741,7 @@ def plot_diffs_for_epoch(diffs, epoch, file=None, var='annual_hail_days_mean_dif
         epoch: The epoch to plot for.
         file: Output file for plot.
         var: The variable to plot differences for.
+        stipple_var: The variable to use for stipples.
         scale_label: The label for the scale.
         figsize: Figure size width x height.
         row*: Arguments to plot_map() for row label positions.
@@ -1761,6 +1750,7 @@ def plot_diffs_for_epoch(diffs, epoch, file=None, var='annual_hail_days_mean_dif
     d = diffs.sel(epoch=epoch)
 
     _ = plot_map([d.sel(model=m, proxy=p)[var] for m, p in itertools.product(d.model.values, d.proxy.values)],
+                 stippling=[d.sel(model=m, proxy=p)[stipple_var] for m, p in itertools.product(d.model.values, d.proxy.values)],
                  title=[f'{m}, {proxy_dims[p]}' for m, p in itertools.product(d.model.values, d.proxy.values)],
                  figsize=figsize, disp_proj=ccrs.Robinson(), ncols=len(d.proxy), nrows=len(d.model), 
                  share_scale=True, share_axes=True, grid=False, contour=True, 
@@ -2003,10 +1993,10 @@ def assert_epochs(runs, data_dir='/g/data/up6/tr2908/future_hail_global/CMIP_con
         d.close()
         del d
 
-def multi_model_mean_diffs(dat, variables, completion):
+def multi_model_mean_diffs(dat, variables, completion='_mean_diff', sig_thresh=0.5):
     """
     Calculate the multi-model, multi-proxy mean difference and indicator of significance. 
-    A difference is considered significant if more than 50% of the models and proxy 
+    A difference is considered significant if more than a certain proportion of the models and proxy 
     combinations have both a) significant differences in the mean and b) their mean 
     difference has the same sign as the multi-model mean difference.
 
@@ -2014,19 +2004,24 @@ def multi_model_mean_diffs(dat, variables, completion):
         dat: Data to work on (differences per model, significance of differences).
         variables: Variables to process.
         completion: Completion of variables to select which mean to use, '_mean_rel_diff' for example.
+        sig_thresh: The proportion of model/proxy combinations that have to be significant and agree 
+                    with sign for the result to be significant.
 
-    Return the mean differences and significance indicator for each point. 
+    Return the mean differences, significance indicator, and mean reference value, for each point. 
     """
 
     diffs = dat[[f'{x}{completion}' for x in variables]]
     sigs = dat[[f'{x}_sig' for x in variables]]
-    
+    refs = dat[[f'{x}_mean_reference' for x in variables]]
+
     diffs = diffs.rename({f'{x}{completion}': x for x in variables})
     sigs = sigs.rename({f'{x}_sig': x for x in variables})
+    refs = refs.rename({f'{x}_mean_reference': x for x in variables})
     
     # Mean differences across all models.
-    mean_diffs = diffs.mean('model')
+    mean_diffs = diffs.mean(['model', 'proxy'])
     mean_sign = np.sign(mean_diffs)
+    mean_refs = refs.mean(['model', 'proxy'])
     
     # Where does the sign of the per-model difference agree with the mean sign?
     sign_agrees = np.sign(diffs) == mean_sign
@@ -2035,10 +2030,14 @@ def multi_model_mean_diffs(dat, variables, completion):
     sig = np.logical_and(sign_agrees, sigs)
     
     # How many models have both sig diffs and matching sign? Consider mean difference significant 
-    # if more than 75% of models have both these conditions true.
-    significance = sig.sum('model') > len(diffs.model)*0.5
+    # if more than threshold of model/proxy combinations have both these conditions true.
+    significance = sig.sum(['model', 'proxy']) >= len(diffs.model)*len(diffs.proxy)*sig_thresh
+
+    # Calculate the mean difference in relative terms (percent of reference).
+    mean_diffs_rel = mean_diffs / mean_refs * 100
+    mean_diffs_rel = mean_diffs_rel.where(mean_refs != 0)
     
-    return mean_diffs, significance
+    return mean_diffs, mean_diffs_rel, significance, mean_refs
 
 def plot_relative_changes_crops(ch, cmap_colours=['cornflowerblue', 'greenyellow', 'indianred'], panelsize=(12,4)):
     """
