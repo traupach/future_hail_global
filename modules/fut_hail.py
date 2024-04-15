@@ -26,6 +26,7 @@ import modules.warming_levels as wl
 import modules.parcel_functions as parcel
 from matplotlib.colors import BoundaryNorm
 import modules.hail_sounding_functions as hs
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from matplotlib.colors import ListedColormap, LinearSegmentedColormap
 
 # Settings for xarray_parcel: set up parcel adiabat calculations.
@@ -525,8 +526,9 @@ def plot_map_to_ax(dat, ax, coastlines=True, grid=True, dat_proj=ccrs.PlateCarre
                    colourbar=True, ticks_left=True, ticks_bottom=True, cbar_aspect=25, cbar_fraction=0.07,
                    cbar_shrink=0.4, cbar_pad=0.015, cbar_label=None, cbar_orientation='vertical', 
                    coastlines_colour='black', xlims=None, ylims=None, num_ticks=None, divergent=False, 
-                   cbar_inset=False, title_inset=False, discrete=False, log_scale=False, nan_colour='#eeeeee',
-                   axis_off=False, country=None, annotations=None, num_contours=len(cmap_colours)+1,
+                   cbar_inset=False, title_inset=False, title_inset_pos='upper', discrete=False, 
+                   log_scale=False, nan_colour='#eeeeee', axis_off=False, country=None, 
+                   annotations=None, num_contours=len(cmap_colours)+1,
                    left_title=None, cbar_extend='neither'):
     """
     Plot data on a map to a specified plot axis object.
@@ -563,7 +565,8 @@ def plot_map_to_ax(dat, ax, coastlines=True, grid=True, dat_proj=ccrs.PlateCarre
         - num_ticks: Number of ticks for x and y axes (None for auto).
         - divergent: Is the colour scale divergent? If so make zero central.
         - cbar_inset: Inset the colorbar in lower left?
-        - title_inset: Inset the title in the upper left?
+        - title_inset: Inset the title?
+        - title_inset_pos: 'lower' or 'upper'.
         - discrete: Make the colour bar discrete?
         - log_scale: Make the colour scale log-scaled?
         - nan_colour: Colour for missing values.
@@ -673,8 +676,15 @@ def plot_map_to_ax(dat, ax, coastlines=True, grid=True, dat_proj=ccrs.PlateCarre
             ax.set_title(left_title, fontsize=plt.rcParams['font.size'], loc='left')
     if not title is None:
         if title_inset:
-            ax.annotate(text=title, xy=(0.05, 0.9), xycoords='axes fraction',
-                        fontweight='bold', fontsize=plt.rcParams['font.size'])
+            ax.set_title('')
+            if title_inset_pos == 'upper':
+                ax.annotate(text=title, xy=(0.05, 0.9), xycoords='axes fraction',
+                            fontweight='bold', fontsize=plt.rcParams['font.size'])
+            elif title_inset_pos == 'lower':
+                ax.annotate(text=title, xy=(0.05, 0.07), xycoords='axes fraction',
+                            fontweight='bold', fontsize=plt.rcParams['font.size'])
+            else:
+                assert 1==0, 'title_inset_pos must be upper or lower.'
         else:
             ax.set_title(title, fontsize=plt.rcParams['font.size'])
     if coastlines:
