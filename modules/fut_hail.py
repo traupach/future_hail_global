@@ -967,7 +967,7 @@ def epoch_stats(d, season_factors={'DJF': 90, 'MAM': 92, 'JJA': 92, 'SON': 91},
 
     print('Annual...')
     annual = annual_stats(d=d, factor=365)
-    annual = annual.rename({n: f'annual_mean_{n}' for n in annual.data_vars})
+    annual = annual.rename({n: f'annual_{n}' for n in annual.data_vars})
     annual = annual.chunk(-1)
 
     dat = xarray.merge([seasonal, annual, days_per_month])
@@ -1523,7 +1523,6 @@ def read_processed_data(data_dir='/g/data/up6/tr2908/future_hail_global/CMIP_con
         dat = dat.where(lsm == 1)
 
     # Rename variables.
-    dat = dat.rename({f'annual_mean_{p}': f'annual_{p}' for p in proxies})
     dat = dat.rename(rename_vars)
 
     # Re-arrange the data so that the seaonal/annual/monthly hail days are organised with proxy as a dimension.
@@ -1741,7 +1740,7 @@ def epoch_differences(dat, variables, epochs=['2C', '3C'],
     return res
     
 def plot_diffs_for_epoch(diffs, epoch, file=None, var='annual_hail_days_mean_diff', stipple_var='annual_hail_days_sig',
-                         scale_label='Mean annual hail-prone days', figsize=(12,11),
+                         scale_label='Mean annual hail-prone days', figsize=(12,9.5),
                          row_label_adjust=0.16, row_label_scale=1.28, row_label_offset=-0.056):
     """
     Plot a grid with differences by proxy (columns) and model (rows).
