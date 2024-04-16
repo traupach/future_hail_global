@@ -658,8 +658,11 @@ def plot_map_to_ax(dat, ax, coastlines=True, grid=True, dat_proj=ccrs.PlateCarre
     if not stippling is None:
         ax.autoscale(False)
         pts = stippling.where(stippling).to_dataframe().dropna().reset_index()
+        hatches = [None, '\\\\\\']
+        if np.all(stippling == True):
+            hatches = ['\\\\\\', '\\\\\\']
         stippling.plot.contourf(transform=dat_proj, ax=ax, add_colorbar=False,
-                    levels=3, colors='none', hatches=[None, '\\\\\\'])
+                                levels=3, colors='none', hatches=hatches)
         
     if xlims is not None:
         ax.set_xlim(xlims)
@@ -1767,78 +1770,6 @@ def plot_diffs_for_epoch(diffs, epoch, file=None, var='annual_hail_days_mean_dif
                  row_label_rotation=0, row_label_adjust=row_label_adjust, row_label_scale=row_label_scale, 
                  row_label_offset=row_label_offset,cmap='RdBu_r', divergent=True, scale_label=scale_label, file=file)
 
-def plot_mean_diffs_for_epoch(diffs, sigs, variable, scale_label, epoch, figsize=(12,6), file=None, ncols=2, nrows=2, seasons=None, **kwargs):
-    """
-    Plot differences in ensemble means between two epochs with stippling showing model agreement and significance of differences.
-
-    Arguments:
-        diffs: The multi-model mean differences data.
-        sigs: Significance information.
-        variable: The variable to plot.
-        scale_label: Label for the scale.
-        epoch: The epoch to plot differences for. 
-        figsize: Figure size.
-        file: Output plot file.
-        ncols/nrows: columns/rows to use.
-        seasons: List of seasons to include.
-        **kwargs: Extra arguments to plot_map.
-    """
-
-    if seasons is None:
-        seasons = diffs.season.values
-    stippling = [sigs.sel(season=s, epoch=epoch)[variable] for s in seasons]
-    differences = [diffs.sel(season=s, epoch=epoch)[variable] for s in seasons]
-    
-    _ = plot_map(differences, stippling=stippling,
-                 title=seasons, share_scale=True, share_axes=True, grid=False,
-                 ncols=ncols, nrows=nrows, figsize=figsize, disp_proj=ccrs.Robinson(), 
-                 contour=True, cmap='RdBu_r', divergent=True, scale_label=scale_label,
-                 file=file, **kwargs)
-
-def plot_mean_diffs_for_season(diffs, sigs, variable, scale_label, season, figsize=(12,6), file=None):
-    """
-    Plot differences in ensemble means between epochs with stippling showing model agreement and significance of differences.
-
-    Arguments:
-        diffs: The multi-model mean differences data.
-        sigs: Significance information.
-        variable: The variable to plot.
-        scale_label: Label for the scale.
-        season: The season to plot for.
-        figsize: Figure size.
-        file: Output plot file.
-    """
-    
-    epochs=diffs.epoch.values
-    stippling = [sigs.sel(season=season, epoch=e)[variable] for e in epochs]
-    differences = [diffs.sel(season=season, epoch=e)[variable] for e in epochs]
-    
-    _ = plot_map(differences, stippling=stippling,
-                 title=[f'{season}, {e}' for e in epochs], share_scale=True, share_axes=True, grid=False,
-                 ncols=1, nrows=2, figsize=figsize, disp_proj=ccrs.Robinson(), 
-                 contour=True, cmap='RdBu_r', divergent=True, scale_label=scale_label,
-                 file=file)
-
-def plot_ing_changes(diffs, sigs, epoch, variables, file, seasons=['DJF', 'JJA']):
-    """
-    Plot changes in ingredients by season.
-
-    Arguments:
-        diffs: Differences to plot.
-        sigs: Significance information for the differences.
-        epoch: The epoch to plot for.
-        variables: Which variables to include as a {variable: name} dictionary.
-        file: Prefix for the file to save in; will have variable name appended.
-        seasons: Seasons to plot for.
-    """
-
-    
-    for var, var_name in variables.items():
-        plot_mean_diffs_for_epoch(diffs=diffs, sigs=sigs, variable=var, seasons=seasons, 
-                                  scale_label='', epoch=epoch, ncols=2, nrows=1, figsize=(12,3.5),
-                                  row_labels=[var_name], row_label_offset=0.65, row_label_adjust=0.03,
-                                  col_labels=seasons, file=file + '_' + var_name.replace(' ', '_').replace('%', 'p') + '.pdf')
-
 def crop_months_array(x):
     """
     Given a start month and an end month in x, return an array of length 12 with 1s where cropping occurs and 0 where it does not.
@@ -2040,7 +1971,7 @@ def multi_model_mean_diffs(dat, variables, completion='_mean_diff', sig_thresh=0
     
     # How many models have both sig diffs and matching sign? Consider mean difference significant 
     # if more than threshold of model/proxy combinations have both these conditions true.
-    significance = sig.sum(['model', 'proxy']) >= len(diffs.model)*len(diffs.proxy)*sig_thresh
+    significance = sig.sum(['model', 'proxy']) >= sig.count(['model', 'proxy'])*sig_thresh
 
     # Calculate the mean difference in relative terms (percent of reference).
     mean_diffs_rel = mean_diffs / mean_refs * 100
