@@ -1516,9 +1516,9 @@ def read_processed_data(data_dir='/g/data/up6/tr2908/future_hail_global/CMIP_con
     dat = xarray.open_mfdataset(f'{data_dir}/{data_exp}', parallel=True)
 
     # Oddly, there seems to be an issue where epochs encoded differently in different 
-    # input files (<U2 for '2C' and <U10 for 'historical') are, when rewritten to NetCDF, 
-    # written as '<U2' so that historical becomes 'hi'. Enforce all epochs being 
-    # the same dtype here. 
+    # input files (<U2 for '2C' and <U10 for 'historical') are, when evaluated and 
+    # rewritten to NetCDF, written as '<U2' so that historical becomes 'hi'. 
+    # Enforce all epochs being the same dtype here. 
     dat = dat.assign_coords({'epoch': dat.epoch.astype(dat.epoch.dtype)})
     
     # Shorten model names if required.
@@ -2065,6 +2065,10 @@ def crop_hail_stats(dat, cp=crop_periods(), crop_res=0.5,
 
     # Read cache files.
     res = xarray.open_mfdataset(f'{cache_dir}/crop_stats*.nc', parallel=True)
+
+    # As for read_processed_data, explicitly code the crop dtype to be the right length 
+    # to avoid future concatenation because input files have different crop lengths.
+    res = res.assign_coords({'crop': res.crop.astype(res.crop.dtype)})
     assert len(res.crop.values) == len(crop_mask.crop.values), 'Crop number mismatch.'
 
     return res
