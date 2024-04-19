@@ -1515,6 +1515,12 @@ def read_processed_data(data_dir='/g/data/up6/tr2908/future_hail_global/CMIP_con
     # Open all data.
     dat = xarray.open_mfdataset(f'{data_dir}/{data_exp}', parallel=True)
 
+    # Oddly, there seems to be an issue where epochs encoded differently in different 
+    # input files (<U2 for '2C' and <U10 for 'historical') are, when rewritten to NetCDF, 
+    # written as '<U2' so that historical becomes 'hi'. Enforce all epochs being 
+    # the same dtype here. 
+    dat = dat.assign_coords({'epoch': dat.epoch.astype(dat.epoch.dtype)})
+    
     # Shorten model names if required.
     dat = dat.assign_coords({'model': [rename_models[x] if x in rename_models else x for x in dat.model.values]})
 
@@ -2024,15 +2030,15 @@ def crop_hail_stats(dat, cp=crop_periods(), crop_res=0.5,
     """
 
     # Select data to analyse. 
-    days_per_month = dat[['monthly_hail_prone_days']]
-    days_per_month = days_per_month.chunk({'model': 1, 'epoch': 1, 'year_num': -1, 'month': -1, 'lat': -1, 'lon': -1})
+    days_per_month = dat[['monthly_hail_days']]
+    days_per_month = days_per_month.chunk({'model': 1, 'proxy': 1, 'epoch': 1, 'year_num': -1, 'month': -1, 'lat': -1, 'lon': -1})
     days_per_month['month_days'] = ('month', [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31])
-    days_per_month = days_per_month.rename({'monthly_hail_prone_days': 'crop_hail_prone_days'})
-
+    days_per_month = days_per_month.rename({'monthly_hail_days': 'crop_hail_prone_days'})
+    
     # Find cropping times per crop per location.
     shape = days_per_month.isel(year_num=0).crop_hail_prone_days
     crop_mask = cropping_mask(shape=shape, cache_file=f'{cache_dir}/crop_months_mask.nc')
-    crop_mask = crop_mask.chunk({'crop': 1, 'model': 1, 'epoch': 1, 'month': -1, 'lat': -1, 'lon': -1})
+    crop_mask = crop_mask.chunk({'crop': 1, 'model': 1, 'proxy': 1, 'epoch': 1, 'month': -1, 'lat': -1, 'lon': -1})
 
     # Process cropping info per crop, and cache.
     for crop in crop_mask.crop.values:
