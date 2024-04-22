@@ -2304,3 +2304,63 @@ def storm_proxies(dat):
         out[proxy].attrs['long_name'] = 'Proxy ' + val
         
     return out
+
+def plot_regional_crop_changes(diffs, sig, lats, lons, region_names, file):
+    """
+    Plot box plots of significant crop changes by region.
+
+    Arguments:
+        diffs: The differences to plot.
+        sig: Significance of differences.
+        lats, lons: Regional bounds.
+        region_names: Title names per region.
+        file: Output file.
+    """
+    
+    res = []
+    for region in lats.keys():
+        for e in diffs.epoch.values:
+            d = diffs.crop_hail_prone_proportion.sel(epoch=e, lat=lats[region], lon=lons[region])
+            s = sig.crop_hail_prone_proportion.sel(epoch=e, lat=lats[region], lon=lons[region])
+            d = d.where(s == True)
+            d = d.expand_dims({'region': [region_names[region]]}).to_dataframe().reset_index()#.dropna().reset_index()
+            res.append(d)
+    res = pd.concat(res).reset_index(drop=True)
+    del d, s
+
+    letters = ['a)', 'b)', 'c)', 'd)', 'e)', 'f)', 'g)', 'h)', 'i)', 
+               'j)', 'k)', 'l)', 'm)', 'n)', 'o)', 'p)', 'q)', 'r)', 
+               's)', 't)', 'u)', 'v)', 'w)', 'x)', 'y)', 'z)']
+    
+    regions = np.unique(res.region)
+    
+    range = [float(res.crop_hail_prone_proportion.min())-4,
+             float(res.crop_hail_prone_proportion.max())+4]
+    fig, axs = plt.subplots(nrows=len(regions), figsize=(10,13), gridspec_kw={'hspace': 0.35})
+    for i, r in enumerate(regions):
+        d = res[res.region == r]
+        d = d.sort_values('crop').reset_index()
+        sns.boxplot(data=d, x='crop', y='crop_hail_prone_proportion', hue='epoch', 
+                    ax=axs[i], legend=(i==0), width=0.75, showfliers=False, whis=[10,90], 
+                    gap=0, palette='viridis_r')
+    
+        xmin, xmax = axs[i].get_xlim()
+        for j in np.arange(len(np.unique(res.crop))):
+            if j % 2 == 0:
+                axs[i].axvspan(j-0.5, j+0.5, facecolor='grey', alpha=0.2)
+        axs[i].set_xlim(xmin, xmax)
+        
+        axs[i].set_title(r)
+        axs[i].set_title(letters.pop(0), loc='left')
+        axs[i].set_ylabel('$\Delta$ HPP')
+        axs[i].set_xlabel('')
+        axs[i].set_xticklabels([])
+        axs[i].axhline(y=0, color='black', linewidth=0.75)
+        if i == len(np.unique(res.region.values))-1:
+            axs[i].set_xticks(np.arange(len(np.unique(d.crop))))
+            axs[i].set_xticklabels(np.unique(d.crop), rotation=90)
+        if i == 0:
+            axs[0].legend(title='Epoch')
+            sns.move_legend(axs[0], "upper left", bbox_to_anchor=(1, 1))
+    
+    plt.savefig(fname=file, bbox_inches='tight')
