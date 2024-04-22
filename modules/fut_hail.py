@@ -2341,7 +2341,8 @@ def plot_regional_crop_changes(diffs, sig, lats, lons, region_names, file, figsi
         d = res[res.region == r]
         d = d.sort_values('crop').reset_index()
         sns.boxplot(data=d, x='crop', y='crop_hail_prone_proportion', hue='epoch', 
-                    ax=axs[i], legend=(i==0), width=0.75, showfliers=False, whis=[10,90], 
+                    ax=axs[i], legend=(i==len(np.unique(res.region.values))-1),
+                    width=0.75, showfliers=False, whis=[10,90], 
                     gap=0, palette='viridis_r')
     
         xmin, xmax = axs[i].get_xlim()
@@ -2352,7 +2353,7 @@ def plot_regional_crop_changes(diffs, sig, lats, lons, region_names, file, figsi
         
         axs[i].set_title(r)
         axs[i].set_title(letters.pop(0), loc='left')
-        axs[i].set_ylabel('$\Delta$ HPP')
+        axs[i].set_ylabel('$\Delta$ HPP [%]')
         axs[i].set_xlabel('')
         axs[i].set_xticklabels([])
         axs[i].axhline(y=0, color='black', linewidth=0.75)
@@ -2361,10 +2362,9 @@ def plot_regional_crop_changes(diffs, sig, lats, lons, region_names, file, figsi
             axs[i].set_xticklabels(np.unique(d.crop), rotation=90)
         
     # Do legend.
-    axs[0].legend(title='Epoch')
-    handles, labels = axs[0].get_legend_handles_labels()
-    axs[0].legend(handles, [rename_leg[l] for l in labels])
-    sns.move_legend(axs[0], "upper left", bbox_to_anchor=(1, 1))
+    handles, labels = axs[i].get_legend_handles_labels()
+    axs[i].legend(handles, [rename_leg[l] for l in labels], title='Epoch')
+    sns.move_legend(axs[i], "upper left", bbox_to_anchor=(0.85, -1.1))
 
     # Save plot.
     plt.savefig(fname=file, bbox_inches='tight')
