@@ -2305,7 +2305,7 @@ def storm_proxies(dat):
         
     return out
 
-def plot_regional_crop_changes(diffs, sig, lats, lons, region_names, file):
+def plot_regional_crop_changes(diffs, sig, lats, lons, region_names, file, figsize=(12,13)):
     """
     Plot box plots of significant crop changes by region.
 
@@ -2331,12 +2331,12 @@ def plot_regional_crop_changes(diffs, sig, lats, lons, region_names, file):
     letters = ['a)', 'b)', 'c)', 'd)', 'e)', 'f)', 'g)', 'h)', 'i)', 
                'j)', 'k)', 'l)', 'm)', 'n)', 'o)', 'p)', 'q)', 'r)', 
                's)', 't)', 'u)', 'v)', 'w)', 'x)', 'y)', 'z)']
+    rename_leg = {'2C': '2 $^{\circ}$C',
+                  '3C': '3 $^{\circ}$C'}
     
     regions = np.unique(res.region)
     
-    range = [float(res.crop_hail_prone_proportion.min())-4,
-             float(res.crop_hail_prone_proportion.max())+4]
-    fig, axs = plt.subplots(nrows=len(regions), figsize=(10,13), gridspec_kw={'hspace': 0.35})
+    fig, axs = plt.subplots(nrows=len(regions), figsize=figsize, gridspec_kw={'hspace': 0.35})
     for i, r in enumerate(regions):
         d = res[res.region == r]
         d = d.sort_values('crop').reset_index()
@@ -2359,8 +2359,12 @@ def plot_regional_crop_changes(diffs, sig, lats, lons, region_names, file):
         if i == len(np.unique(res.region.values))-1:
             axs[i].set_xticks(np.arange(len(np.unique(d.crop))))
             axs[i].set_xticklabels(np.unique(d.crop), rotation=90)
-        if i == 0:
-            axs[0].legend(title='Epoch')
-            sns.move_legend(axs[0], "upper left", bbox_to_anchor=(1, 1))
-    
+        
+    # Do legend.
+    axs[0].legend(title='Epoch')
+    handles, labels = axs[0].get_legend_handles_labels()
+    axs[0].legend(handles, [rename_leg[l] for l in labels])
+    sns.move_legend(axs[0], "upper left", bbox_to_anchor=(1, 1))
+
+    # Save plot.
     plt.savefig(fname=file, bbox_inches='tight')
