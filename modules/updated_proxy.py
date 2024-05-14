@@ -264,7 +264,7 @@ def prox_performance(dat, proxy, extra_conditions):
     print('\nAfter extra conds:')
     skill(h=len(hit), m=len(miss), n=len(true_neg), f=len(false_pos))
 
-def plot_proxy_discrims(era5_results, MLH_vals=[1000, 1500, 2000, 3000, 5000, 8000], file=None):
+def plot_proxy_discrims(era5_results, MLH_vals=[1000, 1500, 2000, 3000, 8000], file=None, figsize=(12,3)):
     """
     Plot the discriminator for the proxy by melting level height value.
 
@@ -274,7 +274,7 @@ def plot_proxy_discrims(era5_results, MLH_vals=[1000, 1500, 2000, 3000, 5000, 80
         file: File to save to.
     """
     
-    fig, axs = plt.subplots(ncols=2, figsize=(12,3))
+    fig, axs = plt.subplots(ncols=2, figsize=figsize)
     CAPE = np.arange(1,10000)
     for MLH in MLH_vals:
         alpha, beta = proxy_by_band(band=np.array([MLH]), 
