@@ -98,19 +98,9 @@ for file in files:
         
         # Calculate hail-proxy indices.
         print('Calculating extra convective properties...')
-        c = fh.conv_properties(dat=day_dat, vert_dim='level')
-
-        # Add hail proxies.
-        c['hail_proxy'] = hs.apply_trained_proxy(dat=c, results_file=proxy_results_file, 
-                                                 extra_conds_file=proxy_conds_file)
-        c['hail_proxy_noconds'] = hs.apply_trained_proxy(dat=c, results_file=proxy_results_file, 
-                                                         extra_conds_file=None)
-
-        # Add extra hail proxies.
-        prox = fh.storm_proxies(dat=c)
+        res = fh.conv_properties(dat=day_dat, vert_dim='level')
 
         # Merge for saving.
-        res = xarray.merge([c, prox])
         conv.append(res.load())
         del res, day_dat
 
