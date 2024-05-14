@@ -33,24 +33,22 @@ from matplotlib.colors import ListedColormap, LinearSegmentedColormap
 lookup_dir = '/g/data/w42/tr2908/aus400_hail/'
 parcel.load_moist_adiabat_lookups(base_dir=lookup_dir, chunks=-1)
 
-# Proxy names to use.
-proxies = ['hail_proxy', 'hail_proxy_noconds', 'proxy_Kunz2007', 'proxy_Eccel2012', 
+# Proxies to consider.
+proxies = ['proxy_Raupach2023_original', 'proxy_Raupach2023_original_noconds', 
+           'proxy_Raupach2023_updated', 'proxy_Raupach2023_updated_noconds',
+           'proxy_Kunz2007', 'proxy_Eccel2012', 
            'proxy_Mohr2013', 'proxy_SHIP_0.1', 'proxy_SHIP_0.5']
-proxy_names = {'hail_proxy': 'Raupach 2023',
-               'hail_proxy_noconds': 'Raupach 2023\n(no extra conds)',
+
+# Long names for each proxy.
+proxy_names = {'proxy_Raupach2023_original': 'Raupach 2023 (original)',
+               'proxy_Raupach2023_original_noconds': 'Raupach 2023\n(original, no extra conds)',
+               'proxy_Raupach2023_updated': 'Raupach 2023 (updated)',
+               'proxy_Raupach2023_updated_noconds': 'Raupach 2023\n(updated, no extra conds)',
                'proxy_Kunz2007': 'Kunz 2007',
                'proxy_Eccel2012': 'Eccel 2012',
                'proxy_Mohr2013': 'Mohr 2013', 
                'proxy_SHIP_0.1': 'SHIP > 0.1', 
                'proxy_SHIP_0.5': 'SHIP > 0.5'}
-
-proxy_dims = {'Raupach2023': 'Raupach 2023',
-              'Raupach2023_noconds': 'Raupach 2023\n(no extra conds)',
-              'Kunz2007': 'Kunz 2007',
-              'Eccel2012': 'Eccel 2012',
-              'Mohr2013': 'Mohr 2013', 
-              'SHIP_0.1': 'SHIP > 0.1', 
-              'SHIP_0.5': 'SHIP > 0.5'}
 
 # Pretty colors for hail maps.
 cmap_colours = [
@@ -496,21 +494,11 @@ def conv_CMIP(dat, year, proxy_results_file, proxy_conds_file,
             # Calculate convective parameters.
             c = conv_properties(dat=day_dat, vert_dim='lev').load()
 
-            # Add hail proxies.
-            c['hail_proxy'] = hs.apply_trained_proxy(dat=c, results_file=proxy_results_file, 
-                                                     extra_conds_file=proxy_conds_file)
-            c['hail_proxy_noconds'] = hs.apply_trained_proxy(dat=c, results_file=proxy_results_file, 
-                                                             extra_conds_file=None)
-
-            # Add extra proxies.
-            prox = storm_proxies(dat=c).load()
-            res = xarray.merge([c, prox])
-
             # Save for writing.
-            conv.append(res)
+            conv.append(c)
         
             print('Cleaning up...')
-            del day_dat, c, prox, res
+            del day_dat, c, #,res ,prox
 
             if len(conv) >= days_per_outfile:
                 write_output(dat=xarray.merge(conv), attrs=attrs, file=outfile)
@@ -978,6 +966,7 @@ def epoch_stats(d, season_factors={'DJF': 90, 'MAM': 92, 'JJA': 92, 'SON': 91},
     
 def process_epoch(epoch_name, model_name, exp, epoch_dates, expected_times=365*20*4,
                   data_dir='/g/data/up6/tr2908/future_hail_global/CMIP_conv/',
+                  prox_dir='/g/data/up6/tr2908/future_hail_global/CMIP_proxies/',
                   non_na_vars=proxies):
     """
     Process an epoch for a given simulation.
@@ -998,8 +987,15 @@ def process_epoch(epoch_name, model_name, exp, epoch_dates, expected_times=365*2
         print(f'No files available for {sim_dir}.')
         return None
 
+    # Open convective data.
     dat = xarray.open_mfdataset(sorted(files), parallel=True, chunks={'time': 500}, 
                                 combine='nested', concat_dim='time').sortby('time')
+
+    # Open separately processed proxy data.
+    prox_file = f'{prox_dir}/{model_name}_{exp}_proxies.nc'
+    prox = xarray.open_dataset(prox_file).sortby('time')
+    dat = xarray.merge([dat, prox])
+        
     dat = dat.sel(time=slice(f'{epoch_dates[0]}-01-01', f'{epoch_dates[1]}-12-31'))
 
     # Convert from longitude 0-360 to -180-180.
@@ -1402,8 +1398,6 @@ def define_runs(models, hist_start=1980, hist_end=1999, warming_degrees=[2, 3],
                 ta = xarray.open_dataset(files[0])
 
                 # While we're here, collect some metadata.
-                all['nominal_resolution'] = np.nan
-                all['nominal_resolution'] = all['nominal_resolution'].astype('str')
                 all.loc[i, 'nominal_resolution'] = ta.attrs['nominal_resolution']
                 all.loc[i, 'vertical_levels'] = len(ta.lev.values)
                 
@@ -1490,12 +1484,7 @@ def make_backup_orography(runs, CMIP6_dir='/g/data/oi10/replicas',
 def read_processed_data(data_dir='/g/data/up6/tr2908/future_hail_global/CMIP_conv_annual_stats/', 
                         data_exp='*common_grid.nc', 
                         rename_models={'EC-Earth_Consortium.EC-Earth3': 'EC-Earth3'},
-                        rename_vars={'hail_proxy': 'proxy_Raupach2023',
-                                     'hail_proxy_noconds': 'proxy_Raupach2023_noconds',
-                                     'seasonal_hail_proxy': 'seasonal_proxy_Raupach2023',
-                                     'seasonal_hail_proxy_noconds': 'seasonal_proxy_Raupach2023_noconds',
-                                     'annual_hail_proxy': 'annual_proxy_Raupach2023',
-                                     'annual_hail_proxy_noconds': 'annual_proxy_Raupach2023_noconds'},
+                        rename_vars={},
                         apply_landmask=True):
     """
     Read all processed data, regridding to a common grid on the way and applying a land mask.
@@ -1588,10 +1577,7 @@ def era5_climatology(era5_dir='/g/data/up6/tr2908/future_hail_global/era5_conv/'
                      era5_file_def='era5_1deg_19*.nc',
                      cache_file='/g/data/up6/tr2908/future_hail_global/era5_climatology.nc',
                      landmask=None, 
-                     rename={'hail_proxy': 'proxy_Raupach2023',
-                             'hail_proxy_noconds': 'proxy_Raupach2023_noconds',
-                             'monthly_hail_proxy': 'monthly_proxy_Raupach2023',
-                             'monthly_hail_proxy_noconds': 'monthly_proxy_Raupach2023_noconds'},
+                     rename={},
                      yrs=20):
     """
     Calculate the ERA5 climatology of mean annual hail-prone days.
@@ -1769,10 +1755,10 @@ def plot_diffs_for_epoch(diffs, epoch, file=None, var='annual_hail_days_mean_dif
 
     _ = plot_map([d.sel(model=m, proxy=p)[var] for m, p in itertools.product(d.model.values, d.proxy.values)],
                  stippling=[d.sel(model=m, proxy=p)[stipple_var] for m, p in itertools.product(d.model.values, d.proxy.values)],
-                 title=[f'{m}, {proxy_dims[p]}' for m, p in itertools.product(d.model.values, d.proxy.values)],
+                 title=[f'{m}, {proxy_names[p]}' for m, p in itertools.product(d.model.values, d.proxy.values)],
                  figsize=figsize, disp_proj=ccrs.Robinson(), ncols=len(d.proxy), nrows=len(d.model), 
                  share_scale=True, share_axes=True, grid=False, contour=True, 
-                 col_labels=[proxy_dims[f] for f in list(d.proxy.values)], row_labels=list(d.model.values),
+                 col_labels=[proxy_names[f] for f in list(d.proxy.values)], row_labels=list(d.model.values),
                  row_label_rotation=0, row_label_adjust=row_label_adjust, row_label_scale=row_label_scale, 
                  row_label_offset=row_label_offset,cmap='RdBu_r', divergent=True, scale_label=scale_label, file=file)
 
@@ -2020,7 +2006,7 @@ def crop_hail_stats(dat, cp=crop_periods(), crop_res=0.5,
     Calculate hail proxy stats for cropping months by location.
     
     Arguments:
-        dat: Data to work on - should contain 'monthly_hail_prone_days'.
+        dat: Data to work on - should contain 'monthly_hail_days'.
         cp: Crop period information.
         crop_res: Resolution of crop data in degrees.
         cache_dir: Directory for per-crop cache files.
@@ -2073,53 +2059,62 @@ def crop_hail_stats(dat, cp=crop_periods(), crop_res=0.5,
 
     return res
 
-def plot_crop_lines(dat, lat, lon, crops, figsize=(12, 3.5), buffer=50):
+def plot_crop_lines(dat, lat, lon, crops, figsize=(12, 3.7), 
+                    legend_renamer={'epoch': 'Epoch',
+                                    'proxy': 'Proxy',
+                                    '2C': '2 $^{\circ}C$',
+                                    '3C': '3 $^{\circ}C$',
+                                    'Raupach2023': 'Raupach 2023',
+                                    'Raupach2023_noconds': 'Raupach2023 (NEC)',
+                                    'SHIP_0.1': 'SHIP > 0.1',
+                                    'Eccel2012': 'Eccel 2012'},
+                    legend_col_length = 3):
     """
-    For a given location, plot changes in hail-prone days per month and a map of the selected point.
+    For a given location, plot changes in hail-prone days per month and a
+    map of the selected point.
 
     Arguments:
-        dat: Data to plot, must include 'monthly_hail_prone_days' and 'crop_hail_prone_days'.
+        dat: Data to plot, must include 'monthly_hail_days' and 'crop_hail_days'.
         lat, lon: The point to examine.
         crops: Crops to select.
         figsize: Figure width x height.
+        legend_renamer: Names for each element in the legend.
+        legend_col_length: Number of rows in first legend (for epoch).
     """
 
+    line_dat = dat.monthly_hail_days.chunk({'model': -1, 'epoch': -1, 'year_num': -1, 
+                                            'proxy': -1, 'month': -1}).sel(lat=lat, lon=lon, method='nearest')
+    crop_dat = dat.crop_hail_prone_days.chunk({'model': -1, 'epoch': -1, 'year_num': -1, 'crop': 1,
+                                               'proxy': -1, 'month': -1}).sel(lat=lat, lon=lon, method='nearest').sel(crop=crops)
+    
+    line_dat = line_dat.mean(['year_num', 'model']).load()
+    crop_dat = crop_dat.mean(['year_num', 'model', 'proxy']).load()
+    
+    diffs = line_dat - line_dat.sel(epoch='historical')
+    diffs = diffs.drop_sel(epoch='historical')
+    diffs = diffs.to_dataframe().reset_index()
+    
     fig = plt.figure(constrained_layout=True, figsize=figsize)
-    gs = fig.add_gridspec(nrows=3, ncols=5, wspace=0.01, hspace=0)
+    gs = fig.add_gridspec(nrows=4, ncols=6, wspace=0.1, hspace=0.1)
     
-    map_ax = fig.add_subplot(gs[0:3,0:2], projection=ccrs.PlateCarree())
-    months_ax = fig.add_subplot(gs[0,2:5])
-    line_ax = fig.add_subplot(gs[1:3,2:5])
+    months_ax = fig.add_subplot(gs[0, 0:4])
+    line_ax = fig.add_subplot(gs[1:4, 0:4])
+    map_ax = fig.add_subplot(gs[0:2, 5], projection=ccrs.Orthographic(central_longitude=lon, central_latitude=0))
+    legend_ax = fig.add_subplot(gs[2:4, 4:6])
     
-    lon_range = [lon-buffer, lon+buffer]
-    if lon+buffer > 180:
-        lon_range = [360-2*buffer-lon, 180]
-
-    map_ax.set_xlim(lon_range)
-    map_ax.set_ylim((lat-buffer/1.2), (lat+buffer/1.2))
+    map_ax.scatter(x=lon, y=lat, color='red', transform=ccrs.Geodetic())
     map_ax.coastlines()
-    map_ax.scatter(x=lon, y=lat, color='red')
-    xlocator = mticker.MaxNLocator(nbins=2)   
-    ylocator = mticker.MaxNLocator(nbins=3)   
-    gl = map_ax.gridlines(crs=ccrs.PlateCarree(), 
-                          draw_labels=True, alpha=0.5, xlocs=xlocator, ylocs=ylocator)
-    gl.top_labels = gl.right_labels = False
-    map_ax.set_title(f'{lat} N, {lon} E')
+    map_ax.set_global()
     
-    line_dat = dat.monthly_hail_prone_days.sel(lat=lat, lon=lon).mean(['model', 'year_num']).load()
-    crop_dat = dat.crop_hail_prone_days.sel(lat=lat, lon=lon).mean(['model', 'year_num']).load()
     assert np.max(crop_dat.diff('crop')) == 0, 'Errant differences between crop values.'
-    assert np.max(line_dat - crop_dat) < 1e-12, 'Errant differences between all-month and crop values.'
     
-    d = line_dat.to_dataframe().reset_index()
-    
-    sns.pointplot(d, ax=line_ax, hue='epoch', x='month', y='monthly_hail_prone_days',
-                  hue_order=['3C', '2C', 'historical'])
-    line_ax.set_ylabel('Hail-prone days')
-    line_ax.legend(title='')
-    sns.move_legend(line_ax, "upper left", bbox_to_anchor=(1, 1))
+    line_ax.set_ylabel('$\Delta$ Hail-prone days')
     line_ax.set_xlabel('Month')
     line_ax.spines[['right', 'top']].set_visible(False)
+    line_ax.axhline(y=0, color='black')
+    sns.lineplot(data=diffs, ax=line_ax, x='month', y='monthly_hail_days', hue='epoch', style='proxy',
+                 hue_order=['2C', '3C'])
+    line_ax.get_legend().set_visible(False)
     
     for i, crop in enumerate(crops):
         c = crop_dat.sel(crop=crop).isel(epoch=0)
@@ -2128,9 +2123,18 @@ def plot_crop_lines(dat, lat, lon, crops, figsize=(12, 3.5), buffer=50):
         sns.pointplot(c.to_dataframe(), x='month', y='crop_month', ax=months_ax, marker='x', 
                       color='black', markersize=5, linewidth=1.5)
     
+    h, l = line_ax.get_legend_handles_labels()
+    l = [legend_renamer[l] for l in l]
+    
+    l1 = legend_ax.legend(h[1:legend_col_length], l[1:legend_col_length], loc='upper left', bbox_to_anchor=(0,1.8))#, frameon=False)
+    l2 = legend_ax.legend(h[(legend_col_length+1):], l[(legend_col_length+1):], loc='upper left')#, frameon=False)#, bbox_to_anchor=(1,0))
+    legend_ax.add_artist(l1)
+    legend_ax.set_frame_on(False)
+    legend_ax.tick_params(axis='x', bottom=False, labelbottom=False)
+    legend_ax.tick_params(axis='y', left=False, labelleft=False)
+    
     months_ax.set_frame_on(False)
     months_ax.set_yticks([0, 1, 2], crops)
-    months_ax.yaxis.tick_right()
     months_ax.set_ylabel('')
     months_ax.set_xlabel('')
     months_ax.set_ylim(-0.2, 2.2)
@@ -2305,7 +2309,7 @@ def storm_proxies(dat):
         
     return out
 
-def plot_regional_crop_changes(diffs, sig, lats, lons, region_names, file, figsize=(12,13)):
+def plot_regional_crop_changes(diffs, sig, lats, lons, region_names, file, figsize=(13.6,13.3)):
     """
     Plot box plots of significant crop changes by region.
 

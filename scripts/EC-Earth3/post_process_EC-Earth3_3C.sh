@@ -9,7 +9,7 @@
 #PBS -l storage=gdata/hh5+gdata/up6+gdata/oi10+gdata/dk92+gdata/w42
 #PBS -l ncpus=48
 #PBS -l walltime=04:00:00
-#PBS -l mem=512GB
+#PBS -l mem=1024GB
 #PBS -j oe
 #PBS -W umask=0022
 #PBS -l wd
