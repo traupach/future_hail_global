@@ -264,7 +264,7 @@ def prox_performance(dat, proxy, extra_conditions):
     print('\nAfter extra conds:')
     skill(h=len(hit), m=len(miss), n=len(true_neg), f=len(false_pos))
 
-def plot_proxy_discrims(era5_results, MLH_vals=[1000, 1500, 2000, 3000, 8000], file=None, figsize=(12,3)):
+def plot_proxy_discrims(era5_results, MLH_vals=[200, 1000, 1500, 2000, 3000, 8000], file=None, figsize=(12,3)):
     """
     Plot the discriminator for the proxy by melting level height value.
 
@@ -282,24 +282,28 @@ def plot_proxy_discrims(era5_results, MLH_vals=[1000, 1500, 2000, 3000, 8000], f
                                     alpha_b = era5_results['hail_alpha_b'], 
                                     beta_a = era5_results['hail_beta_a'], 
                                     beta_b = era5_results['hail_beta_b'])
-        
+
+        print(f'MLH: {MLH}, alpha: {alpha}, beta {beta}.')
         plot_power_law(x=CAPE, p=alpha, t=beta, ax=axs[0], label=f'{MLH} m')
         plot_power_law(x=CAPE, p=alpha, t=beta, ax=axs[1], label=f'{MLH} m')
     
     axs[0].set_xscale('log')
     axs[0].set_yscale('log')
-    axs[0].set_ylim(1,100)
+    axs[0].set_ylim(1,75)
     axs[0].set_xlim(1,10000)
-    axs[1].set_ylim(1,30)
+    axs[1].set_ylim(1,75)
     axs[1].set_xlim(1,10000)
+    axs[0].set_title('Log scales')
+    axs[1].set_title('Linear scales')
     
     for ax in axs:
         ax.set_xlabel('CAPE [J kg$^{-1}$]')
-        ax.set_ylabel('S06 [m s$^{-1}$]')
+        ax.set_ylabel('S$_{06}$ [m s$^{-1}$]')
     
-    plt.legend(title='MLH', loc='upper right')
+    plt.legend(loc='upper right', ncol=2, title='Melting level height')
 
     if not file is None:
         plt.savefig(fname=file, bbox_inches='tight')
-    
+
+    plt.tight_layout()
     plt.show()
