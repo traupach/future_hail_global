@@ -1,7 +1,7 @@
 \documentclass[12pt, titlepage]{article}
 
 \usepackage{fullpage}
-\usepackage[numbers,sort]{natbib}
+\usepackage[sort]{natbib}
 \usepackage{amsmath}
 \usepackage{times}
 \usepackage{parskip}
@@ -10,6 +10,7 @@
 
 \urlstyle{same}
 \newcommand{\todo}[1]{\textcolor{red}{\textbf{(#1)}}}
+\newcommand{\degr}{$^{\circ{}}$C}
 
 \renewcommand{\figurename}{Supplementary Figure}
 \renewcommand\refname{Supplementary References}
@@ -35,6 +36,32 @@ library(tidyverse)
 library(xtable)
 @
 
+\section{Update to hail proxy}
+
+The instability-shear proxy of \cite{Raupach_MWR_2023} was slightly updated for this study, to be more globally applicable. This proxy indicates hail-prone conditions when
+
+\begin{equation}
+    \textrm{CAPE} \times {\textrm{S}_{06}}^\alpha \geq \beta,
+\end{equation}
+
+where CAPE is convective available potential energy, S$_{06}$ is 0-6 km bulk vertical wind shear, and $\alpha$ and $\beta$ are parameters that vary with the melting level height \citep{Raupach_MWR_2023}. Figure \ref{fig:proxy_by_MLH} shows the \cite{Raupach_MWR_2023} proxy discriminator lines for various values of melting level height (MLH) above the surface. When the MLH is below about 1500 m, the value of $\alpha$ becomes negative and the value of $\beta$ becomes very small, and the proxy stops detecting high-CAPE, high-shear conditions.
+
+\begin{figure*}[h!]
+    \centering
+    \includegraphics[width=\textwidth]{../../results/supplementary/proxy_by_MLH.pdf}
+    \caption{\textbf{Original proxy for various values of melting level height (MLH).} CAPE stands for convective available potential energy. $S_{06}$ is 0-6 km bulk vertical wind shear. The same discriminator lines are shown on logarithmic and linear scales.}
+    \label{fig:proxy_by_MLH}
+\end{figure*}
+
+So that the proxy is more reliable in colder regions, in this work we have modified the proxy such that when the MLH is below 2000 m, the values of $\alpha$ and $\beta$ for an MLH of 2000 m are used. With and without this modification the three original ``extra conditions'' defined in \cite{Raupach_MWR_2023} are similarly effective in removing false positives from the whole proxy training data set. We thus use these unmodified conditions. To assess the impact of this change we have tested on two datasets:
+
+\begin{enumerate}
+    \item On the original training dataset from \cite{Raupach_MWR_2023}, proxy performance metrics for the proxy with no extra conditions are similar between versions while the performance of the proxy with extra conditions is not affected by the change.
+    \item On the climatology data used in \cite{Raupach_npjCAS_2023} covering storm-prone hours of the day from 1979-2022 across all of Australia, the proxy changes affect the ocean areas in the south and south east of the domain. However, over the whole map no location had more than 0.7\% of its values affected and over land no location had more than 0.35\% of its values affected. The climatology and trends calculated using either version of the proxy are very similar.
+\end{enumerate}
+
+\section{Supplementary tables and figures}
+
 <<runsTable, echo=FALSE, results="asis">>=
 runs = read_csv('../../results/runs_list.csv', col_types='cccccciiccccc')
 runs = runs %>% arrange(model) %>% select(Model=model, 
@@ -54,124 +81,141 @@ print(tab, booktabs=TRUE, include.rownames=FALSE, size='footnotesize')
 
 \begin{figure*}[p]
     \centering
-    \includegraphics[width=\textwidth]{../../results/historical_by_model}
+    \includegraphics[width=\textwidth]{../../results/supplementary/historical_by_model}
     \caption{\textbf{Mean annual hail-prone days in historical (1980-1999) runs.} Plots are by CMIP6 model and for ERA5 reanalysis data.}
     \label{fig:historical_annual_means}
 \end{figure*}
 
 \begin{figure*}[p]
     \centering
-    \includegraphics[width=\textwidth]{../../results/monthly_anoms_India_2015.pdf}
+    \includegraphics[width=\textwidth]{../../results/supplementary/monthly_anoms_India_2015.pdf}
     \caption{\textbf{Monthly proxy-based hail-prone day anomalies for the Indian region in 2015.} Anomalies are calculated using ERA5 data with respect to the monthly ERA5 historical climatology (1980-1999).}
     \label{fig:anoms_India_2015}
 \end{figure*}
 
 \begin{figure*}[p]
     \centering
-    \includegraphics[width=\textwidth]{../../results/monthly_anoms_France_2022.pdf}
-    \caption{\textbf{Monthly proxy-based hail-prone day anomalies for the European region in 2022.} As for Figure \ref{fig:anoms_India_2015} but for Europe in 2022.}
+    \includegraphics[width=\textwidth]{../../results/supplementary/monthly_anoms_France_2022.pdf}
+    \caption{As for Supplementary Figure \ref{fig:anoms_India_2015} but for Europe in 2022.}
     \label{fig:anoms_Europe_2022}
 \end{figure*}
 
 \begin{figure*}[p]
     \centering
-    \includegraphics[width=\textwidth]{../../results/run_years}
-    \caption{\textbf{CMIP6 models and per-degree-framework date ranges.} The reference period from 
-    historical simulations is shown in blue, while periods with 2 and 3 degrees C warming over 
-    the reference period, in SSP5-8.5 simulations, are in orange and green respectively.}
-    \label{fig:epochs}
+    \includegraphics[width=\textwidth]{../../results/supplementary/hail_diffs_2C}
+    \caption{\textbf{Differences in mean annual hail-prone days by model and proxy for 2 \degr{} global warming.} Stippling shows regions for which the difference between epochs was statistically significant ($p <$ 0.05 using Welch's t-test).}
+    \label{fig:hail_diffs_2C}
 \end{figure*}
 
 \begin{figure*}[p]
     \centering
-    \includegraphics[width=\textwidth]{../../results/era5_all_proxies}
-    \caption{\textbf{Mean annual hail-prone days for ERA5 reanalysis (1980-1999) for all applied hail proxies.}}
-    \label{fig:historical_all_proxies}
-\end{figure*}
-
-
-
-
-
-\begin{figure*}[p]
-    \centering
-    \includegraphics[width=\textwidth]{../../results/hail_diffs_by_model_1}
-    \caption{\textbf{Differences in mean annual hail-prone days by model and epoch, part 1.}}
-    \label{fig:hail_diffs_by_model_1}
+    \includegraphics[width=\textwidth]{../../results/supplementary/hail_diffs_3C}
+    \caption{As for Supplementary Figure \ref{fig:hail_diffs_2C} but for 3 \degr{} global warming.}
+    \label{fig:hail_diffs_3C}
 \end{figure*}
 
 \begin{figure*}[p]
     \centering
-    \includegraphics[width=\textwidth]{../../results/hail_diffs_by_model_2}
-    \caption{\textbf{Differences in mean annual hail-prone days by model and epoch, part 2.}}
-    \label{fig:hail_diffs_by_model_2}
+    \includegraphics[width=\textwidth]{../../results/supplementary/hail_changes_by_season}
+    \caption{\textbf{Multi-model, multi-proxy mean differences in hail-prone days by season.} DJF stands for December, January, February; MAM stands for March, April, May; JJA stands for June, July, August; SON stands for September, October, November. Stippling shows regions for which at least 50\% of the model/proxy combinations showed a statistically  significant difference ($p <$ 0.05 using Welch's t-test) and agreed on the sign of the change.}
+    \label{fig:hail_changes_by_season}
+\end{figure*}
+
+\begin{figure*}[p]
+    \includegraphics[width=\textwidth]{../../results/supplementary/ingredients_changes_cape}
+    \includegraphics[width=0.96\textwidth]{../../results/supplementary/ingredients_changes_shear}
+    \includegraphics[width=0.98\textwidth]{../../results/supplementary/ingredients_changes_cin}
+    \includegraphics[width=0.98\textwidth]{../../results/supplementary/ingredients_changes_lifted_index}
+    \caption{\textbf{Multi-model mean differences in hail ingredients by epoch.} Ingredients shown are annual extreme (99th percentile) convective available potential energy (CAPE), annual extreme (99th percentile) 0-6 km bulk wind shear (S06), annual mean convective inhibition (CIN), and annual extreme (1st percentile) lifted index. Stippling as for Supplementary Figure \ref{fig:hail_changes_by_season}.}
+    \label{fig:ingredients_changes_1}
 \end{figure*}
 
 \begin{figure*}[p]
     \centering
-    \includegraphics[width=\textwidth]{../../results/hail_changes_by_season_2C}
-    \caption{\textbf{Differences in mean annual hail-prone days by season, for 2 C warming.} Stippling shows regions for which the difference between scenario means (across models) was statistically significant ($p <$ 0.05 using Welch's t-test) and for which more than half of the models agreed on the sign of the change.}
-    \label{fig:hail_changes_by_season_2C}
+    \includegraphics[width=\textwidth]{../../results/supplementary/ingredients_changes_mlh}
+    \includegraphics[width=\textwidth]{../../results/supplementary/ingredients_changes_temp}
+    \includegraphics[width=\textwidth]{../../results/supplementary/ingredients_changes_lapse_rate}
+    \caption{As for Supplementary Figure \ref{fig:ingredients_changes_1} but for annual mean meltive level height (MLH), annual mean temperature at 500 hPa ($T_{500}$), and annual mean lapse rate (LR). To increase contrast the colour scale for LR is truncated.}
+    \label{fig:ingredients_changes_2}
 \end{figure*}
 
 \begin{figure*}[p]
     \centering
-    \includegraphics[width=\textwidth]{../../results/hail_changes_by_season_3C}
-    \caption{\textbf{Differences in mean annual hail-prone days by season, for 3 C warming.} Stippling as for Figure \ref{fig:hail_changes_by_season_2C}.}
-    \label{fig:hail_changes_by_season_3C}
+    \includegraphics[width=\textwidth]{../../results/supplementary/historical_crop_propertion_hail_prone}
+    \caption{\textbf{Multi-model, multi-proxy mean hail-prone proportions of cropping seasons for the historical period.} Brackets in titles show overall mean hail-prone proportion of cropping seasons by crop. Plots are subset to remove areas with no crop data.}
+    \label{fig:historic_crop_proportions}
 \end{figure*}
 
 \begin{figure*}[p]
     \centering
-    \includegraphics[width=0.95\textwidth]{../../results/ingredient_changes_2C_99p_CAPE}
-    \includegraphics[width=0.95\textwidth]{../../results/ingredient_changes_2C_Mean_CAPE}
-    \includegraphics[width=0.95\textwidth]{../../results/ingredient_changes_2C_99p_S06}
-    \includegraphics[width=0.95\textwidth]{../../results/ingredient_changes_2C_Mean_S06}
-    \includegraphics[width=0.95\textwidth]{../../results/ingredient_changes_2C_Mean_MLH}
-    \caption{\textbf{Multi-model mean relative differences in hail ingredients for 2 C warming.}  Stippling as for Figure \ref{fig:hail_changes_by_season_2C}.}
-    \label{fig:ingredients_changes_2C}
+    \includegraphics[width=\textwidth]{../../results/supplementary/changes_crop_propertion_hail_prone_2C}
+    \caption{\textbf{Multi-model, multi-proxy mean change in hail-prone proportions of cropping seasons for 2 \degr{} warming.} Stippling as for Supplementary Figure \ref{fig:hail_changes_by_season} and region subset as for Supplementary Figure \ref{fig:historic_crop_proportions}.}
+    \label{fig:crop_changes_2C}
 \end{figure*}
 
 \begin{figure*}[p]
     \centering
-    \includegraphics[width=\textwidth]{../../results/crop_changes_north_america.pdf}
-    \caption{\textbf{Multi-model mean change in hail-prone proportion of growing season, for 2 C warming, for North America.} Stippling as for Figure \ref{fig:hail_changes_by_season_2C}. Crops for which there were no significant changes are not shown.}
-    \label{fig:crop_changes_north_america}
+    \includegraphics[width=\textwidth]{../../results/supplementary/changes_crop_propertion_hail_prone_3C}
+    \caption{As for Supplementary Figure \ref{fig:crop_changes_2C} but for 3 \degr{} warming.}
+    \label{fig:crop_changes_3C}
 \end{figure*}
 
 \begin{figure*}[p]
     \centering
-    \includegraphics[width=\textwidth]{../../results/crop_changes_south_america.pdf}
-    \caption{As for Figure \ref{fig:crop_changes_north_america} but for South America.}
-    \label{fig:crop_changes_south_america}
-\end{figure*}
-
-\begin{figure*}[p]
-    \centering
-    \includegraphics[width=\textwidth]{../../results/crop_changes_europe.pdf}
-    \caption{As for Figure \ref{fig:crop_changes_north_america} but for Europe.}
-    \label{fig:crop_changes_europe}
-\end{figure*}
-
-\begin{figure*}[p]
-    \centering
-    \includegraphics[width=\textwidth]{../../results/crop_changes_africa.pdf}
-    \caption{As for Figure \ref{fig:crop_changes_north_america} but for central and southern Africa.}
-    \label{fig:crop_changes_africa}
-\end{figure*}
-
-\begin{figure*}[p]
-    \centering
-    \includegraphics[width=\textwidth]{../../results/crop_changes_asia.pdf}
-    \caption{As for Figure \ref{fig:crop_changes_north_america} but for central and southeast Asia.}
+    \includegraphics[width=\textwidth]{../../results/supplementary/crop_changes_asia}
+    \caption{\textbf{Regional, relative changes in hail-prone proportion of cropping season}. As for Supplementary Figure \ref{fig:crop_changes_3C} but for Asia, and with changes shown as percentages of the historical hail-prone proportion of cropping season. Crops for which there were no significant changes recorded not shown. The colourbar is truncated to the range of stippled values and is non-linear with zero at the centre.}
     \label{fig:crop_changes_asia}
 \end{figure*}
 
 \begin{figure*}[p]
     \centering
-    \includegraphics[width=\textwidth]{../../results/crop_changes_oceania.pdf}
-    \caption{As for Figure \ref{fig:crop_changes_north_america} but for the Maritime Continent, Australia and New Zealand.}
+    \includegraphics[width=\textwidth]{../../results/supplementary/crop_changes_oceania}
+    \caption{As for Supplementary Figure \ref{fig:crop_changes_asia} but for Oceania.}
     \label{fig:crop_changes_oceania}
+\end{figure*}
+
+\begin{figure*}[p]
+    \centering
+    \includegraphics[width=\textwidth]{../../results/supplementary/crop_changes_north_america}
+    \caption{As for Supplementary Figure \ref{fig:crop_changes_asia} but for North America.}
+    \label{fig:crop_changes_north_america}
+\end{figure*}
+
+\begin{figure*}[p]
+    \centering
+    \includegraphics[width=\textwidth]{../../results/supplementary/crop_changes_south_america}
+    \caption{As for Supplementary Figure \ref{fig:crop_changes_asia} but for South America.}
+    \label{fig:crop_changes_south_america}
+\end{figure*}
+
+\begin{figure*}[p]
+    \centering
+    \includegraphics[width=\textwidth]{../../results/supplementary/crop_changes_europe}
+    \caption{As for Supplementary Figure \ref{fig:crop_changes_asia} but for Europe.}
+    \label{fig:crop_changes_europe}
+\end{figure*}
+
+\begin{figure*}[p]
+    \centering
+    \includegraphics[width=\textwidth]{../../results/supplementary/crop_changes_africa}
+    \caption{As for Supplementary Figure \ref{fig:crop_changes_asia} but for Africa.}
+    \label{fig:crop_changes_africa}
+\end{figure*}
+
+\begin{figure*}[p]
+    \centering
+    \includegraphics[width=\textwidth]{../../results/supplementary/era5_all_proxies}
+    \caption{\textbf{Mean annual hail-prone days for ERA5 reanalysis (1980-1999) for all applied hail proxies.}}
+    \label{fig:historical_all_proxies}
+\end{figure*}
+
+\begin{figure*}[p]
+    \centering
+    \includegraphics[width=\textwidth]{../../results/supplementary/run_years}
+    \caption{\textbf{CMIP6 models and per-degree-framework date ranges.} The reference period from 
+    historical simulations is shown in blue, while periods with 2 and 3 degrees C warming over 
+    the reference period, in SSP5-8.5 simulations, are in orange and green respectively.}
+    \label{fig:epochs}
 \end{figure*}
 
 \clearpage
