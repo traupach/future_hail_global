@@ -30,8 +30,8 @@
 \maketitle
 
 <<loadResults, echo=FALSE, results=FALSE, message=FALSE>>=
-#library(rjson)
-#results = fromJSON(file='../../results/results.json')
+library(rjson)
+results_proxy_update = fromJSON(file='../../results/results_proxy_update.json')
 library(tidyverse)
 library(xtable)
 @
@@ -57,7 +57,7 @@ So that the proxy is more reliable in colder regions, in this work we have modif
 
 \begin{enumerate}
     \item On the original training dataset from \cite{Raupach_MWR_2023}, proxy performance metrics for the proxy with no extra conditions are similar between versions while the performance of the proxy with extra conditions is not affected by the change.
-    \item On the climatology data used in \cite{Raupach_npjCAS_2023} covering storm-prone hours of the day from 1979-2022 across all of Australia, the proxy changes affect the ocean areas in the south and south east of the domain. However, over the whole map no location had more than 0.7\% of its values affected and over land no location had more than 0.35\% of its values affected. The climatology and trends calculated using either version of the proxy are very similar.
+    \item On the climatology data used in \cite{Raupach_npjCAS_2023} covering storm-prone hours of the day from 1979-2022 across all of Australia, the proxy changes affect the ocean areas in the south and south east of the domain. However, over the whole map no location had more than \Sexpr{ceiling(results_proxy_update$max_percent_diff_per_pixel_all*100)/100}\% \% of its values affected and over land no location had more than \Sexpr{ceiling(results_proxy_update$max_percent_diff_per_pixel_land*100)/100}\% of its values affected. The climatology and trends calculated using either version of the proxy are very similar.
 \end{enumerate}
 
 \section{Supplementary tables and figures}
