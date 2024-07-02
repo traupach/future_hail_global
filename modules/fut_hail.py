@@ -40,15 +40,18 @@ proxies = ['proxy_Raupach2023_original', 'proxy_Raupach2023_original_noconds',
            'proxy_Mohr2013', 'proxy_SHIP_0.1', 'proxy_SHIP_0.5']
 
 # Long names for each proxy.
-proxy_names = {'proxy_Raupach2023_original': 'Raupach 2023 (original)',
-               'proxy_Raupach2023_original_noconds': 'Raupach 2023\n(original, no extra conds)',
-               'proxy_Raupach2023_updated': 'Raupach 2023 (updated)',
-               'proxy_Raupach2023_updated_noconds': 'Raupach 2023\n(updated, no extra conds)',
-               'proxy_Kunz2007': 'Kunz 2007',
-               'proxy_Eccel2012': 'Eccel 2012',
-               'proxy_Mohr2013': 'Mohr 2013', 
-               'proxy_SHIP_0.1': 'SHIP > 0.1', 
-               'proxy_SHIP_0.5': 'SHIP > 0.5'}
+proxy_names = {'Raupach2023_original': 'Raupach 2023',
+               'Raupach2023_original_noconds': 'Raupach 2023\n(no extra conds)',
+               'Raupach2023_updated': 'Raupach',
+               'Raupach2023_updated_noconds': 'Raupach\n(no extra conds)',
+               'Kunz2007': 'Kunz 2007',
+               'Eccel2012': 'Eccel 2012',
+               'Mohr2013': 'Mohr 2013', 
+               'SHIP_0.1': 'SHIP > 0.1', 
+               'SHIP_0.5': 'SHIP > 0.5'}
+
+# Names/title of proxies when used as a dimension.
+proxy_dims = {p[6:None]: proxy_names[p[6:]] for p in proxies}
 
 # Pretty colors for hail maps.
 cmap_colours = [
@@ -1485,7 +1488,7 @@ def read_processed_data(data_dir='/g/data/up6/tr2908/future_hail_global/CMIP_con
                         data_exp='*common_grid.nc', 
                         rename_models={'EC-Earth_Consortium.EC-Earth3': 'EC-Earth3'},
                         rename_vars={},
-                        apply_landmask=True):
+                        apply_landmask=False):
     """
     Read all processed data, regridding to a common grid on the way and applying a land mask.
 
@@ -1523,7 +1526,7 @@ def read_processed_data(data_dir='/g/data/up6/tr2908/future_hail_global/CMIP_con
     # Rename variables.
     dat = dat.rename(rename_vars)
 
-    # Re-arrange the data so that the seaonal/annual/monthly hail days are organised with proxy as a dimension.
+    # Re-arrange the data so that the seasonal/annual/monthly hail days are organised with proxy as a dimension.
     seasonal_proxies = [x for x in list(dat.keys()) if 'seasonal_proxy' in x]
     annual_proxies = [x for x in list(dat.keys()) if 'annual_proxy_' in x]
     prox = [x for x in list(dat.keys()) if 'proxy_' in x and x not in seasonal_proxies and x not in annual_proxies]
@@ -1575,6 +1578,7 @@ def era5_climatology_calc(era5, proxy_vars=proxies, proxy_names=proxy_names):
 
 def era5_climatology(era5_dir='/g/data/up6/tr2908/future_hail_global/era5_conv/',
                      era5_file_def='era5_1deg_19*.nc',
+                     era5_proxy_file='era5_proxies.nc',
                      cache_file='/g/data/up6/tr2908/future_hail_global/era5_climatology.nc',
                      landmask=None, 
                      rename={},
@@ -1595,6 +1599,10 @@ def era5_climatology(era5_dir='/g/data/up6/tr2908/future_hail_global/era5_conv/'
 
     if cache_file is None or not os.path.exists(cache_file):
         dat = xarray.open_mfdataset(f'{era5_dir}/{era5_file_def}', parallel=True)
+        prox = xarray.open_dataset(f'{era5_dir}/{era5_proxy_file}')
+        prox = prox.transpose('time', 'latitude', 'longitude')
+        prox = prox.sel(time=dat.time)
+        dat = xarray.merge([dat, prox])
         assert len(dat.time) == 365*yrs*4, 'Incorrect number of times in ERA5 historic period.'
     
         dat = era5_climatology_calc(dat)
