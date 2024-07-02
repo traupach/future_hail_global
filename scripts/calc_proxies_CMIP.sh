@@ -33,4 +33,4 @@ dask worker --nworkers 8 --nthreads 4 --memory-limit 0.125 --scheduler-file sche
 sleep 10
 
 # Run the python script to do the work.
-time python3 calc_proxies.py ${PBS_ARRAY_INDEX}
+time python3 calc_proxies_CMIP.py ${PBS_ARRAY_INDEX}
