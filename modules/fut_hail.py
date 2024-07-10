@@ -1,6 +1,5 @@
 import os
 import re
-import sys
 import dask
 import metpy
 import xarray
@@ -15,9 +14,8 @@ import pandas as pd
 from glob import glob
 import seaborn as sns
 import geopandas as gp
-from matplotlib import cm
 import cartopy.crs as ccrs
-from functools import reduce
+from matplotlib import colors
 from metpy.units import units
 import matplotlib.pyplot as plt
 from cartopy.io import shapereader
@@ -25,9 +23,10 @@ import matplotlib.ticker as mticker
 import modules.warming_levels as wl
 import modules.parcel_functions as parcel
 from matplotlib.colors import BoundaryNorm
-import modules.hail_sounding_functions as hs
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
-from matplotlib.colors import ListedColormap, LinearSegmentedColormap
+from matplotlib.colors import LinearSegmentedColormap
+
+# ruff: noqa: E712                                # Don't check rule E712 in Ruff.
 
 # Settings for xarray_parcel: set up parcel adiabat calculations.
 lookup_dir = '/g/data/w42/tr2908/aus400_hail/'
@@ -390,7 +389,7 @@ def write_output(dat, file, attrs=None):
     
     comp = dict(zlib=True, shuffle=True, complevel=4)
     encoding = {var: comp for var in dat.data_vars}
-    if not attrs is None:
+    if attrs is not None:
         dat.attrs = attrs
     dat.to_netcdf(file, encoding=encoding)
     
@@ -424,9 +423,9 @@ def regrid_global(path, out_res=1, rename=None, output_file=lambda x: x.replace(
             attrs = d.attrs
             attrs.update({'history': f'Regridded to {out_res} x {out_res} degree grid using xESMF.'})
 
-            if not rename is None:
+            if rename is not None:
                 d = d.rename(rename)
-            if not isel is None:
+            if isel is not None:
                 d = d.isel(isel)
             
             write_output(dat=d, file=outfile, attrs=attrs)
@@ -468,7 +467,6 @@ def conv_CMIP(dat, year, proxy_results_file, proxy_conds_file,
     attrs['CMIP_note'] = 'Pressure derived from version used for temperature (ta).'
     
     # Process each day in turn.
-    i = 1
     conv = []
     
     for j, day in enumerate(days_in_year):
@@ -624,7 +622,7 @@ def plot_map_to_ax(dat, ax, coastlines=True, grid=True, dat_proj=ccrs.PlateCarre
     if cbar_label is not None:
         cbar_args['label'] = cbar_label
                     
-    if colourbar == False:
+    if colourbar is False:
         cbar_args = None
         
     cmap = plt.get_cmap(cmap).copy()
@@ -638,17 +636,16 @@ def plot_map_to_ax(dat, ax, coastlines=True, grid=True, dat_proj=ccrs.PlateCarre
         if col_min is not None:
             col_min = np.floor(col_min)
             col_max = np.ceil(col_max)
-            l = np.linspace(col_min, col_max, num_contours, dtype=np.int64)
+            levs = np.linspace(col_min, col_max, num_contours, dtype=np.int64)
         else:
-            l = num_contours
+            levs = num_contours
 
         res = dat.plot.contourf(ax=ax, transform=dat_proj, vmin=col_min, vmax=col_max, 
                                 cmap=cmap, norm=norm, cbar_kwargs=cbar_args,
-                                add_colorbar=colourbar, levels=l)
+                                add_colorbar=colourbar, levels=levs)
     
-    if not stippling is None:
+    if stippling is not None:
         ax.autoscale(False)
-        pts = stippling.where(stippling).to_dataframe().dropna().reset_index()
         hatches = [None, '\\\\\\']
         if np.all(stippling == True):
             hatches = ['\\\\\\', '\\\\\\']
@@ -660,15 +657,15 @@ def plot_map_to_ax(dat, ax, coastlines=True, grid=True, dat_proj=ccrs.PlateCarre
     if ylims is not None:
         ax.set_ylim(ylims)
     if colourbar == True:
-        if not tick_labels is None:
+        if tick_labels is not None:
             assert len(tick_labels) == len(cbar_ticks), 'Labels and ticks must have same length'
             res.colorbar.ax.set_yticklabels(tick_labels)
-    if not left_title is None:
+    if left_title is not None:
         if title_inset:
             title = f'{left_title} {title}'
         else:
             ax.set_title(left_title, fontsize=plt.rcParams['font.size'], loc='left')
-    if not title is None:
+    if title is not None:
         if title_inset:
             ax.set_title('')
             if title_inset_pos == 'upper':
@@ -796,7 +793,7 @@ def plot_map(dat, dat_proj=ccrs.PlateCarree(), disp_proj=ccrs.PlateCarree(), fig
                 
         for i, d in enumerate(dat):
             ax_title = None
-            if not title is None:
+            if title is not None:
                 ax_title = title[i]
             
             tb = ticks_bottom
@@ -836,7 +833,7 @@ def plot_map(dat, dat_proj=ccrs.PlateCarree(), disp_proj=ccrs.PlateCarree(), fig
             fmt.set_powerlimits((-4, 6))
             cb = fig.colorbar(im, ax=ax, cax=cbar_ax, ticks=cbar_ticks, label=scale_label, format=fmt,
                               extend=cbar_extend)
-            if not tick_labels is None:
+            if tick_labels is not None:
                 assert len(tick_labels) == len(cbar_ticks), 'Labels and ticks must have same length'
                 cb.ax.set_yticklabels(tick_labels)
             
@@ -859,7 +856,7 @@ def plot_map(dat, dat_proj=ccrs.PlateCarree(), disp_proj=ccrs.PlateCarree(), fig
                     lab_ax.annotate(lab, xy=(0.5, 1-p), rotation=row_label_rotation,
                                     xycoords='axes fraction', ha='center')
 
-    if not file is None:
+    if file is not None:
         plt.savefig(fname=file, bbox_inches='tight')
         
         if show:
@@ -902,14 +899,14 @@ def annual_stats(d, factor, day_vars=proxies,
     
     # Annual ingredient means.
     means = xarray.Dataset()
-    if not mean_vars is None:
+    if mean_vars is not None:
         means = d[mean_vars].groupby('time.year').mean(keep_attrs=True)
         for v in mean_vars:
             means = means.rename({v: f'mean_{v}'})
     
     # Annual ingredient extremes.
     extremes = xarray.Dataset()
-    if not quantile_vars is None:
+    if quantile_vars is not None:
         for q in quantile_vars:
             for v in quantile_vars[q]:
                 quant_dat = d[v].chunk(chunks)
@@ -1015,7 +1012,7 @@ def process_epoch(epoch_name, model_name, exp, epoch_dates, expected_times=365*2
 
     # Check no NAs in non_na_var.
     for v in non_na_vars:
-        assert not np.any(np.isnan(dat))[v], f'NaN found in {non_na_var}'
+        assert not np.any(np.isnan(dat))[v], f'NaN found in {non_na_vars}'
 
     # Get annual/seasonal stats for the epoch.
     stats = epoch_stats(d=dat)
@@ -1274,7 +1271,7 @@ def plot_run_years(runs, figsize=(10,2.8), legend_y=9.5, file=None, show=True):
         
     plt.legend(loc='upper right', bbox_to_anchor=(1.15, legend_y), framealpha=1)
 
-    if not file is None:
+    if file is not None:
         plt.savefig(fname=file, bbox_inches='tight')
         
         if show:
@@ -1461,7 +1458,7 @@ def make_backup_orography(runs, CMIP6_dir='/g/data/oi10/replicas',
                     break
             assert os.path.exists(path), f'Could not find path/res combinations for {grid_var}.'
             grids = [os.path.basename(x) for x in sorted(glob(f'{path}/*'))]
-            assert len(grids) == 1, f'Multiple grids to choose from for {path}/{v}.'
+            assert len(grids) == 1, f'Multiple grids to choose from for {path}.'
             grid = grids[0]
             path = f'{path}/{grid}'
             version = [os.path.basename(x) for x in sorted(glob(f'{path}/v*'))][-1] # Use latest version.
@@ -1607,13 +1604,13 @@ def era5_climatology(era5_dir='/g/data/up6/tr2908/future_hail_global/era5_conv/'
     
         dat = era5_climatology_calc(dat)
 
-        if not cache_file is None:
+        if cache_file is not None:
             write_output(dat, attrs={}, file=cache_file)
 
-    if not cache_file is None:
+    if cache_file is not None:
         dat = xarray.open_dataset(cache_file)
         
-    if not landmask is None:
+    if landmask is not None:
         dat = dat.where(landmask == True).load()
 
     # Reorganise so proxy is a dimension.
@@ -1686,8 +1683,9 @@ def plot_era5_anomalies(anoms, year, lats, lons, figsize=(12,9), ncols=3, nrows=
                  share_axes=True, grid=False, contour=False, scale_label=scale_label, 
                  nan_colour='white', **kwargs)
 
-def epoch_differences(dat, variables, epochs=['2C', '3C'], 
-                      cache_dir='/g/data/up6/tr2908/future_hail_global/CMIP_changes/'):
+def epoch_differences(dat, variables, epochs=['2C', '3C'], outstring='_',
+                      cache_dir='/g/data/up6/tr2908/future_hail_global/CMIP_changes/',
+                      expand_dims=None):
     """
     Calculate differences between historical epoch and warming epochs.
 
@@ -1695,7 +1693,9 @@ def epoch_differences(dat, variables, epochs=['2C', '3C'],
         dat: The data to work on.
         variables: Which variables to select.
         epochs: The future epochs to test.
+        outstring: string to put in the middle of output file name.
         cache_dir: The cache directory to write changes to.
+        expand_dims: Optionally pass this argument to expand_dims before saving differences.
 
     Returns: mean differences, significances of differences, and historical mean for each model.
     """
@@ -1703,7 +1703,7 @@ def epoch_differences(dat, variables, epochs=['2C', '3C'],
     res = []
     for model in dat.model.values:
         print(f'Processing {model}...')
-        out_file = f'{cache_dir}/{model}_epoch_diffs.nc'
+        out_file = f'{cache_dir}/{model}{outstring}epoch_diffs.nc'
         if not os.path.exists(out_file):
     
             d = dat.sel(model=model).chunk({'lat': 50, 'lon': 50})
@@ -1735,6 +1735,10 @@ def epoch_differences(dat, variables, epochs=['2C', '3C'],
                 reference_mean = reference_mean.rename({v: f'{v}_mean_reference'})
                 
             out = xarray.merge([mean_diffs, sigs, reference_mean])
+
+            if expand_dims is not None:
+                out = out.expand_dims(expand_dims)
+
             write_output(dat=out, file=out_file, attrs=out.attrs)
         
         res.append(xarray.open_dataset(out_file).expand_dims({'model': [model]}))
@@ -2131,11 +2135,10 @@ def plot_crop_lines(dat, lat, lon, crops, figsize=(12, 3.7),
         sns.pointplot(c.to_dataframe(), x='month', y='crop_month', ax=months_ax, marker='x', 
                       color='black', markersize=5, linewidth=1.5)
     
-    h, l = line_ax.get_legend_handles_labels()
-    l = [legend_renamer[l] for l in l]
+    h, labs = line_ax.get_legend_handles_labels()
+    labs = [legend_renamer[lab] for lab in labs]
     
-    l1 = legend_ax.legend(h[1:legend_col_length], l[1:legend_col_length], loc='upper left', bbox_to_anchor=(0,1.8))#, frameon=False)
-    l2 = legend_ax.legend(h[(legend_col_length+1):], l[(legend_col_length+1):], loc='upper left')#, frameon=False)#, bbox_to_anchor=(1,0))
+    l1 = legend_ax.legend(h[1:legend_col_length], labs[1:legend_col_length], loc='upper left', bbox_to_anchor=(0,1.8))
     legend_ax.add_artist(l1)
     legend_ax.set_frame_on(False)
     legend_ax.tick_params(axis='x', bottom=False, labelbottom=False)
@@ -2259,12 +2262,19 @@ def conv_properties(dat, vert_dim='model_level_number'):
 
     return out
 
-def storm_proxies(dat):
+def storm_proxies(dat, check_negative_cape=False, 
+                  proxies = {'proxy_Kunz2007': 'Kunz 2007',
+                             'proxy_Eccel2012': 'Eccel 2012',
+                             'proxy_Mohr2013': 'Mohr 2013',
+                             'proxy_SHIP_0.1': 'SHIP > 0.1',
+                             'proxy_SHIP_0.5': 'SHIP > 0.5'}):
     """
     Calculate storm proxies.
     
     Arguments:
         - dat: Data with convective properties.
+        - check_negative_cape: Check for negative cape values? (Default: False).
+        - proxies: A list of proxies to compute and which study they are from.
         
     Returns:
         - DataSet with proxy values (binary, 1=proxy triggered, 0=proxy untriggered).
@@ -2272,45 +2282,46 @@ def storm_proxies(dat):
     
     # Ignore negative CAPE.
     dat = dat.rename({'shear_magnitude': 'S06'})
-    assert np.all(dat.mixed_100_cape >= 0), 'Negative CAPE found.'
-    assert np.all(dat.mu_cape >= 0), 'Negative MUCAPE found.'
+
+    if check_negative_cape:
+        assert np.all(dat.mixed_100_cape >= 0), 'Negative CAPE found.'
+        assert np.all(dat.mu_cape >= 0), 'Negative MUCAPE found.'
 
     out = xarray.Dataset()
 
     # Proxy calculations.
     
     # Kunz 2007.
-    out['proxy_Kunz2007'] = np.logical_or(dat.mixed_100_lifted_index <= -2.07,
-                                          np.logical_or(dat.mu_cape >= 1474,
-                                                        dat.mixed_100_dci >= 25.7))
+    if 'proxy_Kunz2007' in proxies:
+        out['proxy_Kunz2007'] = np.logical_or(dat.mixed_100_lifted_index <= -2.07,
+                                              np.logical_or(dat.mu_cape >= 1474,
+                                                            dat.mixed_100_dci >= 25.7))
 
     # Eccel 2012.
-    out['proxy_Eccel2012'] = np.logical_and(dat.mixed_100_cape * dat.S06 > 10000, 
-                                            dat.mixed_100_cin > -50)
+    if 'proxy_Eccel2012' in proxies:
+        out['proxy_Eccel2012'] = np.logical_and(dat.mixed_100_cape * dat.S06 > 10000, 
+                                                dat.mixed_100_cin > -50)
 
     # Mohr 2013.
-    out['proxy_Mohr2013'] = np.logical_or(dat.mixed_100_lifted_index <= -1.6,
-                                          dat.mixed_100_cape >= 439)
-    out['proxy_Mohr2013'] = np.logical_or(out.proxy_Mohr2013,
-                                          dat.mixed_100_dci >= 26.4)
+    if 'proxy_Mohr2013' in proxies:
+        out['proxy_Mohr2013'] = np.logical_or(dat.mixed_100_lifted_index <= -1.6,
+                                              dat.mixed_100_cape >= 439)
+        out['proxy_Mohr2013'] = np.logical_or(out.proxy_Mohr2013,
+                                              dat.mixed_100_dci >= 26.4)
 
     # Significant hail parameter.
-    out['ship'] = parcel.significant_hail_parameter(mucape=dat.mu_cape,
-                                                    mixing_ratio=dat.mu_mixing_ratio,
-                                                    lapse=dat.lapse_rate_700_500,
-                                                    temp_500=dat.temp_500,
-                                                    shear=dat.S06,
-                                                    flh=dat.freezing_level)
-    out['proxy_SHIP_0.1'] = out.ship > 0.1
-    out['proxy_SHIP_0.5'] = out.ship > 0.5
-    out.ship.attrs['long_name'] = 'Significant hail parameter (SHIP)'
-
-    # Define proxies and which study they are from.
-    proxies = {'proxy_Kunz2007': 'Kunz 2007',
-               'proxy_Eccel2012': 'Eccel 2012',
-               'proxy_Mohr2013': 'Mohr 2013',
-               'proxy_SHIP_0.1': 'SHIP > 0.1',
-               'proxy_SHIP_0.5': 'SHIP > 0.5'}
+    if 'proxy_SHIP_0.1' in proxies or 'proxy_SHIP_0.5' in proxies:
+        out['ship'] = parcel.significant_hail_parameter(mucape=dat.mu_cape,
+                                                        mixing_ratio=dat.mu_mixing_ratio,
+                                                        lapse=dat.lapse_rate_700_500,
+                                                        temp_500=dat.temp_500,
+                                                        shear=dat.S06,
+                                                        flh=dat.freezing_level)
+        if 'proxy_SHIP_0.1' in proxies:
+            out['proxy_SHIP_0.1'] = out.ship > 0.1
+        if 'proxy_SHIP_0.5' in proxies:
+            out['proxy_SHIP_0.5'] = out.ship > 0.5
+        out.ship.attrs['long_name'] = 'Significant hail parameter (SHIP)'
 
     for proxy, val in proxies.items():
         out[proxy].attrs['long_name'] = 'Proxy ' + val
@@ -2375,8 +2386,93 @@ def plot_regional_crop_changes(diffs, sig, lats, lons, region_names, file, figsi
         
     # Do legend.
     handles, labels = axs[i].get_legend_handles_labels()
-    axs[i].legend(handles, [rename_leg[l] for l in labels], title='Epoch')
+    axs[i].legend(handles, [rename_leg[lab] for lab in labels], title='Epoch')
     sns.move_legend(axs[i], "upper left", bbox_to_anchor=(0.85, -1.1))
 
     # Save plot.
     plt.savefig(fname=file, bbox_inches='tight')
+
+def calc_detrended_annual(detrended_proxy_dir='/g/data/up6/tr2908/future_hail_global/CMIP_detrended/proxy_results/',
+                          annual_detrended_dir='/g/data/up6/tr2908/future_hail_global/CMIP_detrended/annual_stats'):
+    """
+    Load annual statistics for proxy data with detrended ingredients, on the common global grid, caching outputs.
+
+    Arguments:
+        detrended_proxy_dir: Directory with detrended proxy files to process.
+        annual_detrended_dir: Directory for output annual detrended files.
+
+    Returns: All annual detrended data.
+
+    """
+    # Each file in the detrended proxy directory has proxy results for a scenario 
+    # in which one ingredient has been detrended.
+    for f in [os.path.basename(x) for x in glob(f'{detrended_proxy_dir}/*.nc')]:
+
+        annual_file = f'{annual_detrended_dir}/{f.replace(".nc", "_native_grid.nc")}'
+        if not os.path.exists(annual_file):
+            print(f'Calculating annual stats for {f}')
+
+            # Calculate annual stats.
+            d = xarray.open_dataset(f'{detrended_proxy_dir}/{f}')
+            d = d.reset_coords(drop=True)
+            model = f.split('_')[0]
+            d = d.chunk({'time': 1000, 'lat': -1, 'lon': -1})
+            d = d.expand_dims({'model': [model],
+                               'epoch': ['3C']}) 
+            d = d.drop_vars('ship')
+
+            # Calculate annual hail days.
+            annual = annual_stats(d=d, factor=365, mean_vars=None, quantile_vars=None,
+                                  day_vars=[x for x in list(d.variables) if 'proxy' in x])
+            annual_proxies = [x for x in list(annual.keys()) if ['proxy_' in x]]
+            
+            # Re-arrange the data so that the annual hail days are organised with proxy as a dimension.
+            annual = annual[annual_proxies].rename({f'{p}': f'{p[6:None]}' for p in annual_proxies}).to_dataarray(
+                dim='proxy', name='annual_hail_days')
+
+            # Get year number in abstract form.
+            annual['year_num'] = ('year', np.arange(1, annual.year.size+1))
+            annual = annual.swap_dims({'year': 'year_num'}).reset_coords()
+            assert annual.year_num.size == 20, 'Incorrect number of years in annual.'
+            write_output(dat=annual, file=annual_file)
+
+    # Regrid annual files from native to global 1 degree grid.
+    regrid_global(path=f'{annual_detrended_dir}/*_native_grid.nc')
+
+def detrended_changes(hist_dat,
+                      annual_detrended_dir='/g/data/up6/tr2908/future_hail_global/CMIP_detrended/annual_stats',
+                      cache_dir='/g/data/up6/tr2908/future_hail_global/CMIP_detrended/detrended_changes'):
+    """
+    Calculate changes for models with detrended ingredients.
+
+    Arguments: 
+        hist_dat: Data containing the historical dataset to compare to.
+        annual_detrended_dir: The directory containing files output by calc_detrended_annual().
+        cache_dir: Directory to cache changes in.
+
+    Returns: all changes organsed by model and detrended ingredient.
+    """
+
+    files = glob(f'{annual_detrended_dir}/*common_grid.nc')
+    cache_files = glob(f'{cache_dir}/*.nc')
+
+    if len(files) != len(cache_files):
+        for file in files:
+            print(f'Calculating changes for {file}')
+            detrended = xarray.open_dataset(file)
+            detrended_ing = re.search('detrended_(.*)_common_grid.nc', os.path.basename(file)).group(1)
+        
+            # Collect historic and 3D detrended results to compare.
+            hist = hist_dat.sel(model=detrended.model, proxy=detrended.proxy, epoch=['historical'])[['annual_hail_days']]
+            detrended = detrended.chunk(hist.chunks)
+            detrended = xarray.merge([detrended.annual_hail_days, hist.annual_hail_days])   
+
+            epoch_diffs = epoch_differences(dat=detrended, variables=['annual_hail_days'], epochs=['3C'], 
+                                            cache_dir=cache_dir, outstring=f'_{detrended_ing}_', 
+                                            expand_dims={'detrended_ing': [detrended_ing]})
+            del epoch_diffs
+  
+    # Read all cache files.
+    res = xarray.open_mfdataset(f'{cache_dir}/*.nc', parallel=True)
+    return res
+    
