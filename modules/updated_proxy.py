@@ -1,14 +1,14 @@
 # Functions to apply the proxy of Raupach et al., 2023 (doi: 10.1175/MWR-D-22-0127.1) with 
 # optional limiting of the proxy variation with melting level height.
 
-import os
 import json
 import math
 import xarray
 import numpy as np
 import pandas as pd
-from glob import glob
 import matplotlib.pyplot as plt
+
+# ruff: noqa: E712
 
 def apply_Raupach_proxy(dat, results_file, extra_conds_file, load=False, subset_conds=None, 
                         band_limits=[2000,None], **kwargs):
@@ -36,7 +36,7 @@ def apply_Raupach_proxy(dat, results_file, extra_conds_file, load=False, subset_
         extra_conds = pd.DataFrame()
     else:
         extra_conds = pd.read_csv(extra_conds_file)
-        if not subset_conds is None:
+        if subset_conds is not None:
             extra_conds = extra_conds.iloc[subset_conds,:]
 
     # Apply the proxy.
@@ -166,55 +166,6 @@ def plot_power_law(x, p, t, ax, label):
     y = (t/x)**(1/p)
     ax.plot(x, y, label=label)
 
-def prox_performance(dat, proxy, extra_conds):
-    def stats(d):
-        hit = d[np.logical_and(d.true_hail == True, d[proxy] == True)]
-        miss = d[np.logical_and(d.true_hail == True, d[proxy] == False)]
-        true_neg = d[np.logical_and(d.true_hail == False, d[proxy] == False)]
-        false_pos = d[np.logical_and(d.true_hail == False, d[proxy] == True)]
-        return hit, miss, true_neg, false_pos
-
-    def skill(h, m, n, f):
-        POD = h/(h+m)
-        FAR = f/(h+f)
-        HSS = 2 * (h*n - m*f) / (m**2 + f**2 + 2*h*n + (m+f)*(h+n))
-        SR = 1-FAR
-        bias = POD/SR
-        CSI = 1/(1/SR + 1/POD - 1)
-        
-        print(f'POD: {np.round(POD, 2)}')
-        print(f'FAR: {np.round(FAR, 2)}')
-        print(f'HSS: {np.round(HSS, 2)}')
-        print(f'SR: {np.round(SR, 2)}')
-        print(f'bias: {np.round(bias, 2)}')
-        print(f'CSI: {np.round(CSI, 2)}')
-
-    hit, miss, true_neg, false_pos = stats(dat)
-    print('Before extra conds:')
-    skill(h=len(hit), m=len(miss), n=len(true_neg), f=len(false_pos))
-    print('')
-    
-    print((f'lapse_rate_700_500 >= -5.45 removes {np.round((hit.lapse_rate_700_500 >= -5.45).mean()*100, 1)}% of hits ' + 
-           f'and {np.round((false_pos.lapse_rate_700_500 >= -5.45).mean()*100, 1)}% of false positives.'))
-    
-    dat.loc[dat.lapse_rate_700_500 >= -5.45, proxy] = False
-    hit, miss, true_neg, false_pos = stats(dat)
-    
-    print((f'mixed_100_lifted_index >= 0.4 removes {np.round((hit.mixed_100_lifted_index >= 0.4).mean()*100, 1)}% of hits ' + 
-           f'and {np.round((false_pos.mixed_100_lifted_index >= 0.4).mean()*100, 1)}% of false positives.'))
-    
-    dat.loc[dat.mixed_100_lifted_index >= 0.4, proxy] = False
-    hit, miss, true_neg, false_pos = stats(dat)
-    
-    print((f'temp_500 >= 265.46 removes {np.round((hit.temp_500 >= 265.46).mean()*100, 1)}% of hits ' + 
-           f'and {np.round((false_pos.temp_500 >= 265.46).mean()*100, 1)}% of false positives.'))
-
-    dat.loc[dat.temp_500 >= 265.46, proxy] = False
-    hit, miss, true_neg, false_pos = stats(dat)
-    
-    print('\nAfter extra conds:')
-    skill(h=len(hit), m=len(miss), n=len(true_neg), f=len(false_pos))
-
 def prox_performance(dat, proxy, extra_conditions):
     """
     Test proxy performance and show effects of extra conditions.
@@ -302,7 +253,7 @@ def plot_proxy_discrims(era5_results, MLH_vals=[200, 1000, 1500, 2000, 3000, 800
     
     plt.legend(loc='upper right', ncol=2, title='Melting level height')
 
-    if not file is None:
+    if file is not None:
         plt.savefig(fname=file, bbox_inches='tight')
 
     plt.tight_layout()
@@ -334,7 +285,6 @@ def era5_proxies(climatol_dir, landsea_file, results_file, extra_conds_file,
     climatol = {}
     num_nonphys = 0
     total_pts = 0
-    tmp_chunks = {'time': -1, 'latitude': 30, 'longitude': 30}
 
     land_sea_mask = xarray.open_dataset(landsea_file)
     if np.isin('time', land_sea_mask.keys()):
@@ -360,7 +310,7 @@ def era5_proxies(climatol_dir, landsea_file, results_file, extra_conds_file,
         dat['time'] = dat.time.dt.floor('1D')
 
         # Ignore non-physical points in the ERA5 data.
-        climatol[UTC] = dat.where(dat.physical_mask)
+        climatol[UTC] = dat.where(dat.physical_mask == True)
         del dat
 
     # Average all fields except the proxy.

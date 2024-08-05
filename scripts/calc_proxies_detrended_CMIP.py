@@ -63,14 +63,16 @@ for ing in detrended_ing:
         # Calculate literature cape-shear proxies.
         print('Literature proxies...')
         prox = fh.storm_proxies(dat=detrended, proxies={'proxy_Eccel2012': 'Eccel 2012',
-                                                  'proxy_SHIP_0.1': 'SHIP > 0.1'})
+                                                        'proxy_SHIP_0.1': 'SHIP > 0.1'})
 
         # Add Raupach hail proxies.
         print('Raupach proxies...')
-        prox['proxy_Raupach2023_updated'] = up.apply_Raupach_proxy(dat=detrended, results_file=proxy_results_file, 
+        prox['proxy_Raupach2023_updated'] = up.apply_Raupach_proxy(dat=detrended,
+                                                                   results_file=proxy_results_file, 
                                                                    extra_conds_file=proxy_conds_file,
                                                                    band_limits=[2000, None], load=False)
-        prox['proxy_Raupach2023_updated_noconds'] = up.apply_Raupach_proxy(dat=detrended, results_file=proxy_results_file, 
+        prox['proxy_Raupach2023_updated_noconds'] = up.apply_Raupach_proxy(dat=detrended,
+                                                                           results_file=proxy_results_file, 
                                                                            extra_conds_file=None,
                                                                            band_limits=[2000, None], load=False)
     
