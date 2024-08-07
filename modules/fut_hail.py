@@ -609,7 +609,6 @@ def plot_map_to_ax(
     tick_labels=None,
     contour=False,
     stippling=None,
-    stipple_size=3,
     colourbar=True,
     ticks_left=True,
     ticks_bottom=True,
@@ -2244,7 +2243,7 @@ def plot_diffs_for_epoch(
     file=None,
     var='annual_hail_days_mean_diff',
     stipple_var='annual_hail_days_sig',
-    scale_label='Mean annual hail-prone days',
+    scale_label='$\Delta$ mean annual hail-prone days',
     figsize=(12, 9.5),
     row_label_adjust=0.16,
     row_label_scale=1.28,
@@ -2677,6 +2676,7 @@ def plot_crop_lines(
         'Eccel2012': 'Eccel 2012',
     },
     legend_col_length=8,
+    file=None
 ):
     """
     For a given location, plot changes in hail-prone days per month and a
@@ -2784,6 +2784,10 @@ def plot_crop_lines(
     months_ax.set_ylim(-0.2, 2.2)
     months_ax.tick_params(axis='x', bottom=False, labelbottom=False)
     months_ax.tick_params(axis='y', right=False)
+
+    if file is not None:
+        plt.savefig(fname=file, bbox_inches='tight')
+    plt.show()
 
 
 def conv_properties(dat, vert_dim='model_level_number'):
@@ -3215,11 +3219,13 @@ def plot_drivers(
         'mixed_100_lifted_index': 'LI',
         'mu_cape': 'MUCAPE',
         'mu_cin': 'MUCIN',
-        'mu_mixing_ratio': 'MUML',
+        'mu_mixing_ratio': 'MUMR',
         'shear_magnitude': 'S06',
         'temp_500': 'T500',
     },
     days_threshold=None,
+    refs=[],
+    refs_title=None,
     **kwargs
 ):
     """
@@ -3230,7 +3236,15 @@ def plot_drivers(
         ing_names: Ingredient names for plotting. 
         days_threshold: Require at least this many days in any of the plots to show an ingredient (optional).
         kwargs: Arguments to plot_map.
+        refs: If given, plots to provide as a row of reference values (ie changes with no drivers excluded).
+        refs_title: Title for the reference row.
     """
+
+    # If references are provided, also plot column sums.
+    refs_title = ['Sum', refs_title] if refs_title is not None else []
+    sums = []
+    if refs is not []: 
+        sums = [drivers.sum('detrended_ing').sel(proxy=p) for p in drivers.proxy.values]
 
     if days_threshold is not None:
         drivers = drivers.copy(deep=True)
@@ -3245,16 +3259,16 @@ def plot_drivers(
         [
             drivers.sel(detrended_ing=ing, proxy=p)
             for ing, p in itertools.product(drivers.detrended_ing.values, drivers.proxy.values)
-        ],
+        ] + sums + refs,
         cmap='RdBu_r',
         divergent=True,
-        nrows=len(drivers.detrended_ing),
+        nrows=len(drivers.detrended_ing) + np.min([1, len(refs)]) + np.min([1, len(sums)]),
         ncols=len(drivers.proxy),
         share_scale=True,
         hspace=0.1,
         disp_proj=ccrs.Robinson(),
         grid=False,
-        row_labels=[ing_names[x] for x in drivers.detrended_ing.values],
+        row_labels=[ing_names[x] for x in drivers.detrended_ing.values] + refs_title,
         col_labels=[proxy_dims[f] for f in drivers.proxy.values],
         **kwargs
     )
