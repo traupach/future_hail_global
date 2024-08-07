@@ -804,7 +804,7 @@ def plot_map_to_ax(
             res.colorbar.ax.set_yticklabels(tick_labels)
     if left_title is not None:
         if title_inset:
-            title = f'{left_title} {title}'
+            title = f'{left_title} {title if title is not None else ""}'
         else:
             ax.set_title(left_title, fontsize=plt.rcParams['font.size'], loc='left')
     if title is not None:
@@ -826,8 +826,16 @@ def plot_map_to_ax(
                     fontweight='bold',
                     fontsize=plt.rcParams['font.size'],
                 )
+            elif title_inset_pos == 'left_lower':
+                ax.annotate(
+                    text=title.replace(')', ''),
+                    xy=(0.01, 0.01),
+                    xycoords='axes fraction',
+                    fontweight='bold',
+                    fontsize=plt.rcParams['font.size'],
+                )
             else:
-                assert 1 == 0, 'title_inset_pos must be upper or lower.'
+                assert 1 == 0, 'title_inset_pos must be upper or lower or left_lower.'
         else:
             ax.set_title(title, fontsize=plt.rcParams['font.size'])
     if coastlines:
@@ -1114,6 +1122,7 @@ def plot_map(
                         rotation=row_label_rotation,
                         xycoords='axes fraction',
                         ha='center',
+                        va='center'
                     )
 
     if file is not None:
@@ -2714,8 +2723,10 @@ def plot_crop_lines(
     map_ax.coastlines()
     map_ax.set_global()
 
-    assert np.max(crop_dat.diff('crop')) == 0, (f'Errant differences between crop values with diff of {np.max(crop_dat.diff("crop"))}' + 
-                                                '(if nan then perhaps crop is not at this location)')
+    assert np.max(crop_dat.diff('crop')) == 0, (
+        f'Errant differences between crop values with diff of {np.max(crop_dat.diff("crop"))}'
+        + '(if nan then perhaps crop is not at this location)'
+    )
 
     line_ax.set_ylabel('$\Delta$ Hail-prone days')
     line_ax.set_xlabel('Month')
@@ -2751,7 +2762,11 @@ def plot_crop_lines(
     labs = [legend_renamer[lab] for lab in labs]
 
     l1 = legend_ax.legend(
-        h[0:legend_col_length], labs[0:legend_col_length], loc='upper left', bbox_to_anchor=(0, 2), frameon=False
+        h[0:legend_col_length],
+        labs[0:legend_col_length],
+        loc='upper left',
+        bbox_to_anchor=(0, 2),
+        frameon=False,
     )
     legend_ax.add_artist(l1)
     legend_ax.set_frame_on(False)
@@ -3186,3 +3201,60 @@ def detrended_changes(
         res.append(d)
 
     return xarray.combine_by_coords(res)
+
+
+def plot_drivers(
+    drivers,
+    ing_names={
+        'freezing_level': 'FLH',
+        'lapse_rate_700_500': 'LR',
+        'melting_level': 'MLH',
+        'mixed_100_cape': 'MLCAPE',
+        'mixed_100_cin': 'MLCIN',
+        'mixed_100_dci': 'DCI',
+        'mixed_100_lifted_index': 'LI',
+        'mu_cape': 'MUCAPE',
+        'mu_cin': 'MUCIN',
+        'mu_mixing_ratio': 'MUML',
+        'shear_magnitude': 'S06',
+        'temp_500': 'T500',
+    },
+    days_threshold=None,
+    **kwargs
+):
+    """
+    Plot drivers with optional subsetting to remove insignificant drivers.
+
+    Args:
+        drivers: The drivers to plot.
+        ing_names: Ingredient names for plotting. 
+        days_threshold: Require at least this many days in any of the plots to show an ingredient (optional).
+        kwargs: Arguments to plot_map.
+    """
+
+    if days_threshold is not None:
+        drivers = drivers.copy(deep=True)
+        null_drivers = (
+            np.round(np.abs(drivers).max(['lat', 'lon', 'proxy']), 0).to_dataframe().reset_index()
+        )
+        null_drivers = null_drivers[null_drivers.annual_hail_days_mean_diff < days_threshold]
+        for _, row in null_drivers.iterrows():
+            drivers = drivers.drop_sel(detrended_ing=row.detrended_ing)
+
+    _ = plot_map(
+        [
+            drivers.sel(detrended_ing=ing, proxy=p)
+            for ing, p in itertools.product(drivers.detrended_ing.values, drivers.proxy.values)
+        ],
+        cmap='RdBu_r',
+        divergent=True,
+        nrows=len(drivers.detrended_ing),
+        ncols=len(drivers.proxy),
+        share_scale=True,
+        hspace=0.1,
+        disp_proj=ccrs.Robinson(),
+        grid=False,
+        row_labels=[ing_names[x] for x in drivers.detrended_ing.values],
+        col_labels=[proxy_dims[f] for f in drivers.proxy.values],
+        **kwargs
+    )
