@@ -16,7 +16,8 @@
 \renewcommand\refname{Supplementary References}
 
 \title{Shifting hail hazard under global warming: supplementary information}
-\author{Timothy H. Raupach$^{1,2,3}$, Raphael Portmann$^{4,5}$, Christian Siderius$^{6}$, \\and Steven C. Sherwood$^{2,3}$ \\
+\author{Timothy H. Raupach$^{1,2,3}$, Raphael Portmann$^{4,5}$, Christian Siderius$^{6}$, \\
+ and Steven C. Sherwood$^{2,3}$ \\
  \\
  \footnotesize 1: Institute for Climate Risk and Response, The University of New South Wales (UNSW), Sydney, Australia \\
  \footnotesize 2: Climate Change Research Centre, UNSW Sydney, Sydney, Australia \\
