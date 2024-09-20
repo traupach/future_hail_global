@@ -1,0 +1,4 @@
+{"rule":"UPPERCASE_SENTENCE_START","sentence":"^\\Qsame\\E$"}
+{"rule":"ENGLISH_WORD_REPEAT_BEGINNING_RULE","sentence":"^\\QAs for Supplementary Figure \\E(?:Dummy|Ina|Jimmy-)[0-9]+\\Q but for South America.\\E$"}
+{"rule":"ENGLISH_WORD_REPEAT_BEGINNING_RULE","sentence":"^\\QAs for Supplementary Figure \\E(?:Dummy|Ina|Jimmy-)[0-9]+\\Q but for Europe.\\E$"}
+{"rule":"ENGLISH_WORD_REPEAT_BEGINNING_RULE","sentence":"^\\QAs for Supplementary Figure \\E(?:Dummy|Ina|Jimmy-)[0-9]+\\Q but for Africa.\\E$"}

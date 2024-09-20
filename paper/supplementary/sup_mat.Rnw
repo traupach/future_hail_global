@@ -16,12 +16,14 @@
 \renewcommand\refname{Supplementary References}
 
 \title{Shifting hail hazard under global warming: supplementary information}
-\author{Timothy H. Raupach$^{1,2}$, Raphael Portmann$^{3}$, Christian Siderius$^{4}$, \\and Steven C. Sherwood$^{1,2}$ \\
+\author{Timothy H. Raupach$^{1,2,3}$, Raphael Portmann$^{4,5}$, Christian Siderius$^{6}$, \\and Steven C. Sherwood$^{2,3}$ \\
  \\
- \footnotesize 1: Climate Change Research Centre, The University of New South Wales, Sydney, Australia \\
- \footnotesize 2: ARC Centre of Excellence for Climate Extremes, UNSW Sydney, Sydney, Australia \\
- \footnotesize 3: Agroscope, Swiss Federal Office for Agriculture, Zurich, Switzerland \\
- \footnotesize 4: Uncharted Waters Research, Sydney, Australia
+ \footnotesize 1: Institute for Climate Risk and Response, The University of New South Wales (UNSW), Sydney, Australia \\
+ \footnotesize 2: Climate Change Research Centre, UNSW Sydney, Sydney, Australia \\
+ \footnotesize 3: ARC Centre of Excellence for Climate Extremes, UNSW Sydney, Sydney, Australia \\
+ \footnotesize 4: Agroscope, Swiss Federal Office for Agriculture, Zurich, Switzerland \\
+ \footnotesize 5: Planval, Bern, Switzerland \\
+ \footnotesize 6: Uncharted Waters Research, Sydney, Australia
  }
 \date{}
 
@@ -37,6 +39,7 @@ library(xtable)
 @
 
 \section{Update to hail proxy}
+\label{sec:proxy-update}
 
 The instability-shear proxy of \cite{Raupach_MWR_2023} was slightly updated for this study, to be more globally applicable. This proxy indicates hail-prone conditions when
 
@@ -48,7 +51,7 @@ where CAPE is convective available potential energy, S$_{06}$ is 0-6 km bulk ver
 
 \begin{figure*}[h!]
     \centering
-    \includegraphics[width=\textwidth]{../../results/supplementary/proxy_by_MLH.pdf}
+    \includegraphics[width=\textwidth]{../../results/supplementary/proxy_by_MLH}
     \caption{\textbf{Original proxy for various values of melting level height (MLH).} CAPE stands for convective available potential energy. $S_{06}$ is 0-6 km bulk vertical wind shear. The same discriminator lines are shown on logarithmic and linear scales.}
     \label{fig:proxy_by_MLH}
 \end{figure*}
@@ -57,7 +60,7 @@ So that the proxy is more reliable in colder regions, in this work we have modif
 
 \begin{enumerate}
     \item On the original training dataset from \cite{Raupach_MWR_2023}, proxy performance metrics for the proxy with no extra conditions are similar between versions while the performance of the proxy with extra conditions is not affected by the change.
-    \item On the climatology data used in \cite{Raupach_npjCAS_2023} covering storm-prone hours of the day from 1979-2022 across all of Australia, the proxy changes affect the ocean areas in the south and south east of the domain. However, over the whole map no location had more than \Sexpr{ceiling(results_proxy_update$max_percent_diff_per_pixel_all*100)/100}\% \% of its values affected and over land no location had more than \Sexpr{ceiling(results_proxy_update$max_percent_diff_per_pixel_land*100)/100}\% of its values affected. The climatology and trends calculated using either version of the proxy are very similar.
+    \item On the climatology data used in \cite{Raupach_npjCAS_2023} covering storm-prone hours of the day from 1979-2022 across all of Australia, the proxy changes affect the ocean areas in the south and southeast of the domain. However, over the whole map no location had more than \Sexpr{ceiling(results_proxy_update$max_percent_diff_per_pixel_all*100)/100}\% \% of its values affected and over land no location had more than \Sexpr{ceiling(results_proxy_update$max_percent_diff_per_pixel_land*100)/100}\% of its values affected. The climatology and trends calculated using either version of the proxy are very similar.
 \end{enumerate}
 
 \section{Supplementary tables and figures}
@@ -88,14 +91,14 @@ print(tab, booktabs=TRUE, include.rownames=FALSE, size='footnotesize')
 
 \begin{figure*}[p]
     \centering
-    \includegraphics[width=\textwidth]{../../results/supplementary/monthly_anoms_India_2015.pdf}
+    \includegraphics[width=\textwidth]{../../results/supplementary/monthly_anoms_India_2015}
     \caption{\textbf{Monthly proxy-based hail-prone day anomalies for the Indian region in 2015.} Anomalies are calculated using ERA5 data with respect to the monthly ERA5 historical climatology (1980-1999).}
     \label{fig:anoms_India_2015}
 \end{figure*}
 
 \begin{figure*}[p]
     \centering
-    \includegraphics[width=\textwidth]{../../results/supplementary/monthly_anoms_France_2022.pdf}
+    \includegraphics[width=\textwidth]{../../results/supplementary/monthly_anoms_France_2022}
     \caption{As for Supplementary Figure \ref{fig:anoms_India_2015} but for Europe in 2022.}
     \label{fig:anoms_Europe_2022}
 \end{figure*}
@@ -117,7 +120,7 @@ print(tab, booktabs=TRUE, include.rownames=FALSE, size='footnotesize')
 \begin{figure*}[p]
     \centering
     \includegraphics[width=\textwidth]{../../results/supplementary/hail_changes_by_season}
-    \caption{\textbf{Multi-model, multi-proxy mean differences in hail-prone days by season.} DJF stands for December, January, February; MAM stands for March, April, May; JJA stands for June, July, August; SON stands for September, October, November. Stippling shows regions for which at least 50\% of the model/proxy combinations showed a statistically  significant difference ($p <$ 0.05 using Welch's t-test) and agreed on the sign of the change.}
+    \caption{\textbf{Multimodel, multi-proxy mean differences in hail-prone days by season.} DJF stands for December, January, February; MAM stands for March, April, May; JJA stands for June, July, August; SON stands for September, October, November. Stippling shows regions for which at least 50\% of the model/proxy combinations showed a statistically  significant difference ($p <$ 0.05 using Welch's t-test) and agreed on the sign of the change.}
     \label{fig:hail_changes_by_season}
 \end{figure*}
 
@@ -126,7 +129,7 @@ print(tab, booktabs=TRUE, include.rownames=FALSE, size='footnotesize')
     \includegraphics[width=0.96\textwidth]{../../results/supplementary/ingredients_changes_shear}
     \includegraphics[width=0.98\textwidth]{../../results/supplementary/ingredients_changes_cin}
     \includegraphics[width=0.98\textwidth]{../../results/supplementary/ingredients_changes_lifted_index}
-    \caption{\textbf{Multi-model mean differences in hail ingredients by epoch.} Ingredients shown are annual extreme (99th percentile) convective available potential energy (CAPE), annual extreme (99th percentile) 0-6 km bulk wind shear (S06), annual mean convective inhibition (CIN), and annual extreme (1st percentile) lifted index. Stippling as for Supplementary Figure \ref{fig:hail_changes_by_season}.}
+    \caption{\textbf{Multimodel mean differences in hail ingredients by epoch.} Ingredients shown are annual extreme (99th percentile) convective available potential energy (CAPE), annual extreme (99th percentile) 0-6 km bulk wind shear (S06), annual extreme (1st percentile) convective inhibition (CIN), and annual extreme (1st percentile) lifted index. Stippling as for Supplementary Figure \ref{fig:hail_changes_by_season}.}
     \label{fig:ingredients_changes_1}
 \end{figure*}
 
@@ -135,21 +138,21 @@ print(tab, booktabs=TRUE, include.rownames=FALSE, size='footnotesize')
     \includegraphics[width=\textwidth]{../../results/supplementary/ingredients_changes_mlh}
     \includegraphics[width=\textwidth]{../../results/supplementary/ingredients_changes_temp}
     \includegraphics[width=\textwidth]{../../results/supplementary/ingredients_changes_lapse_rate}
-    \caption{As for Supplementary Figure \ref{fig:ingredients_changes_1} but for annual mean meltive level height (MLH), annual mean temperature at 500 hPa ($T_{500}$), and annual mean lapse rate (LR). To increase contrast the colour scale for LR is truncated.}
+    \caption{As for Supplementary Figure \ref{fig:ingredients_changes_1} but for annual mean melting level height (MLH), annual mean temperature at 500 hPa ($T_{500}$), and annual mean lapse rate (LR). To increase contrast the colour scale for LR is truncated.}
     \label{fig:ingredients_changes_2}
 \end{figure*}
 
 \begin{figure*}[p]
     \centering
     \includegraphics[width=\textwidth]{../../results/supplementary/historical_crop_propertion_hail_prone}
-    \caption{\textbf{Multi-model, multi-proxy mean hail-prone proportions of cropping seasons for the historical period.} Brackets in titles show overall mean hail-prone proportion of cropping seasons by crop. Plots are subset to remove areas with no crop data.}
+    \caption{\textbf{Multimodel, multi-proxy mean hail-prone proportions of cropping seasons for the historical period.} Brackets in titles show overall mean hail-prone proportion of cropping seasons by crop. Plots are subset to remove areas with no crop data.}
     \label{fig:historic_crop_proportions}
 \end{figure*}
 
 \begin{figure*}[p]
     \centering
     \includegraphics[width=\textwidth]{../../results/supplementary/changes_crop_propertion_hail_prone_2C}
-    \caption{\textbf{Multi-model, multi-proxy mean change in hail-prone proportions of cropping seasons for 2 \degr{} warming.} Stippling as for Supplementary Figure \ref{fig:hail_changes_by_season} and region subset as for Supplementary Figure \ref{fig:historic_crop_proportions}.}
+    \caption{\textbf{Multimodel, multi-proxy mean change in hail-prone proportions of cropping seasons for 2 \degr{} warming.} Stippling as for Supplementary Figure \ref{fig:hail_changes_by_season} and region subset as for Supplementary Figure \ref{fig:historic_crop_proportions}.}
     \label{fig:crop_changes_2C}
 \end{figure*}
 
@@ -163,7 +166,7 @@ print(tab, booktabs=TRUE, include.rownames=FALSE, size='footnotesize')
 \begin{figure*}[p]
     \centering
     \includegraphics[width=\textwidth]{../../results/supplementary/crop_changes_asia}
-    \caption{\textbf{Regional, relative changes in hail-prone proportion of cropping season}. As for Supplementary Figure \ref{fig:crop_changes_3C} but for Asia, and with changes shown as percentages of the historical hail-prone proportion of cropping season. Crops for which there were no significant changes recorded not shown. The colourbar is truncated to the range of stippled values and is non-linear with zero at the centre.}
+    \caption{\textbf{Regional, relative changes in hail-prone proportion of cropping season}. As for Supplementary Figure \ref{fig:crop_changes_3C} but for Asia, and with changes shown as percentages of the historical hail-prone proportion of cropping season. Crops for which there were no significant changes recorded not shown. The colour bar is truncated to the range of stippled values and is non-linear with zero at the centre.}
     \label{fig:crop_changes_asia}
 \end{figure*}
 
@@ -204,7 +207,34 @@ print(tab, booktabs=TRUE, include.rownames=FALSE, size='footnotesize')
 
 \begin{figure*}[p]
     \centering
-    \includegraphics[width=\textwidth]{../../results/supplementary/era5_all_proxies}
+    \includegraphics[width=\textwidth]{../../results/supplementary/crop_lines_af}
+    \includegraphics[width=\textwidth]{../../results/supplementary/crop_lines_as}
+    \includegraphics[width=\textwidth]{../../results/supplementary/crop_lines_au}
+    \caption{\textbf{Changes affecting crops at point locations.} \todo{Fix widths.}}
+    \label{fig:crop_lines_1}
+\end{figure*}
+
+\begin{figure*}[p]
+    \centering
+    \includegraphics[width=\textwidth]{../../results/supplementary/crop_lines_ca}
+    \includegraphics[width=\textwidth]{../../results/supplementary/crop_lines_eu}
+    \includegraphics[width=\textwidth]{../../results/supplementary/crop_lines_nz}
+    \caption{\textbf{Changes affecting crops at point locations.} \todo{Fix widths.}}
+    \label{fig:crop_lines_2}
+\end{figure*}
+
+\begin{figure*}[p]
+    \centering
+    \includegraphics[width=0.83\textwidth]{../../results/supplementary/all_drivers}
+    \caption{\textbf{Drivers of changes across models.} Rows show de-biased ingredients: freezing level height (FLH), lapse rate (LR), melting level height (MLH), mixed-layer CAPE (MLCAPE), mixed-layer CIN (MLCIN), deep convective index (DCI), lifted index (LI), most-unstable CAPE (MUCAPE), most-unstable CIN (MUCIN), most-unstable mixing ratio (MUMR), 0-6 km bulk shear (S06), and temperature at 500 hPa (T500).}
+    \label{fig:drivers}
+\end{figure*}
+
+
+
+\begin{figure*}[p]
+    \centering
+    \includegraphics[width=0.92\textwidth]{../../results/supplementary/era5_all_proxies}
     \caption{\textbf{Mean annual hail-prone days for ERA5 reanalysis (1980-1999) for all applied hail proxies.}}
     \label{fig:historical_all_proxies}
 \end{figure*}
