@@ -2664,7 +2664,7 @@ def plot_crop_lines(
     lat,
     lon,
     crops,
-    figsize=(12, 3.7),
+    figsize=(12, 3.6),
     legend_renamer={
         'epoch': 'Epoch',
         'proxy': 'Proxy',
