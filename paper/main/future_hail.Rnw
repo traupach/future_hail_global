@@ -12,15 +12,17 @@
 
 \title{Shifting hail hazard under global warming}
 
-\author*[1,2]{\fnm{Timothy H.} \sur{Raupach}}\email{timothy.h.raupach@gmail.com}
-\author[3]{\fnm{Raphael} \sur{Portmann}}
-\author[4]{\fnm{Christian} \sur{Siderius}}
-\author[1,2]{\fnm{Steven C.} \sur{Sherwood}}
+\author*[1,2,3]{\fnm{Timothy H.} \sur{Raupach}}\email{timothy.h.raupach@gmail.com}
+\author[4,5]{\fnm{Raphael} \sur{Portmann}}
+\author[6]{\fnm{Christian} \sur{Siderius}}
+\author[2,3]{\fnm{Steven C.} \sur{Sherwood}}
 
-\affil[1]{\orgdiv{Climate Change Research Centre}, \orgname{UNSW Sydney}, \orgaddress{\street{Mathews Building Level 4}, \city{The University of New South Wales, Sydney}, \postcode{2051}, \state{NSW}, \country{Australia}}}
-\affil[2]{\orgdiv{ARC Centre of Excellence for Climate Extremes}, \orgname{UNSW Sydney}, \orgaddress{\country{Australia}}}
-\affil[3]{\orgdiv{Agroscope}, \orgname{Swiss Federal Office for Agriculture}, \orgaddress{\city{Zurich}, \country{Switzerland}}}
-\affil[4]{\orgname{Uncharted Waters Research}, \orgaddress{\city{Sydney}, \country{Australia}}}
+\affil[1]{\orgdiv{Institute for Climate Risk and Response}, \orgname{UNSW Sydney}, \orgaddress{\street{Mathews Building Level 4}, \city{The University of New South Wales, Sydney}, \postcode{2051}, \state{NSW}, \country{Australia}}}
+\affil[2]{\orgdiv{Climate Change Research Centre}, \orgname{UNSW Sydney}, \orgaddress{\country{Australia}}}
+\affil[3]{\orgdiv{ARC Centre of Excellence for Climate Extremes}, \orgname{UNSW Sydney}, \orgaddress{\country{Australia}}}
+\affil[4]{\orgdiv{Agroscope}, \orgname{Swiss Federal Office for Agriculture}, \orgaddress{\city{Zurich}, \country{Switzerland}}}
+\affil[5]{\orgname{Planval}, \orgaddress{\city{Bern}, \country{Switzerland}}}
+\affil[6]{\orgname{Uncharted Waters Research}, \orgaddress{\city{Sydney}, \country{Australia}}}
 
 \abstract{Hailstorms cause significant damage across the globe, but changes to
 hailstorms in a warming climate are not well quantified. Here, we apply hail
@@ -50,38 +52,37 @@ summer crops.}
 #results = fromJSON(file='../../results/results.json')
 @
 
-Hailstorms are extreme weather that cause significant damage to assets and crop losses worldwide. Hail and the storms that produce it are expected to be affected by anthropogenic global warming, yet regional studies using observations or projections show geographical inhomogeneities and there remains high uncertainty on the details of any changes \cite{Raupach_NREE_2021}. Globally, hail observations are scarce\cite{Raupach_NREE_2021}, meaning global climatologies generally rely on satellite data \cite{Cecil_JC_2012,Bang_JAMC_2019} or examination of environmental conditions in reanalyses using hail proxies \cite{Prein_WCE_2018}. Here, we global projections of future hail hazard, using a hail proxies applied to model output from the Coupled Model Intercomparison Project (CMIP6) \cite{Eyring_GMD_2016} in a per-degree framework.
+Hailstorms are a form of extreme weather that causes significant damage to physical assets including crops. Hail and the storms that produce it are expected to be affected by anthropogenic global warming, yet regional studies using observations or projections show geographical inhomogeneities and there remains high uncertainty on the details of any changes \cite{Raupach_NREE_2021}. Globally, hail observations are scarce \cite{Raupach_NREE_2021}, meaning global climatologies generally rely on satellite data \cite{Cecil_JC_2012,Bang_JAMC_2019} or examination of environmental conditions in reanalyses using hail proxies \cite{Prein_WCE_2018}. Here, we global projections of future hail hazard, using a hail proxies applied to model output from the Coupled Model Intercomparison Project (CMIP6) \cite{Eyring_GMD_2016} in a per-degree framework.
 
 \section*{Results}
 \label{sec:results}
 
 \subsection*{Comparison to ERA5 for historical period}
 
-Figure \ref{fig:cmip_era_comparison} shows a comparison between the multi-model, multi-proxy mean of annual hail-prone days for the CMIP6 models, and the multi-proxy mean of annual hail-prone days for the ERA5 reanalyses. Supplementary Figure \ref{SM-fig:historical_annual_means} shows mean annual hail-prone days for the individual models and ERA5 for each proxy. While the CMIP6 models show a wide spread of absolute values, the locations of hail hotspots match well between reanalysis and models. The models MPI-ESM1-2-HR and EC-Earth show similar numbers of hail-prone days to ERA5, while MIROC6, CMCC-CM2-SR5, and CMCC-ESM2 show moderately more and CNRM-CM6-1 and GISS-E2-1-G show significantly more hail activity than ERA5. There are also differences across the selected hail proxies, with the Significant Hail Parameter (SHIP) \cite{SPC_SHIP} producing the least hail-prone days and the proxy of Raupach et al. 2023 without extra conditions \cite{Raupach_MWR_2023} producing the greatest number of hail-prone days. Given the geographical agreement but differences in absolute numbers of hail-prone days, we consider relative changes per model in the rest of our analyses. 
+Figure \ref{fig:cmip_era_comparison} shows a comparison between the multimodel, multi-proxy mean of annual hail-prone days for the CMIP6 models, and the multi-proxy mean of annual hail-prone days for the ERA5 reanalyses. While the results for individual CMIP6 models show a wide spread of absolute values (Supplementary Figure \ref{SM-fig:historical_annual_means}), the locations of hail hotspots match well between reanalysis and models. The models MPI-ESM1-2-HR and EC-Earth show similar numbers of hail-prone days to ERA5, while MIROC6, CMCC-CM2-SR5, and CMCC-ESM2 show moderately more and CNRM-CM6-1 and GISS-E2-1-G show significantly more hail activity than ERA5. There are also differences across the selected hail proxies, with the Significant Hail Parameter (SHIP) \cite{SPC_SHIP} producing the least hail-prone days and the proxy of Raupach et al. 2023 without extra conditions \cite{Raupach_MWR_2023} producing the greatest number of hail-prone days. Given the geographical agreement but differences in absolute numbers of hail-prone days, we consider relative changes per model in the rest of our analyses. 
 
 \begin{figure*}[h!]
     \includegraphics[width=\textwidth]{../../results/main/CMIP6_ERA5_comparison_historical}
-    \caption{\textbf{Hail proxies show known hail-prone regions in both projections and reanalysis}. Multi-model, multi-proxy mean annual hail-prone days for CMIP6 models (a), and multi-proxy mean annual hail-prone days for ERA5 reanalysis (b), for four selected proxies over the historical period (1980-1999) at 1 $\times$ 1 $^{\circ}$ resolution.}
+    \caption{\textbf{Hail proxies show known hail-prone regions in both projections and reanalysis}. Multimodel, multi-proxy mean annual hail-prone days for CMIP6 models (a), and multi-proxy mean annual hail-prone days for ERA5 reanalysis (b), for four selected proxies over the historical period (1980-1999) at 1 $\times$ 1 $^{\circ}$ resolution.}
     \label{fig:cmip_era_comparison}
 \end{figure*}
 
-\subsection*{Case study hail-prone day anomalies}
+\subsection*{Case study of hail-prone day anomalies}
 
-Figure \ref{fig:case_anomalies} shows multi-proxy mean monthly anomalies, derived using ERA5 reanalysis data, in proxy-derived hail-prone days for months with known high occurrences of damaging hailstorms. The proxy produced higher than average numbers of hail-prone days for February 2015 in northern and central India, regions that were affected by hailstorms that caused major losses to wheat crops at this time \citep{Singh_CS_2017}. Similarly the proxy highlights areas of central and southern Europe as particularly hail-prone in June 2022, when the passage of two low-pressure systems caused hailstorm outbreaks across these regions \citep{Pucik_2023} that broke records for insured losses in France \citep{Soyka_2023}. The proxy also identified April 2015 and October 2022 as unusually hail-prone months in northeast India and western France, respectively (Supplementary Figures \ref{SM-fig:anoms_India_2015} and \ref{SM-fig:anoms_Europe_2022}); there were reported hailstorms in both regions during the respective months \cite{Chattopadhyay_Mausam_2017, Pucik_2023}. These case-study results increase our confidence in the ability of the hail proxies, which were trained using data from Australia \citep{Raupach_MWR_2023}, Italy \citep{Eccel_IJC_2012}, and the United States \citep{SPC_SHIP} \todo{check} to identify hail-prone conditions worldwide.
-
-\begin{figure*}[h!]
-    \includegraphics[width=\textwidth]{../../results/main/case_anomalies.pdf}
-    \caption{\textbf{Hail-proxy anomalies highlight known hail-prone periods.} Colours show the monthly anomaly in proxy-derived hail-prone days in ERA5 data with respect to the monthly historical climatology (1980-1999), for the Indian subcontinent in February 2015 (a) and Europe in June 2022 (b). Anomalies for all months in these selected years are shown for the Indian subcontinent and Europe in Supplementary Figures \ref{SM-fig:anoms_India_2015} and \ref{SM-fig:anoms_Europe_2022}, respectively.}
-    \label{fig:case_anomalies}
-\end{figure*}
+Monthly anomalies, derived using ERA5 reanalysis data, in proxy-derived hail-prone days show higher values for months with known high occurrences of damaging hailstorms. The proxy produced higher than average numbers of hail-prone days for February 2015 in northern and central India (Supplementary Figure \ref{SM-fig:anoms_India_2015}), regions that were affected by hailstorms that caused major losses to wheat crops at this time \citep{Singh_CS_2017}. Similarly, the proxy highlights areas of central and southern Europe as particularly hail-prone in June 2022 (Supplementary Figure \ref{SM-fig:anoms_Europe_2022}), when the passage of two low-pressure systems caused hailstorm outbreaks across these regions \citep{Pucik_2023} that broke records for insured losses in France \citep{Soyka_2023}. The proxy also identified April 2015 and October 2022 as unusually hail-prone months in northeast India and western France, respectively; there were reported hailstorms in both regions during the respective months \cite{Chattopadhyay_Mausam_2017, Pucik_2023}. These case-study results increase our confidence in the ability of the hail proxies, which were trained using data from Australia \citep{Raupach_MWR_2023}, Italy \citep{Eccel_IJC_2012}, and the United States \citep{SPC_SHIP} \todo{check} to identify hail-prone conditions worldwide.
 
 \subsection*{Changes in hail-prone days with warming}
 
-Figure \ref{fig:future_changes_hail_days} shows multi-model, multi-proxy mean changes in annual hail-prone days (differences per model and proxy are shown in Supplementary Figures \ref{SM-fig:hail_diffs_2C} and \ref{SM-fig:hail_diffs_3C} for 2 \degr{} and 3 \degr{} warming, respectively). Multi-model, multi-proxy mean changes are shown as relative differences zoomed to selected land areas in Figures \ref{fig:future_changes_regional_1} and \ref{fig:future_changes_regional_2}. Multi-model, multi-proxy mean differences by season are shown in Supplementary Figure \ref{SM-fig:hail_changes_by_season}.
+Figure \ref{fig:future_changes_hail_days} shows multimodel, multi-proxy mean changes in annual hail-prone days for 2 \degr{} and 3 \degr{} warming, respectively. Multimodel, multi-proxy mean changes are shown as relative differences zoomed to selected land areas in Figures \ref{fig:future_changes_regional_1} and \ref{fig:future_changes_regional_2}. There is an overall poleward shift of hail-prone conditions.
+
+\begin{itemize}
+\item \todo{Incorporate supplementary figures.} Differences per model and proxy are shown in Supplementary Figures \ref{SM-fig:hail_diffs_2C} and \ref{SM-fig:hail_diffs_3C}. Multimodel, multi-proxy mean differences by season are shown in Supplementary Figure \ref{SM-fig:hail_changes_by_season}.
+\item \todo{Comment on regional changes in Figures 3 and 4.}
+\end{itemize}
 
 \begin{figure*}[h!]
     \includegraphics[width=\textwidth]{../../results/main/change_annual_hail_days_abs}
-    \caption{\textbf{Hail-prone conditions shift under warming projections.} Multi-proxy, multi-model mean changes in annual hail-prone days for 2 \degr{} (a) and 3 \degr{} (b) of global warming. Stippling shows regions in which at least 50\% of the model/proxy combinations agreed with the sign of the mean difference and also showed significant differences in the mean ($p < 0.05$ on a t-test on two related samples).}
+    \caption{\textbf{Hail-prone conditions shift under warming projections.} Multi-proxy, multimodel mean changes in annual hail-prone days for 2 \degr{} (a) and 3 \degr{} (b) of global warming. Stippling shows regions in which at least 50\% of the model/proxy combinations agreed with the sign of the mean difference and also showed significant differences in the mean ($p < 0.05$ on a t-test on two related samples).}
     \label{fig:future_changes_hail_days}
 \end{figure*}
 
@@ -89,7 +90,7 @@ Figure \ref{fig:future_changes_hail_days} shows multi-model, multi-proxy mean ch
     \includegraphics[width=\textwidth]{../../results/main/regional_change_asia}
     \includegraphics[width=\textwidth]{../../results/main/regional_change_oceania}
     \includegraphics[width=\textwidth]{../../results/main/regional_change_north_america}   
-    \caption{\textbf{Multi-proxy, multi-model mean changes in annual hail-prone days by region.} Changes are shown as a percentage of historical hail-prone days over land for 2 \degr{} warming (a-c) and 3 \degr{} warming (g-i) for Asia (a, g), Australasia (b, h), and North America (c, i). Stippling as for Figure \ref{fig:future_changes_hail_days}. Colourbars are shared across rows; to increase contrast the colourbar for a and g is truncated.}
+    \caption{\textbf{Multi-proxy, multimodel mean changes in annual hail-prone days by region.} Changes are shown as a percentage of multi-proxy, multimodel mean historical hail-prone days over land, for 2 \degr{} warming (a-c) and 3 \degr{} warming (g-i) for Asia (a, g), Australasia (b, h), and North America (c, i). Stippling as for Figure \ref{fig:future_changes_hail_days}. Colour bars are shared across rows; to increase contrast the colour bar for a and g is truncated.}
     \label{fig:future_changes_regional_1}
 \end{figure*}
 
@@ -101,30 +102,44 @@ Figure \ref{fig:future_changes_hail_days} shows multi-model, multi-proxy mean ch
     \label{fig:future_changes_regional_2}
 \end{figure*}
 
-\subsection*{Changes in atmospheric ingredients for hail}
+\subsection*{Drivers of the projected changes}
 
-Supplementary Figures \ref{SM-fig:ingredients_changes_1} and \ref{SM-fig:ingredients_changes_2} show changes in hail proxy ``ingredients'' by epoch. 
+Future projections show almost uniform increases in convective instability, with increases in extreme values of convective available potential energy (CAPE) and lifted index (LI), and increasing convective inhibition that may lead to more explosive development of severe storms (Supplementary Figure \ref{SM-fig:ingredients_changes_1}). Projections in extremes in 0-6 km bulk wind shear (S06) show decreases (mixed increases) in the northern (southern) hemisphere (Supplementary Figure \ref{SM-fig:ingredients_changes_1}). Temperature-related ingredients naturally increase in the warmer scenarios (Supplementary Figure \ref{SM-fig:ingredients_changes_2}). 
+
+Figure \ref{fig:drivers} shows the main drivers of projected changes in this study, shown as the difference between these projected changes and changes when the future values for single ingredients were artificially de-biased. The ingredients driving the changes depend on the proxy. Overall, increases in instability drive increases in hail-prone environment frequency while increases in temperature-related ingredients drive reductions in hail-prone environment occurrence. The sums of changes across de-biased ingredients are close to the projected changes where no ingredients were de-biased, indicating that this experiment explains most of the projected changes, with the small differences that remain likely related to interactions between ingredients. The large differences between the proxy of \cite{Eccel_IJC_2012} and the other proxies are caused by Eccel's proxy reacting to increases in instability without taking temperature changes into account. Changes in SHIP are driven mainly by changes in the most-unstable mixing ratio. In the Raupach proxies, increases owing to instability increases are offset by changes in melting level height and $T_{500}$.
+
+\begin{figure*}[h!]
+    \includegraphics[width=\textwidth]{../../results/main/sig_drivers}
+    \caption{The main drivers of the projected changes (all drivers are shown in Supplementary Figure \ref{SM-fig:drivers}). All plots are multimodel means. Plots show the difference in hail prone days between historical and the 3C epoch for unchanged ingredients, minus the difference with the given ingredient de-biased in the 3C epoch. Red (blue) areas show where an ingredient added to (subtracted from) the projected change. Ingredients shown here are melting level height (MLH, a-d), mixed-layer CAPE (MLCAPE, e-h), most-unstable mixing ratio (MUMR, i-l), and temperature at 500 hPa (T500, m-p). ``Sum'' (q-t) shows sums across changes from all de-biased ingredients (that is, column sums from Supplementary Figure \ref{SM-fig:drivers}) and ``Ref'' (u-x) shows the projected changes per proxy when no ingredients were de-biased. Columns show hail proxies and the colour scale is in annual hail days.}
+    \label{fig:drivers}
+\end{figure*}
 
 \subsection*{Changes in hail-prone days in cropping periods}
 
+For the historic period, the most hail-prone crops are millet, sorghum, soybeans, maize, groundnuts/peanuts, pulses, and wheat in the African tropics (Supplementary Figure \ref{SM-fig:historic_crop_proportions}). Warming of 2 \degr{} and 3 \degr{} is projected to reduce the hail-prone cropping period for these crops while increasing the risk for crops grown in more poleward regions (Supplementary Figures \ref{SM-fig:crop_changes_2C} and \ref{SM-fig:crop_changes_3C}). 
+
+Figure \ref{fig:crop_changes} shows changes in the proportion of crop growing time that is considered hail-prone, by world region (regional maps of relative projected changes per crop are shown in Supplementary Figures \ref{SM-fig:crop_changes_asia}, \ref{SM-fig:crop_changes_oceania}, \ref{SM-fig:crop_changes_north_america}, \ref{SM-fig:crop_changes_south_america}, \ref{SM-fig:crop_changes_europe} and \ref{SM-fig:crop_changes_africa}). In Africa, all crops are projected to experience fewer hail-prone days. Likewise in South America, all crops show projected decreased risk, with possible increases for barley, millet, and rye in the 3 \degr{} scenario. In Asia and Europe, the crops of barley, fodder grasses, grapes/vine, rye, and wheat show particular projected increases in risk in the future scenarios. In Oceania, barley shows a projected increase in risk while all other crops show projected decreases in risk. Examinations of monthly changes for point locations (Supplementary Figures \ref{SM-fig:crop_lines_1} and \ref{SM-fig:crop_lines_2}) highlight that the crops with the greatest increases in risk are those with winter cropping periods, while those with the greatest reductions in risk are those that grow across summer periods. \todo{More regional analysis.}
+
 \begin{figure*}[h!]
     \includegraphics[width=\textwidth]{../../results/main/crop_changes}
-    \caption{Distributions of significant changes in hail-prone crop proportion by crop, epoch, and world region. Regions are defined as in Figure \ref{fig:future_changes_regional_1}. Changes multi-model, multi-proxy mean changes shown as a percentage of the multi-model, multi-proxy mean historical hail-prone crop proportion. Significant changes are those for which at least 50\% of the model/proxy combinations agreed with the sign of the mean difference and also showed significant differences in the mean ($p < 0.05$ using Welch's t-test). Coloured boxes show inter-quartile ranges, whiskers show 10th-90th percentile ranges.}
+    \caption{Distributions of significant changes in hail-prone crop proportion (HPP) by crop, epoch, and world region. Regions are defined as in Figure \ref{fig:future_changes_regional_1}. Changes multimodel, multi-proxy mean changes shown as a percentage of the multimodel, multi-proxy mean historical hail-prone crop proportion. Significant changes are those for which at least 50\% of the model/proxy combinations agreed with the sign of the mean difference and also showed significant differences in the mean ($p < 0.05$ using Welch's t-test). Coloured boxes show interquartile ranges, whiskers show 10th-90th percentile ranges.}
     \label{fig:crop_changes}
 \end{figure*}
 
 \section*{Discussion}
 
-Although we show proxy results globally, the proxies used were trained using land-based reports \cite{Raupach_MWR_2023, Eccel_IJC_2012} and there is uncertainty in the occurrence of hail in maritime storms \citep{Knight_2001}.
-
-Leung et al., 2023 also observed a northward shift in hailstorms in the US from 2000 (preprint at https://assets.researchsquare.com/files/rs-3217821/v1\_covered\_a256d1b8-b2e0-41b6-ab9c-e2628059bc91.pdf?c=1699615569.)
+\begin{itemize}
+\item Although we show proxy results globally, the proxies used were trained using land-based reports \cite{Raupach_MWR_2023, Eccel_IJC_2012} and there is uncertainty in the occurrence of hail in maritime storms \citep{Knight_2001}.
+\item Leung et al., 2023 also observed a northward shift in hailstorms in the US from 2000 (preprint at https://assets.researchsquare.com/files/rs-3217821/v1\_covered\_a256d1b8-b2e0-41b6-ab9c-e2628059bc91.pdf?c=1699615569.)
+\item It is clear that Eccel 2012 shows an increase where the Raupach proxies and SHIP show decreases. This is explained by the non-Eccel proxies taking changes in temperature explicitly into account, but the discrepancy also increases the uncertainty in these results.
+\end{itemize}
 
 \section*{Online methods}
 \label{sec:methods}
 
 \subsection*{Data}
 
-We used a filtering approach to select models from the Coupled Model Intercomparison Project Phase 6 (CMIP6) \cite{Eyring_GMD_2016}. We selected models that contained variables required to calculate convective indices: air temperature at the surface (\texttt{tas}) and by model level (\texttt{ta}), wind vectors at the surface (\texttt{uas} and \texttt{vas}) and by level (\texttt{ua} and \texttt{va}), specific humidity at the surface (\texttt{huss}) and by level (\texttt{hus}), and surface pressure (\texttt{ps}). We filtered for models with a temperal resolution higher than six-hourly (those with ``table IDs'' of \texttt{3hr} or \texttt{6hrLev}), and models that were available for both historical and SSP5-8.5 experiments (``experiment IDs'' of \texttt{historical} or \texttt{ssp585}). Further, the models had to be available in the National Computational Infrastructure (NCI) node of the Earth System Grid Federation (ESGF), and had to cover the required epochs. The resulting CMIP6 models, that we used here, are detailed in Supplementary Table \ref{SM-tab:model_details}. If model orography was available in the \texttt{orog} variable, it was used; if not, the orography of the historical runs of CNRM-CM6-1 (ensemble r1i1p1f2) was interpolated onto the model grid and used instead \cite{Bracegirdle_ASL_2020}. Reanalyses were European Centre for Medium-range Weather Forecasts (ECMWF) reanalysis 5 (ERA5) data \cite{Hersbach_QJRMS_2020} on pressure levels \cite{ERA5_data}. To match the CMIP6 model characteristics, we used global ERA5 data at 00, 06, 12, and 18 UTC for each day from 1980--1999, interpolated to 1$\times$1 $^{\circ}$ resolution. 
+A filtering approach was used to select models from the Coupled Model Intercomparison Project Phase 6 (CMIP6) \cite{Eyring_GMD_2016}. We selected models that contained variables required to calculate convective indices: air temperature at the surface (\texttt{tas}) and by model level (\texttt{ta}), wind vectors at the surface (\texttt{uas} and \texttt{vas}) and by level (\texttt{ua} and \texttt{va}), specific humidity at the surface (\texttt{huss}) and by level (\texttt{hus}), and surface pressure (\texttt{ps}). We filtered for models with a temporal resolution higher than six-hourly (those with ``table IDs'' of \texttt{3hr} or \texttt{6hrLev}), and models that were available for both historical and SSP5-8.5 experiments (``experiment IDs'' of \texttt{historical} or \texttt{ssp585}). Further, the models had to be available in the National Computational Infrastructure (NCI) node of the Earth System Grid Federation (ESGF), and had to cover the required epochs. The resulting CMIP6 models, that we used here, are detailed in Supplementary Table \ref{SM-tab:model_details}. If model orography was available in the \texttt{orog} variable, it was used; if not, the orography of the historical runs of CNRM-CM6-1 (ensemble r1i1p1f2) was interpolated onto the model grid and used instead \cite{Bracegirdle_ASL_2020}. Reanalyses were European Centre for Medium-range Weather Forecasts (ECMWF) reanalysis 5 (ERA5) data \cite{Hersbach_QJRMS_2020} on pressure levels \cite{ERA5_data}. To match the CMIP6 model characteristics, we used global ERA5 data at 00, 06, 12, and 18 UTC for each day from 1980 to 1999, interpolated to 1$\times$1 $^{\circ}$ resolution. 
 
 \subsection*{Calculation of convective parameters}
 
@@ -132,11 +147,15 @@ Convective parameters were calculated as described for the proxy of Raupach et a
 
 \subsection*{Application of hail proxies}
 
-We applied four hail-specific instability-shear proxies to CMIP6 and ERA5 data. The proxies were those of Raupach et al., 2023 (with and without ``extra conditions'' to remove false positives) \cite{Raupach_MWR_2023}, Eccel et al., 2012 \cite{Eccel_IJC_2012}, and a threshold of 0.1 on the Significant Hail Parameter (SHIP) \cite{SPC_SHIP}. The proxies of Kunz 2007 \cite{Kunz_NHESS_2007} and Mohr and Kunz, 2013 \cite{Mohr_AR_2013} were tested but were found to produce unrealistically many hail-prone days in tropical regions for which they were not trained \cite{Raupach_MWR_2023} (Supplementary Figure \ref{SM-fig:historical_all_proxies}). Similarly, the threshold of 0.5 on SHIP, as has been used in other studies for severe hail \cite{Prein_WCE_2018}, was found to produce too few hail-prone days in comparison with the other proxy results which are for any hail (Supplementary Figure \ref{SM-fig:historical_all_proxies}), and was therefore excluded here. 
+We applied four hail-specific instability-shear proxies to CMIP6 and ERA5 data. The proxies were those modified versions of Raupach et al., 2023 (with and without ``extra conditions'' to remove false positives) \cite{Raupach_MWR_2023}, Eccel et al., 2012 \cite{Eccel_IJC_2012}, and a threshold of 0.1 on the Significant Hail Parameter (SHIP) \cite{SPC_SHIP}. The modifications made to the proxies of \cite{Raupach_MWR_2023} are detailed in Supplementary Material Section \ref{SM-sec:proxy-update}. The proxies of Kunz 2007 \cite{Kunz_NHESS_2007} and Mohr and Kunz, 2013 \cite{Mohr_AR_2013} were tested but were found to produce unrealistically many hail-prone days in tropical regions for which they were not trained \cite{Raupach_MWR_2023} (Supplementary Figure \ref{SM-fig:historical_all_proxies}). Similarly, the threshold of 0.5 on SHIP, as has been used in other studies for severe hail \cite{Prein_WCE_2018}, was found to produce too few hail-prone days in comparison with the other proxy results which are for any hail (Supplementary Figure \ref{SM-fig:historical_all_proxies}), and was therefore excluded here. 
 
 \subsection*{Per-degree framework}
 
-The historical period used for each model was 1980--1999. The epochs that represented 2 \degr{} and 3 \degr{} warming compared to the historical period were determined per model using 20-year running means of monthly global average temperature anomalies. The date ranges for each epoch are shown in Supplementary Figure \ref{SM-fig:epochs}.
+The historical period used for each model was 1980--1999. The epochs that represented 2 \degr{} and 3 \degr{} warming compared to the historical period were determined per model using 20-year running means of monthly global average temperature anomalies (Supplementary Figure \ref{SM-fig:epochs}).
+
+\subsection*{Calculation of drivers}
+
+For each hail proxy ingredient, de-biased versions of the 3 \degr{} epoch were calculated using \texttt{python-cmethods} v2.3.0 \cite{Schwertfeger_2024} using the quantile-mapping method with 100 quantiles and the historical period as the baseline.
 
 \backmatter
 
@@ -154,13 +173,13 @@ MIRCA2000 data are available with identifier \url{https://doi.org/10.5281/zenodo
 
 Convective indices were calculated using \texttt{xarray\_parcel} by T. H. Raupach (https://doi.org/10.5281/zenodo.8088497) \todo{Update version with new xarray release}. Warming levels were calculated using code by T. H. Raupach \todo{ref}.
 
-\bmhead{Acknowledgments}
+\bmhead{Acknowledgements}
 
-This research was undertaken with the assistance of resources and services from the NCI, which is supported by the Australian Government.
+This research was undertaken with the assistance of resources and services from the NCI, which is supported by the Australian Government. THR acknowledges financial support from QBE Insurance.
 
 \bmhead{Competing interests}
 
-The authors declare no competing financial or non-financial interests.
+Since March 2024 THR's position at UNSW Sydney has been financially supported by QBE Insurance. The authors declare no other competing financial or non-financial interests.
 
 \bmhead{Author contributions}
 
