@@ -2675,6 +2675,11 @@ def plot_crop_lines(
         'SHIP_0.1': 'SHIP > 0.1',
         'Eccel2012': 'Eccel 2012',
     },
+    crop_renamer={
+        'Fodder grasses': '  Fodder',
+        'Groundnuts / Peanuts': 'Peanuts',
+        'Barley': '  Barley'
+    },
     legend_col_length=8,
     file=None
 ):
@@ -2746,6 +2751,7 @@ def plot_crop_lines(
     for i, crop in enumerate(crops):
         c = crop_dat.sel(crop=crop).isel(epoch=0)
         c = c.where(np.isnan(c), other=i)
+
         c.name = 'crop_month'
         sns.pointplot(
             c.to_dataframe(),
@@ -2778,7 +2784,7 @@ def plot_crop_lines(
     map_ax.patch.set_visible(False)
 
     months_ax.set_frame_on(False)
-    months_ax.set_yticks([0, 1, 2], crops)
+    months_ax.set_yticks([0, 1, 2], [crop_renamer[x] if x in crop_renamer else x for x in crops])
     months_ax.set_ylabel('')
     months_ax.set_xlabel('')
     months_ax.set_ylim(-0.2, 2.2)
