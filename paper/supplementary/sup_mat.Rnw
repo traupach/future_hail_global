@@ -16,7 +16,8 @@
 \renewcommand\refname{Supplementary References}
 
 \title{Shifting hail hazard under global warming: supplementary information}
-\author{Timothy H. Raupach$^{1,2,3}$, Raphael Portmann$^{4,5}$, Christian Siderius$^{6}$, \\and Steven C. Sherwood$^{2,3}$ \\
+\author{Timothy H. Raupach$^{1,2,3}$, Raphael Portmann$^{4,5}$, Christian Siderius$^{6}$, \\
+ and Steven C. Sherwood$^{2,3}$ \\
  \\
  \footnotesize 1: Institute for Climate Risk and Response, The University of New South Wales (UNSW), Sydney, Australia \\
  \footnotesize 2: Climate Change Research Centre, UNSW Sydney, Sydney, Australia \\
@@ -129,7 +130,7 @@ print(tab, booktabs=TRUE, include.rownames=FALSE, size='footnotesize')
     \includegraphics[width=0.96\textwidth]{../../results/supplementary/ingredients_changes_shear}
     \includegraphics[width=0.98\textwidth]{../../results/supplementary/ingredients_changes_cin}
     \includegraphics[width=0.98\textwidth]{../../results/supplementary/ingredients_changes_lifted_index}
-    \caption{\textbf{Multimodel mean differences in hail ingredients by epoch.} Ingredients shown are annual extreme (99th percentile) convective available potential energy (CAPE), annual extreme (99th percentile) 0-6 km bulk wind shear (S06), annual extreme (1st percentile) convective inhibition (CIN), and annual extreme (1st percentile) lifted index. Stippling as for Supplementary Figure \ref{fig:hail_changes_by_season}.}
+    \caption{\textbf{Multimodel mean differences in hail ingredients by epoch.} Ingredients shown are annual extreme (99th percentile) convective available potential energy (CAPE), annual extreme (99th percentile) 0-6 km bulk wind shear (S06), annual extreme (1st percentile) convective inhibition (CIN), and annual extreme (1st percentile) lifted index. Stippling as for Supplementary Figure \ref{fig:hail_changes_by_season}. \todo{Make projections consistent}}
     \label{fig:ingredients_changes_1}
 \end{figure*}
 
@@ -138,7 +139,7 @@ print(tab, booktabs=TRUE, include.rownames=FALSE, size='footnotesize')
     \includegraphics[width=\textwidth]{../../results/supplementary/ingredients_changes_mlh}
     \includegraphics[width=\textwidth]{../../results/supplementary/ingredients_changes_temp}
     \includegraphics[width=\textwidth]{../../results/supplementary/ingredients_changes_lapse_rate}
-    \caption{As for Supplementary Figure \ref{fig:ingredients_changes_1} but for annual mean melting level height (MLH), annual mean temperature at 500 hPa ($T_{500}$), and annual mean lapse rate (LR). To increase contrast the colour scale for LR is truncated.}
+    \caption{As for Supplementary Figure \ref{fig:ingredients_changes_1} but for annual mean melting level height (MLH), annual mean temperature at 500 hPa ($T_{500}$), and annual mean lapse rate (LR). To increase contrast the colour scale for LR is truncated. \todo{Make projections consistent}}
     \label{fig:ingredients_changes_2}
 \end{figure*}
 
@@ -210,7 +211,7 @@ print(tab, booktabs=TRUE, include.rownames=FALSE, size='footnotesize')
     \includegraphics[width=\textwidth]{../../results/supplementary/crop_lines_af}
     \includegraphics[width=\textwidth]{../../results/supplementary/crop_lines_as}
     \includegraphics[width=\textwidth]{../../results/supplementary/crop_lines_au}
-    \caption{\textbf{Changes affecting crops at point locations.} \todo{Fix widths.}}
+    \caption{\textbf{Changes affecting crops at point locations.} \todo{Fix widths. Add case study locations. Chris writes: ``In case you add India to Suppl Figure 19, better check the wheat and rice cropping periods. MIRCA has split these crops evenly among the two main seasons in northern India - the two main crops, which is wrong (I might have mentioned before). Wheat growing season should (only) be from Nov-Apr  in Punjab, Uttar Pradesh and Haryana. Harvest starts in March but in many regions extends into April, especially when winter has been colder than usual and the crop takes longer to grow. I can imagine this would expose a much higher fraction to hail risk. Rice is grown primarily from Jul-Oct.''}}
     \label{fig:crop_lines_1}
 \end{figure*}
 
@@ -219,7 +220,7 @@ print(tab, booktabs=TRUE, include.rownames=FALSE, size='footnotesize')
     \includegraphics[width=\textwidth]{../../results/supplementary/crop_lines_ca}
     \includegraphics[width=\textwidth]{../../results/supplementary/crop_lines_eu}
     \includegraphics[width=\textwidth]{../../results/supplementary/crop_lines_nz}
-    \caption{\textbf{Changes affecting crops at point locations.} \todo{Fix widths.}}
+    \caption{\textbf{Changes affecting crops at point locations.} \todo{Fix widths. Add case study locations.}}
     \label{fig:crop_lines_2}
 \end{figure*}
 
