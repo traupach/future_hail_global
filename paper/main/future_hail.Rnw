@@ -246,6 +246,89 @@ the northern (southern) hemisphere (Supplementary Figure
 as expected in the warmer scenarios (Supplementary Figure
 \ref{SM-fig:ingredients_changes_2}). 
 
+\subsection*{Changes in hail-prone proportions of cropping periods}
+
+Figure \ref{fig:crop_changes} shows changes in the proportion of crop growing
+time that is considered hail-prone, for 26 crops by world region. For the
+historic period, the African tropics showed particularly high proportions of
+hail-prone cropping periods for millet, sorghum, soybeans, maize,
+groundnuts/peanuts, and pulses (Supplementary Figure
+\ref{SM-fig:historic_crop_proportions}). Warming of 2 \degr{} and 3 \degr{} was
+projected to reduce the hail-prone cropping period for these crops while
+increasing the risk for crops grown in more poleward regions (Supplementary
+Figures \ref{SM-fig:crop_changes_2C} and \ref{SM-fig:crop_changes_3C}). 
+
+In Africa, all crops were projected to experience fewer hail-prone days, with
+regional increases not statistically significant (Supplementary Figure
+\ref{SM-fig:crop_changes_africa}). In Asia, (Supplementary Figure
+\ref{SM-fig:crop_changes_asia}), there were a variety of responses, with
+decreasing hail-prone cropping periods in India and generally in China.
+Increases in the hail-prone proportion of cropping seasons were projected
+particularly across the north for barley, fodder grasses, grapes/vine,
+rapeseed/canola, rye, and wheat. Maize was projected to experience a greater
+hail-prone proportion of the cropping season in southeastern china but a lesser
+proportion in the northeast, while wheat and rapeseed/canola showed strong
+increases in hail-prone cropping season proportion in northeastern China. 
+
+In Europe, most non-significant changes were decreases, but significant changes
+indicated increases in hail-prone cropping season proportion for barley, fodder
+grasses, grapes/vine, maize, potatoes, pulses, rapeseed/canola, rye, wheat, and
+other annual and perennial crops. The significant increases were generally
+concentrated in a zonal band at around 60\degg{}N and in regions around the Alps
+in Western Europe, an area to the southeast of the Black Sea, and in southern
+Iran (Supplementary Figure \ref{SM-fig:crop_changes_europe}). Increases in
+hail-prone cropping proportion for rye were heavily concentrated in Finland,
+Estonia, Latvia, and the adjoining areas of Russia. In North America, there were
+significant increases for barley and rye in particular, with regional increases
+in the hail-prone proportion for these crops across the central and eastern USA.
+For other crops, there were generally decreases in hail-prone cropping season
+proportion projected in the southeast, with increases projected in the northeast
+and across northern Canada (Supplementary Figure
+\ref{SM-fig:crop_changes_north_america}). In Oceania, barley was projected to
+have increased hail-prone cropping season proportion, albeit with a large range
+in projected changes, while all other crops showed projected decreases in hail
+risk. Significant decreases were concentrated in Australia's northeast, while
+significant increases were concentrated in a small region of southeast Australia
+and the South Island of New Zealand (Supplementary Figure
+\ref{SM-fig:crop_changes_oceania}). In South America, all crops show projected
+decreased risk, but there are possible increases for barley, millet, and rye in
+the 3 \degr{} scenario. Regional changes show statistically significant
+increases in hail hazard for several crops, for example maize and potatoes, in a
+region of the southern Pampas and west to the Andes (Supplementary Figure
+\ref{SM-fig:crop_changes_south_america}).
+
+Examinations of monthly changes for point locations (Supplementary Figures
+\ref{SM-fig:crop_lines_1} and \ref{SM-fig:crop_lines_2}) highlight that the
+crops with the greatest increases in risk are those with winter cropping
+periods, while those with the greatest reductions in risk are those that grow
+across summer periods. \todo{Include two case study locations as a way of
+circling back. Chris writes: ``There is no agreement on India (Fig 3a) but a
+hint of hail-prone days increasing. Southern France shows agreement and
+increase, at least in the area adjacent to the Alps (4a). Re India, better check
+the wheat and rice cropping periods. MIRCA has split these crops evenly among
+the two main seasons in northern India - the two main crops, which is wrong (I
+might have mentioned before). Wheat growing season should (only) be from Nov-Apr
+in Punjab, Uttar Pradesh and Haryana. Harvest starts in March but in many
+regions extends into April, especially when winter has been colder than usual
+and the crop takes longer to grow. I can imagine this would expose a much higher
+fraction to hail risk. Rice is grown primarily from Jul-Oct.''}
+
+\begin{figure*}[!ht]
+    \includegraphics[width=\textwidth]{../../results/main/crop_changes}
+    \caption{Distributions of significant changes in hail-prone crop proportion
+    (HPP) by crop, epoch, and world region. Regions are defined as in Figure
+    \ref{fig:future_changes_regional_1}. Changes are multimodel, multi-proxy
+    mean changes in hail-prone crop proportion, shown as a percentage of the
+    multimodel, multi-proxy mean historical hail-prone crop proportion.
+    Significant changes are those for which at least 50\% of the model/proxy
+    combinations agreed with the sign of the mean difference and also showed
+    significant differences in the mean ($p < 0.05$ using Welch's t-test).
+    Coloured boxes show interquartile ranges, whiskers show 10th-90th percentile
+    ranges.}
+    \label{fig:crop_changes}
+\end{figure*}
+
+
 \subsection*{Drivers of the projected changes}
 
 Figure \ref{fig:drivers} shows the main drivers of projected changes in this
@@ -281,79 +364,6 @@ $T_{500}$.
     de-biased. Columns show hail proxies and the colour scale is in annual hail
     days.}
     \label{fig:drivers}
-\end{figure*}
-
-\subsection*{Changes in hail-prone days in cropping periods}
-
-Figure \ref{fig:crop_changes} shows changes in the proportion of crop growing
-time that is considered hail-prone, by world region and for 26 crops. For the
-historic period, the African tropics showed particularly high proportions of
-hail-prone seasons for millet, sorghum, soybeans, maize, groundnuts/peanuts, and
-pulses (Supplementary Figure \ref{SM-fig:historic_crop_proportions}).
-
-Warming of 2
-\degr{} and 3 \degr{} is projected to reduce the hail-prone cropping period for
-these crops while increasing the risk for crops grown in more poleward regions
-(Supplementary Figures \ref{SM-fig:crop_changes_2C} and
-\ref{SM-fig:crop_changes_3C}). 
-
- 
-
-In Africa, all crops are projected to experience fewer hail-prone days, with
-regional increases not statistically significant (Supplementary Figure
-\ref{SM-fig:crop_changes_africa}). 
-
-In Asia, (Supplementary Figure \ref{SM-fig:crop_changes_asia}).
-
-In Europe (Supplementary Figure \ref{SM-fig:crop_changes_europe}).
-
-In North America (Supplementary Figure \ref{SM-fig:crop_changes_north_america}),
-
-In Oceania, barley shows a projected increase in risk while all other crops show
-projected decreases in risk. (Supplementary Figure
-\ref{SM-fig:crop_changes_oceania}).
-
-In South America, all crops show projected decreased risk, but there are
-possible increases for barley, millet, and rye in the 3 \degr{} scenario.
-Regional changes show statistically significant increases in hail hazard for
-several crops, for example maize and potatoes, in a region of the southern
-Pampas and west to the Andes (Supplementary Figure
-\ref{SM-fig:crop_changes_south_america}).
-
-In Asia and Europe, the crops of barley, fodder grasses,
-grapes/vine, rye, and wheat show particular projected increases in risk in the
-future scenarios. 
-
-Examinations of monthly changes for point locations (Supplementary Figures
-\ref{SM-fig:crop_lines_1} and \ref{SM-fig:crop_lines_2}) highlight that the
-crops with the greatest increases in risk are those with winter cropping
-periods, while those with the greatest reductions in risk are those that grow
-across summer periods. \todo{More regional analysis.} \todo{Include two case
-study locations as a way of circling back. Chris writes: ``There is no agreement
-on India (Fig 3a) but a hint of hail-prone days increasing. Southern France
-shows agreement and increase, at least in the area adjacent to the Alps (4a). Re
-India, better check the wheat and rice cropping periods. MIRCA has split these
-crops evenly among the two main seasons in northern India - the two main crops,
-which is wrong (I might have mentioned before). Wheat growing season should
-(only) be from Nov-Apr  in Punjab, Uttar Pradesh and Haryana. Harvest starts in
-March but in many regions extends into April, especially when winter has been
-colder than usual and the crop takes longer to grow. I can imagine this would
-expose a much higher fraction to hail risk. Rice is grown primarily from
-Jul-Oct.''}
-
-\begin{figure*}[!ht]
-    \includegraphics[width=\textwidth]{../../results/main/crop_changes}
-    \caption{Distributions of significant changes in hail-prone crop proportion
-    (HPP) by crop, epoch, and world region. Regions are defined as in Figure
-    \ref{fig:future_changes_regional_1}. Changes are multimodel, multi-proxy
-    mean changes in hail-prone crop proportion, shown as a percentage of the
-    multimodel, multi-proxy mean historical hail-prone crop proportion.
-    Significant changes are those for which at least 50\% of the model/proxy
-    combinations agreed with the sign of the mean difference and also showed
-    significant differences in the mean ($p < 0.05$ using Welch's t-test).
-    Coloured boxes show interquartile ranges, whiskers show 10th-90th percentile
-    ranges.}
-    \label{fig:crop_changes}
 \end{figure*}
 
 \section*{Discussion}

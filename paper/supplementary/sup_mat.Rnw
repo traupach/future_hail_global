@@ -141,44 +141,54 @@ print(tab, booktabs=TRUE, include.rownames=FALSE, size='footnotesize')
 
 \begin{figure*}[p]
     \centering
+    \includegraphics[width=\textwidth]{../../results/supplementary/crop_changes_africa}
+    \caption{\textbf{Regional, relative changes in hail-prone proportion of
+    cropping season}. As for Supplementary Figure \ref{fig:crop_changes_3C} but
+    for Africa, and with changes shown as percentages of the historical
+    hail-prone proportion of cropping season. Crops for which there were no
+    significant changes recorded not shown. The colour bar is truncated to the
+    range of stippled values and is non-linear with zero at the centre.}
+    \label{fig:crop_changes_africa}
+\end{figure*}
+
+\begin{figure*}[p]
+    \centering
     \includegraphics[width=\textwidth]{../../results/supplementary/crop_changes_asia}
-    \caption{\textbf{Regional, relative changes in hail-prone proportion of cropping season}. As for Supplementary Figure \ref{fig:crop_changes_3C} but for Asia, and with changes shown as percentages of the historical hail-prone proportion of cropping season. Crops for which there were no significant changes recorded not shown. The colour bar is truncated to the range of stippled values and is non-linear with zero at the centre.}
+    \caption{As for Supplementary Figure \ref{fig:crop_changes_africa} but for
+    Asia.}
     \label{fig:crop_changes_asia}
 \end{figure*}
 
 \begin{figure*}[p]
     \centering
-    \includegraphics[width=\textwidth]{../../results/supplementary/crop_changes_oceania}
-    \caption{As for Supplementary Figure \ref{fig:crop_changes_asia} but for Oceania.}
-    \label{fig:crop_changes_oceania}
-\end{figure*}
-
-\begin{figure*}[p]
-    \centering
-    \includegraphics[width=\textwidth]{../../results/supplementary/crop_changes_north_america}
-    \caption{As for Supplementary Figure \ref{fig:crop_changes_asia} but for North America.}
-    \label{fig:crop_changes_north_america}
-\end{figure*}
-
-\begin{figure*}[p]
-    \centering
-    \includegraphics[width=\textwidth]{../../results/supplementary/crop_changes_south_america}
-    \caption{As for Supplementary Figure \ref{fig:crop_changes_asia} but for South America.}
-    \label{fig:crop_changes_south_america}
-\end{figure*}
-
-\begin{figure*}[p]
-    \centering
     \includegraphics[width=\textwidth]{../../results/supplementary/crop_changes_europe}
-    \caption{As for Supplementary Figure \ref{fig:crop_changes_asia} but for Europe.}
+    \caption{As for Supplementary Figure \ref{fig:crop_changes_africa} but for
+    Europe.}
     \label{fig:crop_changes_europe}
 \end{figure*}
 
 \begin{figure*}[p]
     \centering
-    \includegraphics[width=\textwidth]{../../results/supplementary/crop_changes_africa}
-    \caption{As for Supplementary Figure \ref{fig:crop_changes_asia} but for Africa.}
-    \label{fig:crop_changes_africa}
+    \includegraphics[width=\textwidth]{../../results/supplementary/crop_changes_north_america}
+    \caption{As for Supplementary Figure \ref{fig:crop_changes_africa} but for
+    North America.}
+    \label{fig:crop_changes_north_america}
+\end{figure*}
+
+\begin{figure*}[p]
+    \centering
+    \includegraphics[width=\textwidth]{../../results/supplementary/crop_changes_oceania}
+    \caption{As for Supplementary Figure \ref{fig:crop_changes_africa} but for
+    Oceania.}
+    \label{fig:crop_changes_oceania}
+\end{figure*}
+
+\begin{figure*}[p]
+    \centering
+    \includegraphics[width=\textwidth]{../../results/supplementary/crop_changes_south_america}
+    \caption{As for Supplementary Figure \ref{fig:crop_changes_africa} but for
+    South America.}
+    \label{fig:crop_changes_south_america}
 \end{figure*}
 
 \begin{figure*}[p]
