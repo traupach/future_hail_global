@@ -16,6 +16,7 @@ import seaborn as sns
 import geopandas as gp
 import cartopy.crs as ccrs
 from matplotlib import colors
+from matplotlib.patches import Rectangle
 from metpy.units import units
 import matplotlib.pyplot as plt
 from cartopy.io import shapereader
@@ -215,9 +216,9 @@ def geopotential_height(dat, vert_dim='lev', Rd=287.04749, g=9.80665):
     Returns: A DataArray of geopotential heights (m), and a DataArray of heights above the surface.
     """
 
-    assert np.all(
-        dat[vert_dim].diff(vert_dim) == 1
-    ), 'Vert dim should be an integer increasing index.'
+    assert np.all(dat[vert_dim].diff(vert_dim) == 1), (
+        'Vert dim should be an integer increasing index.'
+    )
 
     # Calculate virtual temperature.
     virt_temp = dat.temperature * (1 + 0.608 * dat.specific_humidity)
@@ -301,8 +302,8 @@ def read_all_CMIP_data(
     base_path = f'{CMIP6_dir}/{model_dir}'
     dat = xarray.Dataset()
 
-    # Parse model string.
-    project, mip, source, model_name, exp, ensemble = model.split('.')
+    # Parse model string. Return values are project, mip, source, model_name, exp, ensemble.
+    _, _, _, model_name, exp, ensemble = model.split('.')
 
     for v in variables:
         for [p, res] in tables:
@@ -324,13 +325,13 @@ def read_all_CMIP_data(
 
         print(path, flush=True)
         d = open_CMIP(path=path, res=res, variable=v, chunks=chunks)
-        d = d.sel(time=slice(None, f'{max_year-1}-12-31'))
+        d = d.sel(time=slice(None, f'{max_year - 1}-12-31'))
 
         # Keep data only every 6H.
         if res != out_res:
-            assert (
-                'time' in dat
-            ), f'Must include data natively at {out_res} before data that requires resampling.'
+            assert 'time' in dat, (
+                f'Must include data natively at {out_res} before data that requires resampling.'
+            )
             keep_times = xarray.cftime_range(
                 dat.time.values[0],
                 dat.time.values[-1],
@@ -405,14 +406,14 @@ def read_all_CMIP_data(
 
         # If orography coordinates differ slightly from other-data coordinates, use main data coordinates.
         if not np.all(dat.lat.values == orog.lat.values):
-            assert (
-                np.max(np.abs(dat.lat.values - orog.lat.values)) < 1e-5
-            ), 'Mismatch in orography latitudes.'
+            assert np.max(np.abs(dat.lat.values - orog.lat.values)) < 1e-5, (
+                'Mismatch in orography latitudes.'
+            )
             orog = orog.assign_coords({'lat': dat.lat.values})
         if not np.all(dat.lon.values == orog.lon.values):
-            assert (
-                np.max(np.abs(dat.lon.values - orog.lon.values)) < 1e-5
-            ), 'Mismatch in orography longitudes.'
+            assert np.max(np.abs(dat.lon.values - orog.lon.values)) < 1e-5, (
+                'Mismatch in orography longitudes.'
+            )
             orog = orog.assign_coords({'lon': dat.lon.values})
 
         dat['orog'] = orog
@@ -1030,9 +1031,9 @@ def plot_map(
                 np.nanquantile(all_vals, shared_scale_quantiles[0]),
                 np.nanquantile(all_vals, shared_scale_quantiles[1]),
             )
-            assert not (
-                np.isnan(colour_scale[0]) or np.isnan(colour_scale[1])
-            ), 'share_scale cannot be used with subplots missing data.'
+            assert not (np.isnan(colour_scale[0]) or np.isnan(colour_scale[1])), (
+                'share_scale cannot be used with subplots missing data.'
+            )
 
         for i, d in enumerate(dat):
             ax_title = None
@@ -1121,7 +1122,7 @@ def plot_map(
                         rotation=row_label_rotation,
                         xycoords='axes fraction',
                         ha='center',
-                        va='center'
+                        va='center',
                     )
 
     if file is not None:
@@ -1559,7 +1560,7 @@ def make_run_scripts(
     """
 
     # Make scripts for each run.
-    for index, row in runs.iterrows():
+    for _, row in runs.iterrows():
         # Make scripts directory per model.
         script_dir = f'{scripts_dir}/{row.model}/'
         if not os.path.exists(script_dir):
@@ -1569,16 +1570,16 @@ def make_run_scripts(
 
         for start in [row.start_year, row.end_year - yrs]:
             script = f'{script_dir}/process_{row.model}_{exp}'
-            script = f'{script}_{start}-{start+yrs}.sh'
+            script = f'{script}_{start}-{start + yrs}.sh'
 
             # Copy the template.
             os.system(f'cp {template} {script}')
 
             # Adapt the template for the model.
-            os.system(f'sed -i s/DESC/{row.model}_{start}-{start+yrs}/g {script}')
+            os.system(f'sed -i s/DESC/{row.model}_{start}-{start + yrs}/g {script}')
             os.system(f'sed -i s/MODEL/{row.desc}/g {script}')
             os.system(f'sed -i s/START/{start}/g {script}')
-            os.system(f'sed -i s/END/{start+yrs}/g {script}')
+            os.system(f'sed -i s/END/{start + yrs}/g {script}')
 
 
 def make_postprocessing_scripts(
@@ -1594,7 +1595,7 @@ def make_postprocessing_scripts(
     """
 
     # Make scripts for each run.
-    for index, row in runs.iterrows():
+    for _, row in runs.iterrows():
         # Make scripts directory per model.
         script_dir = f'{scripts_dir}/{row.model}/'
         if not os.path.exists(script_dir):
@@ -1634,7 +1635,7 @@ def plot_run_years(runs, figsize=(10, 2.8), legend_y=9.5, file=None, show=True):
     for key, val in rename_exps.items():
         runs.loc[runs.exp == key, 'exp'] = val
 
-    fig, axs = plt.subplots(figsize=figsize, ncols=1, nrows=len(np.unique(runs.model)))
+    _, axs = plt.subplots(figsize=figsize, ncols=1, nrows=len(np.unique(runs.model)))
 
     for i, model in enumerate(np.unique(runs.model)):
         mod_runs = runs.loc[runs.model == model]
@@ -1688,7 +1689,7 @@ def warming_years(future_models, warming_degrees=2, baseline_range=[1980, 1999])
     all_levels = pd.DataFrame()
 
     for mod in future_models:
-        _, _, _, model, exp, ensemble = mod.split('.')
+        _, _, _, model, _, ensemble = mod.split('.')
 
         levels = warming_levels.loc[warming_levels.model == f'{model}_{ensemble}'].copy()
         levels['desc'] = mod
@@ -1766,9 +1767,9 @@ def define_runs(
                 path = f'{base_path}/{p}/{v}'
                 if os.path.exists(path):
                     break
-            assert os.path.exists(
-                path
-            ), f'Could not find path/res combinations for {v} under {base_path}.'
+            assert os.path.exists(path), (
+                f'Could not find path/res combinations for {v} under {base_path}.'
+            )
 
             grids = [os.path.basename(x) for x in sorted(glob(f'{path}/*'))]
             assert len(grids) == 1, f'Multiple grids to choose from for {path}/{v}.'
@@ -1860,7 +1861,7 @@ def make_backup_orography(
             print('Producing backup orography for ' + run.desc)
 
             # Open a variable to get the grid to interpolate to.
-            for [p, res] in tables:
+            for [p, _] in tables:
                 path = f'{base_path}/{p}/{grid_var}'
                 if os.path.exists(path):
                     break
@@ -1918,7 +1919,7 @@ def read_processed_data(
     regrid_global(path=f'{data_dir}/*native_grid.nc')
 
     # Open all data.
-    dat = xarray.open_mfdataset(f'{data_dir}/{data_exp}', parallel=True)
+    dat = xarray.open_mfdataset(f'{data_dir}/{data_exp}', parallel=True, engine='netcdf4')
 
     # Oddly, there seems to be an issue where epochs encoded differently in different
     # input files (<U2 for '2C' and <U10 for 'historical') are, when evaluated and
@@ -1973,7 +1974,8 @@ def read_processed_data(
 
     dat = xarray.merge([dat[rest], seasonal, annual, prox])
 
-    # Transpose - for the ttest the axis over which the t-test should be applied ('year_num') must be first after model/epoch selection.
+    # Transpose - for the ttest the axis over which the t-test should be applied 
+    # ('year_num') must be first after model/epoch selection.
     dat = dat.transpose('model', 'epoch', 'year_num', 'proxy', 'season', 'month', 'lat', 'lon')
 
     return dat, lsm
@@ -2093,15 +2095,13 @@ def monthly_era5_anoms(
         anomaly_years: The years for which to find anomalies.
     """
 
-    era5_mean_clim = era5.mean('proxy')
-
     anoms = []
     for year in anomaly_years:
         year_dat = era5_climatology(
             era5_dir=era5_dir, era5_file_def=f'*{year}*.nc', yrs=1, cache_file=None
         )
-        year_dat = year_dat.sel(proxy=era5.proxy).mean('proxy')
-        year_anoms = year_dat - era5_mean_clim
+        year_dat = year_dat.sel(proxy=era5.proxy)
+        year_anoms = (year_dat - era5).mean('proxy')
         year_anoms = year_anoms.expand_dims({'year': [year]})
         anoms.append(year_anoms)
 
@@ -2161,7 +2161,7 @@ def plot_era5_anomalies(
         divergent=True,
         share_scale=True,
         share_axes=True,
-        grid=False,
+        grid=True,
         contour=False,
         scale_label=scale_label,
         nan_colour='white',
@@ -2661,92 +2661,85 @@ def crop_hail_stats(
 
 def plot_crop_lines(
     dat,
+    diffs,
+    sig,
     lat,
     lon,
     crops,
-    figsize=(12, 3.6),
+    epoch='3C',
+    figsize=(12, 6.2),
     legend_renamer={
         'epoch': 'Epoch',
         'proxy': 'Proxy',
         '2C': '2 $^{\circ}$C',
         '3C': '3 $^{\circ}$C',
-        'Raupach2023_updated': 'Raupach 2023',
-        'Raupach2023_updated_noconds': 'Raupach 2023 (NEC)',
-        'SHIP_0.1': 'SHIP > 0.1',
-        'Eccel2012': 'Eccel 2012',
+        'Raupach2023_updated': 'Raupach',
+        'Raupach2023_updated_noconds': 'RaupachNEC',
+        'SHIP_0.1': 'SHIP',
+        'Eccel2012': 'Eccel',
     },
     crop_renamer={
         'Fodder grasses': '  Fodder',
         'Groundnuts / Peanuts': 'Peanuts',
-        'Barley': '  Barley'
+        'Barley': '  Barley',
     },
     legend_col_length=8,
-    file=None
+    file=None,
+    average_buffer=1,
+    subset_buffer=10
 ):
     """
-    For a given location, plot changes in hail-prone days per month and a
-    map of the selected point.
+    For a given location, plot changes in hail-prone days per month, 
+    cropping months, and a map of the selected point.
 
     Arguments:
         dat: Data to plot, must include 'monthly_hail_days' and 'crop_hail_days'.
+        diffs: Differences to show on inset plot.
+        sig: Significances of differences to show on inset plot.
         lat, lon: The point to examine.
         crops: Crops to select.
         figsize: Figure width x height.
         legend_renamer: Names for each element in the legend.
         legend_col_length: Number of rows in first legend (for epoch).
+        file: Plot to file?
+        average_buffer: average monthly changes over this number of lat/long degrees around the location.
+        subset_buffer: show this buffer around the location in inset maps.
     """
 
     line_dat = dat.monthly_hail_days.chunk(
         {'model': -1, 'epoch': -1, 'year_num': -1, 'proxy': -1, 'month': -1}
-    ).sel(lat=lat, lon=lon, method='nearest')
+    ).sel(lat=slice(lat-average_buffer, lat+average_buffer), 
+          lon=slice(lon-average_buffer, lon+average_buffer), 
+          epoch=['historical', epoch])
+    subset_dat = xarray.Dataset({'hpp': diffs.crop_hail_prone_proportion,
+                                 'sig': sig.crop_hail_prone_proportion})
+    subset_dat = subset_dat.chunk({'epoch': 1, 'crop': 1})
+    subset_dat = subset_dat.sel(lat=slice(lat-subset_buffer, lat+subset_buffer), 
+                                lon=slice(lon-subset_buffer, lon+subset_buffer), 
+                                epoch=epoch)
     crop_dat = (
         dat.crop_hail_prone_days.chunk(
             {'model': -1, 'epoch': -1, 'year_num': -1, 'crop': 1, 'proxy': -1, 'month': -1}
         )
         .sel(lat=lat, lon=lon, method='nearest')
-        .sel(crop=crops)
+        .sel(crop=crops, epoch=['historical', epoch])
     )
 
-    line_dat = line_dat.mean(['year_num', 'model']).load()
+    line_dat = line_dat.mean(['year_num', 'lat', 'lon']).load()
     crop_dat = crop_dat.mean(['year_num', 'model', 'proxy']).load()
 
     diffs = line_dat - line_dat.sel(epoch='historical')
     diffs = diffs.drop_sel(epoch='historical')
     diffs = diffs.to_dataframe().reset_index()
 
-    fig = plt.figure(constrained_layout=True, figsize=figsize)
-    gs = fig.add_gridspec(nrows=4, ncols=6, wspace=0.1, hspace=0.1)
+    fig = plt.figure(figsize=figsize, constrained_layout=False)
+    gs = fig.add_gridspec(nrows=6, ncols=5)
 
     months_ax = fig.add_subplot(gs[0, 0:4])
-    line_ax = fig.add_subplot(gs[1:4, 0:4])
-    map_ax = fig.add_subplot(
-        gs[0:2, 5], projection=ccrs.Orthographic(central_longitude=lon, central_latitude=0)
-    )
-    legend_ax = fig.add_subplot(gs[2:4, 4:6])
-
-    map_ax.scatter(x=lon, y=lat, color='red', transform=ccrs.Geodetic())
-    map_ax.coastlines()
-    map_ax.set_global()
-
-    assert np.max(crop_dat.diff('crop')) == 0, (
-        f'Errant differences between crop values with diff of {np.max(crop_dat.diff("crop"))}'
-        + '(if nan then perhaps crop is not at this location)'
-    )
-
-    line_ax.set_ylabel('$\Delta$ Hail-prone days')
-    line_ax.set_xlabel('Month')
-    line_ax.spines[['right', 'top']].set_visible(False)
-    line_ax.axhline(y=0, color='black')
-    sns.lineplot(
-        data=diffs,
-        ax=line_ax,
-        x='month',
-        y='monthly_hail_days',
-        hue='epoch',
-        style='proxy',
-        hue_order=['2C', '3C'],
-    )
-    line_ax.get_legend().set_visible(False)
+    line_ax = fig.add_subplot(gs[1:5, 0:4])
+    subset_axes = [fig.add_subplot(gs[0:2, 4], projection=ccrs.PlateCarree()),
+                   fig.add_subplot(gs[2:4, 4], projection=ccrs.PlateCarree()),
+                   fig.add_subplot(gs[4:6, 4], projection=ccrs.PlateCarree())]
 
     for i, crop in enumerate(crops):
         c = crop_dat.sel(crop=crop).isel(epoch=0)
@@ -2764,33 +2757,57 @@ def plot_crop_lines(
             linewidth=1.5,
         )
 
-    h, labs = line_ax.get_legend_handles_labels()
-    labs = [legend_renamer[lab] for lab in labs]
-
-    l1 = legend_ax.legend(
-        h[0:legend_col_length],
-        labs[0:legend_col_length],
-        loc='upper left',
-        bbox_to_anchor=(0, 2),
-        frameon=False,
-    )
-    legend_ax.add_artist(l1)
-    legend_ax.set_frame_on(False)
-    legend_ax.tick_params(axis='x', bottom=False, labelbottom=False)
-    legend_ax.tick_params(axis='y', left=False, labelleft=False)
-
-    # Set the z-order of the map so it appears over the legend.
-    map_ax.set_zorder(legend_ax.get_zorder() + 1)
-    map_ax.patch.set_visible(False)
-
+    # Top row: lines showing cropping months.
     months_ax.set_frame_on(False)
     months_ax.set_yticks([0, 1, 2], [crop_renamer[x] if x in crop_renamer else x for x in crops])
     months_ax.set_ylabel('')
     months_ax.set_xlabel('')
-    months_ax.set_ylim(-0.2, 2.2)
+    months_ax.set_ylim(-0.5, 2.5)
     months_ax.tick_params(axis='x', bottom=False, labelbottom=False)
     months_ax.tick_params(axis='y', right=False)
 
+    # Bottom rows: lines showing monthly changes in hail-prone days.
+    line_ax.set_ylabel('$\Delta$ Hail-prone days')
+    line_ax.set_xlabel('Month')
+    line_ax.spines[['right', 'top']].set_visible(False)
+    line_ax.axhline(y=0, color='black')
+    sns.pointplot(
+        data=diffs,
+        ax=line_ax,
+        x='month',
+        y='monthly_hail_days',
+        err_kws={'linewidth': 1.75},
+        linewidth=1.2,
+        hue='proxy',
+        dodge=0.3,
+        errorbar=('pi', 100),
+    )
+    h, labs = line_ax.get_legend_handles_labels()
+    labs = [legend_renamer[lab] for lab in labs]
+    line_ax.legend(h[0:legend_col_length], labs[0:legend_col_length], frameon=False)
+    sns.move_legend(line_ax, 'lower center', ncol=4, bbox_to_anchor=(0.5, -0.4))
+
+    # Right plots: crop changes spatially.
+    for i, crop in enumerate(crops):
+        rect = Rectangle((lon-average_buffer, lat-average_buffer),
+                         width=average_buffer*2,
+                         height=average_buffer*2,
+                         edgecolor='fuchsia',
+                         facecolor='none', 
+                         linewidth=2)
+
+        plot_map_to_ax(dat=subset_dat.sel(crop=crop).hpp, stippling=subset_dat.sel(crop=crop).sig,
+                       ax=subset_axes[i], grid=True, cmap='RdBu_r', divergent=True, 
+                       cbar_label='Change %', title=crop, cbar_aspect=15, cbar_shrink=0.65,
+                       cbar_pad=0.03, ticks_bottom=i == len(crops)-1)
+        subset_axes[i].add_patch(rect)
+
+    assert np.max(crop_dat.diff('crop')) == 0, (
+        f'Errant differences between crop values with diff of {np.max(crop_dat.diff("crop"))}'
+        + '(if nan then perhaps crop is not at this location)'
+    )
+
+    plt.subplots_adjust(hspace=0.5, wspace=0.7)
     if file is not None:
         plt.savefig(fname=file, bbox_inches='tight')
     plt.show()
@@ -2878,7 +2895,7 @@ def conv_properties(dat, vert_dim='model_level_number'):
     )
 
     print('Calculating most-unstable CAPE and CIN...')
-    mu_cape_cin, mu_profile, mu_parcel = parcel.most_unstable_cape_cin(
+    mu_cape_cin, _, mu_parcel = parcel.most_unstable_cape_cin(
         pressure=dat.pressure,
         temperature=dat.temperature,
         dewpoint=dat.dewpoint,
@@ -3060,7 +3077,7 @@ def plot_regional_crop_changes(diffs, sig, lats, lons, region_names, file, figsi
 
     regions = np.unique(res.region)
 
-    fig, axs = plt.subplots(nrows=len(regions), figsize=figsize, gridspec_kw={'hspace': 0.35})
+    _, axs = plt.subplots(nrows=len(regions), figsize=figsize, gridspec_kw={'hspace': 0.35})
     for i, r in enumerate(regions):
         d = res[res.region == r]
         d = d.sort_values('crop').reset_index()
@@ -3232,14 +3249,14 @@ def plot_drivers(
     days_threshold=None,
     refs=[],
     refs_title=None,
-    **kwargs
+    **kwargs,
 ):
     """
     Plot drivers with optional subsetting to remove insignificant drivers.
 
     Args:
         drivers: The drivers to plot.
-        ing_names: Ingredient names for plotting. 
+        ing_names: Ingredient names for plotting.
         days_threshold: Require at least this many days in any of the plots to show an ingredient (optional).
         kwargs: Arguments to plot_map.
         refs: If given, plots to provide as a row of reference values (ie changes with no drivers excluded).
@@ -3249,7 +3266,7 @@ def plot_drivers(
     # If references are provided, also plot column sums.
     refs_title = ['Sum', refs_title] if refs_title is not None else []
     sums = []
-    if refs is not []: 
+    if refs is not []:
         sums = [drivers.sum('detrended_ing').sel(proxy=p) for p in drivers.proxy.values]
 
     if days_threshold is not None:
@@ -3265,7 +3282,9 @@ def plot_drivers(
         [
             drivers.sel(detrended_ing=ing, proxy=p)
             for ing, p in itertools.product(drivers.detrended_ing.values, drivers.proxy.values)
-        ] + sums + refs,
+        ]
+        + sums
+        + refs,
         cmap='RdBu_r',
         divergent=True,
         nrows=len(drivers.detrended_ing) + np.min([1, len(refs)]) + np.min([1, len(sums)]),
@@ -3276,5 +3295,5 @@ def plot_drivers(
         grid=False,
         row_labels=[ing_names[x] for x in drivers.detrended_ing.values] + refs_title,
         col_labels=[proxy_dims[f] for f in drivers.proxy.values],
-        **kwargs
+        **kwargs,
     )
