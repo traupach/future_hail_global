@@ -1,36 +1,41 @@
+"""Helper functions for future global hail proxy analysis.
+
+Author: Tim Raupach <t.raupach@unsw.edu.au>
+"""
+
+import itertools
 import os
 import re
-import dask
-import metpy
-import xarray
-import intake
+from glob import glob
+
+import cartopy.crs as ccrs
 import cftime
-import itertools
+import dask
 import geopandas
-import scipy as sp
-import xesmf as xe
+import geopandas as gp
+import intake
+import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
+import metpy
+import modules.parcel_functions as parcel
+import modules.warming_levels as wl
 import numpy as np
 import pandas as pd
-from glob import glob
+import scipy as sp
 import seaborn as sns
-import geopandas as gp
-import cartopy.crs as ccrs
+import xarray
+import xesmf as xe
+from cartopy.io import shapereader
 from matplotlib import colors
+from matplotlib.colors import BoundaryNorm, LinearSegmentedColormap
 from matplotlib.patches import Rectangle
 from metpy.units import units
-import matplotlib.pyplot as plt
-from cartopy.io import shapereader
-import matplotlib.ticker as mticker
-import modules.warming_levels as wl
-import modules.parcel_functions as parcel
-from matplotlib.colors import BoundaryNorm
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
-from matplotlib.colors import LinearSegmentedColormap
 
 # ruff: noqa: E712                                # Don't check rule E712 in Ruff.
 
 # Settings for xarray_parcel: set up parcel adiabat calculations.
-lookup_dir = '/g/data/w42/tr2908/aus400_hail/'
+lookup_dir = '/g/data/li18/tr2908/'
 parcel.load_moist_adiabat_lookups(base_dir=lookup_dir, chunks=-1)
 
 # Proxies to consider.
@@ -86,21 +91,20 @@ hail_cmap = LinearSegmentedColormap.from_list('', cmap_colours)
 
 
 @dask.delayed
-def open_CMIP_file_delayed(filename, chunks={'time': 20}):
-    """
-    Open a CMIP file using dask delayed so it is only accessed when requested.
+def open_CMIP_file_delayed(filename, chunks=None):
+    """Open a CMIP file using dask delayed so it is only accessed when requested.
 
     Arguments:
         filename: The filename to open.
         chunks: Chunks to use.
+
     """
+    d = xarray.open_dataset(filename, use_cftime=True)
+    return d.chunk({'time': 20} if chunks is None else chunks)
 
-    return xarray.open_dataset(filename, use_cftime=True).chunk(chunks)
 
-
-def open_CMIP_file(filename, res, ex, calendar, chunks={'time': 20}, **kwargs):
-    """
-    Open a CMIP file using dask delayed so it is only accessed when requested.
+def open_CMIP_file(filename, res, ex, calendar, chunks=None, **kwargs):
+    """Open a CMIP file using dask delayed so it is only accessed when requested.
 
     Arguments:
         filename: The filename to read.
@@ -108,18 +112,19 @@ def open_CMIP_file(filename, res, ex, calendar, chunks={'time': 20}, **kwargs):
         ex: An example version of the variable to get coordinate info from.
         calendar: Datetime calendar to use.
         chunks: Data chunks to use.
-        **kgwargs: Extra arguments to open_CMIP_file_delayed.
-    """
+        **kwargs: Extra arguments to open_CMIP_file_delayed.
 
-    dat = open_CMIP_file_delayed(filename=filename, chunks=chunks, **kwargs)[ex.name].data
+    """
+    dat = open_CMIP_file_delayed(filename=filename, chunks=chunks, **kwargs)[
+        ex.name
+    ].data
     times = times_in_CMIP_file(filename=filename, res=res, calendar=calendar)
     shape = (times.size,) + ex.shape[1:]
     return dask.array.from_delayed(value=dat, shape=shape, dtype=ex.dtype)
 
 
-def open_CMIP(path, res, variable, chunks={'time': 25}, max_year=2100):
-    """
-    Open all CMIP files in a given path, using dask delayed for speed.
+def open_CMIP(path, res, variable, chunks=None, max_year=2100):
+    """Open all CMIP files in a given path, using dask delayed for speed.
 
     Arguments:
         path: The path containing nc files.
@@ -127,8 +132,8 @@ def open_CMIP(path, res, variable, chunks={'time': 25}, max_year=2100):
         variable: The variable to open.
         chunks: Chunking for result.
         max_year: Open files with years up to this year.
-    """
 
+    """
     # List files to open.
     all_files = sorted(glob(f'{path}/*.nc'))
 
@@ -147,7 +152,11 @@ def open_CMIP(path, res, variable, chunks={'time': 25}, max_year=2100):
     times_first = times_in_CMIP_file(files[0], res=res, calendar=first.time.dt.calendar)
     times_last = times_in_CMIP_file(files[-1], res=res, calendar=first.time.dt.calendar)
     times = xarray.cftime_range(
-        times_first[0], times_last[-1], freq=res, inclusive='both', calendar=first.time.dt.calendar
+        times_first[0],
+        times_last[-1],
+        freq=res,
+        inclusive='both',
+        calendar=first.time.dt.calendar,
     )
 
     # Check that times line up.
@@ -158,7 +167,11 @@ def open_CMIP(path, res, variable, chunks={'time': 25}, max_year=2100):
     dat = dask.array.concatenate(
         [
             open_CMIP_file(
-                filename=f, res=res, ex=ex, calendar=first.time.dt.calendar, chunks=chunks
+                filename=f,
+                res=res,
+                ex=ex,
+                calendar=first.time.dt.calendar,
+                chunks=chunks,
             )
             for f in files
         ],
@@ -168,7 +181,13 @@ def open_CMIP(path, res, variable, chunks={'time': 25}, max_year=2100):
     # Convert to an xarray object.
     coords = {x: ex[x] for x in ex.dims}
     coords['time'] = times
-    ret = xarray.DataArray(dat, name=ex.name, attrs=ex.attrs, dims=ex.dims, coords=coords)
+    ret = xarray.DataArray(
+        dat,
+        name=ex.name,
+        attrs=ex.attrs,
+        dims=ex.dims,
+        coords=coords,
+    )
     ret = ret.chunk(chunks)
 
     # Clean up.
@@ -177,45 +196,52 @@ def open_CMIP(path, res, variable, chunks={'time': 25}, max_year=2100):
 
 
 def times_in_CMIP_file(filename, res, calendar):
-    """
-    Use a CMIP filename to return all the timesteps the file contains.
+    """Use a CMIP filename to return all the timesteps the file contains.
 
     Arguments:
-        file: The CMIP filename, must end in YYYYMMDDHHMM-YYYYMMDDHHMM.nc.
+        filename: The CMIP filename, must end in YYYYMMDDHHMM-YYYYMMDDHHMM.nc.
         res: Temporal resolution for the file.
         calendar: The calendar to use.
 
     Returns: An array of cftimes for all timesteps in the file.
-    """
 
+    """
     basename = os.path.basename(filename)
     time_range = [
         re.search(r'.*_([0-9]{12})-[0-9]{12}\.nc', basename).group(1),
         re.search(r'.*_[0-9]{12}-([0-9]{12})\.nc', basename).group(1),
     ]
-    time_range = [f'{x[0:4]}-{x[4:6]}-{x[6:8]} {x[8:10]}:{x[10:12]}' for x in time_range]
+    time_range = [
+        f'{x[0:4]}-{x[4:6]}-{x[6:8]} {x[8:10]}:{x[10:12]}' for x in time_range
+    ]
 
     res = res.replace('H', 'h')
 
-    times = xarray.cftime_range(
-        time_range[0], time_range[1], freq=res, inclusive='both', calendar=calendar
+    return xarray.cftime_range(
+        time_range[0],
+        time_range[1],
+        freq=res,
+        inclusive='both',
+        calendar=calendar,
     )
-    return times
 
 
 def geopotential_height(dat, vert_dim='lev', Rd=287.04749, g=9.80665):
-    """
-    Calculate geopotential height for all levels in the data.
+    """Calculate geopotential height for all levels in the data.
 
     Arguments:
-        dat: Data containing orog, surface_temperature, surface_pressure, surface_specific_humidity,
-             temperature, pressure, specific_humidity, levels.
+        dat: Data containing orog, surface_temperature, surface_pressure,
+             surface_specific_humidity, temperature, pressure, specific_humidity,
+             levels.
         vert_dim: The name of the vertical dimension.
         chunks: Chunks to apply to intermediate objects.
+        Rd: Gas constant for dry air (J kg-1 K-1).
+        g: Gravitation constant (ms-2).
 
-    Returns: A DataArray of geopotential heights (m), and a DataArray of heights above the surface.
+    Returns: A DataArray of geopotential heights (m), and a DataArray of heights above
+             the surface.
+
     """
-
     assert np.all(dat[vert_dim].diff(vert_dim) == 1), (
         'Vert dim should be an integer increasing index.'
     )
@@ -250,7 +276,10 @@ def geopotential_height(dat, vert_dim='lev', Rd=287.04749, g=9.80665):
 
     # Calculate thickness of each layer.
     thickness = Rd / g * vt_mean * p_div
-    level_heights = xarray.concat([dat.orog.expand_dims({vert_dim: [0]}), thickness], dim=vert_dim)
+    level_heights = xarray.concat(
+        [dat.orog.expand_dims({vert_dim: [0]}), thickness],
+        dim=vert_dim,
+    )
 
     # Do a cumsum to get the height of each layer.
     level_heights = level_heights.cumsum(vert_dim).sel({vert_dim: slice(1, None)})
@@ -273,20 +302,19 @@ def read_all_CMIP_data(
     max_year=2100,
     pressure_var='ta',
     out_res='6H',
-    chunks={'time': 20},
+    chunks=None,
     grid=None,
-    tables=[['6hrLev', '6H'], ['3hr', '3H']],
-    variables=['va', 'ua', 'ta', 'hus', 'ps', 'vas', 'uas', 'huss', 'tas'],
+    tables=None,
+    variables=None,
 ):
-    """
-    Read all CMIP6 data for a given model, at 6H resolution.
+    """Read all CMIP6 data for a given model, at 6H resolution.
 
     Arguments:
         model: Model spec (e.g. CMIP6.ScenarioMIP.MRI.MRI-ESM2-0.ssp585.r1i1p1f1)
         CMIP6_dir: Directory for CMIP6 data.
         orog_path: Path to orography.
-        backup_orog_path: Path to directory containing interpolated orography files for models
-                          missing orography.
+        backup_orog_path: Path to directory containing interpolated orography files for
+                          models missing orography.
         max_year: Read in data to this year only.
         pressure_var: The variable to use for pressure definition.
         out_res: Output resolution.
@@ -295,18 +323,27 @@ def read_all_CMIP_data(
         tables: [path, res] groups to search for variables in, in order of preference.
         variables: variables to read.
 
-    Returns: An xarray object with all CMIP6 data for the given model at the correct resolution.
+    Returns: An xarray object with all CMIP6 data for the given model at the correct
+             resolution.
+
     """
+    if tables is None:
+        tables = [['6hrLev', '6H'], ['3hr', '3H']]
+    if variables is None:
+        variables = ['va', 'ua', 'ta', 'hus', 'ps', 'vas', 'uas', 'huss', 'tas']
+    if chunks is None:
+        chunks = {'time': 20}
 
     model_dir = model.replace('.', '/')
     base_path = f'{CMIP6_dir}/{model_dir}'
     dat = xarray.Dataset()
 
-    # Parse model string. Return values are project, mip, source, model_name, exp, ensemble.
+    # Parse model string. Return values are project, mip, source, model_name,
+    # exp, ensemble.
     _, _, _, model_name, exp, ensemble = model.split('.')
 
     for v in variables:
-        for [p, res] in tables:
+        for [p, res] in tables:  # noqa: B007
             path = f'{base_path}/{p}/{v}'
             if os.path.exists(path):
                 break
@@ -330,7 +367,8 @@ def read_all_CMIP_data(
         # Keep data only every 6H.
         if res != out_res:
             assert 'time' in dat, (
-                f'Must include data natively at {out_res} before data that requires resampling.'
+                f'Must include data natively at {out_res} '
+                'before data that requires resampling.'
             )
             keep_times = xarray.cftime_range(
                 dat.time.values[0],
@@ -357,10 +395,16 @@ def read_all_CMIP_data(
 
         # Check all grid point match.
         if 'lat' in dat.coords:
-            assert np.all(dat.lat == d.lat), 'Latitudes for {v} do not match other variables.'
-            assert np.all(dat.lon == d.lon), 'Longitudes for {v} do not match other variables.'
+            assert np.all(dat.lat == d.lat), (
+                'Latitudes for {v} do not match other variables.'
+            )
+            assert np.all(dat.lon == d.lon), (
+                'Longitudes for {v} do not match other variables.'
+            )
             if 'lev' in d.coords:
-                assert np.all(dat.lev == d.lev), 'Levels for {v} do not match other variables.'
+                assert np.all(dat.lev == d.lev), (
+                    'Levels for {v} do not match other variables.'
+                )
 
         # Process pressure as required.
         if v == pressure_var:
@@ -371,13 +415,17 @@ def read_all_CMIP_data(
                 # Some modules use p = a*p0 + b*ps.
                 dat['a'] = ex.a
                 dat['p0'] = ex.p0
-                assert dat.lev.attrs['formula'] == 'p = a*p0 + b*ps', 'Pressure formula problem.'
+                assert dat.lev.attrs['formula'] == 'p = a*p0 + b*ps', (
+                    'Pressure formula problem.'
+                )
 
             else:
                 # Some modules use ap, in which a is already multiplied by p.
                 dat['a'] = ex.ap
                 dat['p0'] = xarray.ones_like(dat.a)
-                assert dat.lev.attrs['formula'] == 'p = ap + b*ps', 'Pressure formula problem.'
+                assert dat.lev.attrs['formula'] == 'p = ap + b*ps', (
+                    'Pressure formula problem.'
+                )
 
             dat['b'] = ex.b
             del ex
@@ -394,24 +442,27 @@ def read_all_CMIP_data(
             'hus': 'specific_humidity',
             'huss': 'surface_specific_humidity',
             'ps': 'surface_pressure',
-        }
+        },
     )
 
     # Read orography.
     orog_p = f'{base_path}/{orog_path}/{grids[0]}/'
     if os.path.exists(orog_p):
         # Use model orography if it is provided.
-        orog_version = [os.path.basename(x) for x in sorted(glob(f'{orog_p}/*'))][0]
-        orog = xarray.open_mfdataset(f'{orog_p}/{orog_version}/*.nc', use_cftime=True)['orog']
+        orog_version = [os.path.basename(x) for x in sorted(glob(f'{orog_p}/*'))][0]  # noqa: RUF015
+        orog = xarray.open_mfdataset(f'{orog_p}/{orog_version}/*.nc', use_cftime=True)[
+            'orog'
+        ]
 
-        # If orography coordinates differ slightly from other-data coordinates, use main data coordinates.
+        # If orography coordinates differ slightly from other-data coordinates, use main
+        # data coordinates.
         if not np.all(dat.lat.values == orog.lat.values):
-            assert np.max(np.abs(dat.lat.values - orog.lat.values)) < 1e-5, (
+            assert np.max(np.abs(dat.lat.values - orog.lat.values)) < 1e-5, (  # noqa: PLR2004
                 'Mismatch in orography latitudes.'
             )
             orog = orog.assign_coords({'lat': dat.lat.values})
         if not np.all(dat.lon.values == orog.lon.values):
-            assert np.max(np.abs(dat.lon.values - orog.lon.values)) < 1e-5, (
+            assert np.max(np.abs(dat.lon.values - orog.lon.values)) < 1e-5, (  # noqa: PLR2004
                 'Mismatch in orography longitudes.'
             )
             orog = orog.assign_coords({'lon': dat.lon.values})
@@ -445,17 +496,15 @@ def read_all_CMIP_data(
         dat.surface_pressure.attrs['units'] = 'hPa'
 
     # Replace sigma coordinates with integer level numbers.
-    dat = dat.assign_coords({'lev': np.arange(1, dat.lev.size + 1)})
-
-    return dat
+    return dat.assign_coords({'lev': np.arange(1, dat.lev.size + 1)})
 
 
 def write_output(dat, file, attrs=None):
-    """
-    Write data in 'dat', with attributes 'attrs', to 'file' as NetCDF with compression.
-    """
+    """Write data in 'dat'.
 
-    comp = dict(zlib=True, shuffle=True, complevel=4)
+    Use attributes 'attrs', to 'file' as NetCDF with compression.
+    """
+    comp = {'zlib': True, 'shuffle': True, 'complevel': 4}
     encoding = {var: comp for var in dat.data_vars}
     if attrs is not None:
         dat.attrs = attrs
@@ -469,16 +518,16 @@ def regrid_global(
     output_file=lambda x: x.replace('native_grid', 'common_grid'),
     isel=None,
 ):
-    """
-    Regrid all (global) files in a directory to a common grid.
+    """Regrid all (global) files in a directory to a common grid.
 
     Arguments:
         path: Path to match files to regrid.
         out_res: Output resolution in degrees.
         rename: Rename variables before saving?
         output_file: Function to convert input filename to output filename.
-    """
+        isel: Elements to select (or None to not subset).
 
+    """
     files = glob(path)
 
     out_lon = np.arange(-180.0, 180.0 + out_res, out_res)
@@ -489,7 +538,7 @@ def regrid_global(
             'lon': (out_lon[:-1] + out_lon[1:]) / 2,
             'lat_b': out_lat,
             'lon_b': out_lon,
-        }
+        },
     )
 
     for file in files:
@@ -501,7 +550,11 @@ def regrid_global(
             d = regridder(d, keep_attrs=True)
             attrs = d.attrs
             attrs.update(
-                {'history': f'Regridded to {out_res} x {out_res} degree grid using xESMF.'}
+                {
+                    'history': (
+                        f'Regridded to {out_res} x {out_res}degree grid using xESMF.'
+                    ),
+                },
             )
 
             if rename is not None:
@@ -513,18 +566,20 @@ def regrid_global(
 
 
 def conv_CMIP(
-    dat, year, outdir='/g/data/up6/tr2908/future_hail_global/CMIP_conv/', days_per_outfile=30
+    dat,
+    year,
+    outdir='/g/data/up6/tr2908/future_hail_global/CMIP_conv/',
+    days_per_outfile=30,
 ):
-    """
-    Calculate convective parameters for a given year and output to NetCDF.
+    """Calculate convective parameters for a given year and output to NetCDF.
 
     Arguments:
         dat: The CMIP6 data to process.
         year: The year to process.
         outdir: Output directory minus model name.
-        days_per_outfile:
-    """
+        days_per_outfile: Number of days to write to each output file.
 
+    """
     _, _, _, model_name, exp, _ = dat.temperature.CMIP_model_spec.split('.')
     outdir = f'{outdir}/{model_name}/{exp}'
     if not os.path.exists(outdir):
@@ -552,8 +607,7 @@ def conv_CMIP(
     for j, day in enumerate(days_in_year):
         f_from = (j // days_per_outfile) * days_per_outfile + 1
         f_to = f_from + days_per_outfile - 1
-        if f_to > len(days_in_year):
-            f_to = len(days_in_year)
+        f_to = min(f_to, len(days_in_year))
         outfile = f'{outdir}/{model_name}_{year}_{f_from:03}-{f_to:03}.nc'
 
         assert day.year == year, 'Year mismatch.'
@@ -566,8 +620,8 @@ def conv_CMIP(
             day_dat = dat.sel(time=f'{day.year}-{day.month:02}-{day.day:02}')
 
             # Calculate geopotential heights.
-            day_dat['height_asl'], day_dat['wind_height_above_surface'] = geopotential_height(
-                day_dat
+            day_dat['height_asl'], day_dat['wind_height_above_surface'] = (
+                geopotential_height(day_dat)
             )
 
             # Load for speed.
@@ -637,57 +691,59 @@ def plot_map_to_ax(
     left_title=None,
     cbar_extend='neither',
 ):
-    """
-    Plot data on a map to a specified plot axis object.
+    """Plot data on a map to a specified plot axis object.
 
     Arguments:
-
-        - dat: DataSet to plot or list of datasets to plot.
-        - ax: GeoAxes object to plot to.
-        - dat_proj, dist_proj: Data and display projections.
-        - figsize: Figure size width x height.
-        - coastlines: Show coastlines?
-        - grid: Show grid?
-        - ncol/nrows: Number of columns/rows to plot.
-        - title: Title for the plot.
-        - colour_scale: None for default, or a tuple of min/max values for the scale.
-        - cmap: The matplotlib colour map to use.
-        - norm: A norm object for colours (e.g. colors.BoundaryNorm).
-        - cbar_ticks: Colour bar ticks.
-        - tick_labels: Colour bar tick labels.
-        - contour: Plot using xarray's contourf function?
-        - stippling: True where trippling should appear.
-        - stipple_size: Size for stippling points.
-        - colourbar: Include a colourbar?
-        - ticks_left: Include ticks on left of plot?
-        - ticks_bottom: Include ticks on bottom of plot?
-        - cbar_aspect: colorbar aspect ratio?
-        - cbar_fraction: fraction argument for colorbar().
-        - cbar_shrink: shrink argument for colorbar().
-        - cbar_pad: pad argument for colorbar().
-        - cbar_label: Overwrite label?
-        - cbar_orientation: orientation argument for colorbar().
-        - coastlines_colour: Colour for coastlines.
-        - xlims, ylims: x and y plot limits.
-        - num_ticks: Number of ticks for x and y axes (None for auto).
-        - divergent: Is the colour scale divergent? If so make zero central.
-        - cbar_inset: Inset the colorbar in lower left?
-        - title_inset: Inset the title?
-        - title_inset_pos: 'lower' or 'upper'.
-        - discrete: Make the colour bar discrete?
-        - log_scale: Make the colour scale log-scaled?
-        - nan_colour: Colour for missing values.
-        - axis_off: Turn off all axes.
-        - country: Plot coastlines only for a specific country.
-        - annotations: Add annotations to the map - dictionary of {'Text': [x, y, xadj, yadj, ha]} where
-                       x, y are position of text, xadj, yadj give offsets to the label, ha is 'left' or
-                       'right' for horizontal anchor.
-        - num_contours: The number of contours to use in a contour plot.
-        - left_title: Left-hand title to put on the plot.
-        - cbar_extend: colorbar extend argument.
+        dat: DataSet to plot or list of datasets to plot.
+        ax: GeoAxes object to plot to.
+        dat_proj, dist_proj: Data and display projections.
+        figsize: Figure size width x height.
+        coastlines: Show coastlines?
+        grid: Show grid?
+        ncol/nrows: Number of columns/rows to plot.
+        title: Title for the plot.
+        colour_scale: None for default, or a tuple of min/max values for the scale.
+        cmap: The matplotlib colour map to use.
+        norm: A norm object for colours (e.g. colors.BoundaryNorm).
+        cbar_ticks: Colour bar ticks.
+        tick_labels: Colour bar tick labels.
+        contour: Plot using xarray's contourf function?
+        stippling: True where trippling should appear.
+        stipple_size: Size for stippling points.
+        colourbar: Include a colourbar?
+        ticks_left: Include ticks on left of plot?
+        ticks_bottom: Include ticks on bottom of plot?
+        cbar_aspect: colorbar aspect ratio?
+        cbar_fraction: fraction argument for colorbar().
+        cbar_shrink: shrink argument for colorbar().
+        cbar_pad: pad argument for colorbar().
+        cbar_label: Overwrite label?
+        cbar_orientation: orientation argument for colorbar().
+        coastlines_colour: Colour for coastlines.
+        xlims, ylims: x and y plot limits.
+        num_ticks: Number of ticks for x and y axes (None for auto).
+        divergent: Is the colour scale divergent? If so make zero central.
+        cbar_inset: Inset the colorbar in lower left?
+        title_inset: Inset the title?
+        title_inset_pos: 'lower' or 'upper'.
+        discrete: Make the colour bar discrete?
+        log_scale: Make the colour scale log-scaled?
+        nan_colour: Colour for missing values.
+        axis_off: Turn off all axes.
+        country: Plot coastlines only for a specific country.
+        annotations: Add annotations to the map - dictionary of
+                     {'Text': [x, y, xadj, yadj, ha]} where
+                     x, y are position of text, xadj, yadj give offsets
+                     to the label, ha is 'left' or 'right' for horizontal anchor.
+        num_contours: The number of contours to use in a contour plot.
+        left_title: Left-hand title to put on the plot.
+        cbar_extend: colorbar extend argument.
+        dat_proj: Projection of the data.
+        disp_proj: Projection for map display.
+        xlims: Limits on x axis.
+        ylims: iImits on y axis.
 
     """
-
     col_min = None
     col_max = None
 
@@ -710,8 +766,10 @@ def plot_map_to_ax(
 
     if discrete:
         assert cbar_ticks is not None, 'Discrete colorbar requires cbar_ticks'
-        assert cbar_ticks == sorted(cbar_ticks), 'cbar_ticks must be sorted for discrete plot.'
-        cbar_ticks = np.array(cbar_ticks + [np.max(cbar_ticks) + 1])
+        assert cbar_ticks == sorted(cbar_ticks), (
+            'cbar_ticks must be sorted for discrete plot.'
+        )
+        cbar_ticks = np.array([*cbar_ticks, np.max(cbar_ticks) + 1])
         norm = colors.BoundaryNorm(cbar_ticks, ncolors=len(cbar_ticks) - 1)
         cbar_ticks = (cbar_ticks[0:-1] + cbar_ticks[1:]) / 2
         cbar_spacing = 'uniform'
@@ -786,22 +844,28 @@ def plot_map_to_ax(
         )
 
     if stippling is not None:
-        ax.autoscale(False)
+        ax.autoscale(False)  # noqa: FBT003
         hatches = [None, '\\\\\\']
         if np.all(stippling == True):
             hatches = ['\\\\\\', '\\\\\\']
         stippling.plot.contourf(
-            transform=dat_proj, ax=ax, add_colorbar=False, levels=3, colors='none', hatches=hatches
+            transform=dat_proj,
+            ax=ax,
+            add_colorbar=False,
+            levels=3,
+            colors='none',
+            hatches=hatches,
         )
 
     if xlims is not None:
         ax.set_xlim(xlims)
     if ylims is not None:
         ax.set_ylim(ylims)
-    if colourbar == True:
-        if tick_labels is not None:
-            assert len(tick_labels) == len(cbar_ticks), 'Labels and ticks must have same length'
-            res.colorbar.ax.set_yticklabels(tick_labels)
+    if colourbar == True and tick_labels is not None:
+        assert len(tick_labels) == len(cbar_ticks), (
+            'Labels and ticks must have same length'
+        )
+        res.colorbar.ax.set_yticklabels(tick_labels)
     if left_title is not None:
         if title_inset:
             title = f'{left_title} {title if title is not None else ""}'
@@ -835,13 +899,15 @@ def plot_map_to_ax(
                     fontsize=plt.rcParams['font.size'],
                 )
             else:
-                assert 1 == 0, 'title_inset_pos must be upper or lower or left_lower.'
+                assert 1 == 0, 'title_inset_pos must be upper or lower or left_lower.'  # noqa: PLR0133
         else:
             ax.set_title(title, fontsize=plt.rcParams['font.size'])
     if coastlines:
         if country is not None:
             shpfilename = shapereader.natural_earth(
-                resolution='10m', category='cultural', name='admin_0_countries'
+                resolution='10m',
+                category='cultural',
+                name='admin_0_countries',
             )
             df = geopandas.read_file(shpfilename)
             poly = df.loc[df['ADMIN'] == country]['geometry'].values[0]
@@ -858,7 +924,13 @@ def plot_map_to_ax(
         locator = None
         if num_ticks is not None:
             locator = mticker.MaxNLocator(nbins=num_ticks + 1)
-        gl = ax.gridlines(crs=disp_proj, draw_labels=True, alpha=0.5, xlocs=locator, ylocs=locator)
+        gl = ax.gridlines(
+            crs=disp_proj,
+            draw_labels=True,
+            alpha=0.5,
+            xlocs=locator,
+            ylocs=locator,
+        )
         gl.top_labels = gl.right_labels = False
         gl.left_labels = ticks_left
         gl.bottom_labels = ticks_bottom
@@ -868,18 +940,25 @@ def plot_map_to_ax(
     if annotations is not None:
         for text, [x, y, xadj, yadj, ha] in annotations.items():
             if np.abs(xadj) >= 1 or np.abs(yadj) >= 1:
-                if ha == 'right' or ha == 'left':
+                if ha in ('right', 'left'):
                     ax.plot(
-                        [x, x + xadj - (0.2 * np.sign(xadj))], [y, y + yadj + 0.2], color='black'
+                        [x, x + xadj - (0.2 * np.sign(xadj))],
+                        [y, y + yadj + 0.2],
+                        color='black',
                     )
                 elif ha == 'center':
                     ax.plot(
-                        [x, x + xadj - (0.2 * np.sign(xadj))], [y, y + yadj - 0.2], color='black'
+                        [x, x + xadj - (0.2 * np.sign(xadj))],
+                        [y, y + yadj - 0.2],
+                        color='black',
                     )
                     if yadj < 0:
-                        print('Warning: ha=center and negative y adjustment are not supported.')
+                        print(
+                            'Warning: ha=center and negative y adjustment '
+                            'are not supported.',
+                        )
                 else:
-                    assert 1 == 0, 'Invalid value of ha.'
+                    assert 1 == 0, 'Invalid value of ha.'  # noqa: PLR0133
             ax.annotate(xy=(x + xadj, y + yadj), text=text, ha=ha)
 
     return res
@@ -920,47 +999,58 @@ def plot_map(
     row_label_adjust=0.02,
     letter_labels=False,
     cbar_extend='neither',
+    title_inset_pos='upper',
     **kwargs,
 ):
-    """
-    Plot data on a map.
+    """Plot data on a map.
 
     Arguments:
+        dat: DataSet to plot or list of datasets to plot.
+        dat_proj, dist_proj: Data and display projections.
+        figsize: Figure size width x height.
+        grid: Show grid?
+        ncols/nrows: Number of columns/rows to plot.
+        title: Title(s) for the plot(s).
+        share_scale: Make the range of values in each plot the same?
+        colour_scale: Tuple with min/max values to use on scale. Overwritten by
+                      share_scale.
+        cbar_ticks: Ticks for the colourbar.
+        tick_labels: Colour bar tick labels.
+        file: If specified save to 'file' instead of showing onscreen.
+        scale_label: The label for a shared scale.
+        share_axes: Share left/bottom axes?
+        ticks_left, ticks_bottom: Display ticks on the left/bottom of plots?
+        wspace, hspace: gridspec wspace and hspace arguments.
+        stippling: Stippling per axis.
+        cbar_adjust: Amount to shrink plots by to add cbar for shared scale.
+        cbar_pad: Padding between figure and colour bar.
+        col_labels/row_labels: Labels for each column/row; overwrites individial
+                               plot titles.
+        xlims: x limits.
+        ylims: y limits.
+        show: Show the map?
+        row_label_rotation: Rotation for row labels.
+        row_label_scale: Scale factor for gap between row labels.
+        row_label_offset: Offset for first row label.
+        row_label_adjust: Adjust setting for row label space on left of plot.
+        letter_labels: Use a letter to label each subplot?
+        cbar_extend: Extend argument to colorbar().
+        col_labels: Labels for each column.
+        dat_proj: Data projection.
+        disp_proj: Display projection.
+        nrows: Number of rows.
+        ncols: Number of coluns.
+        row_labels: Labels for each row.
+        hspace: Vertical spacing between facets.
+        wspace: Horizontal spacing between facets.
+        shared_scale_quantiles: Quantiles to use in the shared scale.
+        ticks_bottom: Display bottom ticks?
+        ticks_left: Display left ticks?
+        kwargs: Extra arguments to plot_map_to_ax.
 
-        - dat: DataSet to plot or list of datasets to plot.
-        - dat_proj, dist_proj: Data and display projections.
-        - figsize: Figure size width x height.
-        - grid: Show grid?
-        - ncols/nrows: Number of columns/rows to plot.
-        - title: Title(s) for the plot(s).
-        - share_scale: Make the range of values in each plot the same?
-        - colour_scale: Tuple with min/max values to use on scale. Overwritten by share_scale.
-        - cbar_ticks: Ticks for the colourbar.
-        - tick_labels: Colour bar tick labels.
-        - file: If specified save to 'file' instead of showing onscreen.
-        - scale_label: The label for a shared scale.
-        - share_axes: Share left/bottom axes?
-        - ticks_left, ticks_bottom: Display ticks on the left/bottom of plots?
-        - wspace, hspace: gridspec wspace and hspace arguments.
-        - stippling: Stippling per axis.
-        - cbar_adjust: Amount to shrink plots by to add cbar for shared scale.
-        - cbar_pad: Padding between figure and colour bar.
-        - col_labels/row_labels: Labels for each column/row; overwrites individial plot titles.
-        - xlims, ylims: x and y limits.
-        - show: Show the map?
-        - row_label_rotation: Rotation for row labels.
-        - row_label_scale: Scale factor for gap between row labels.
-        - row_label_offset: Offset for first row label.
-        - row_label_adjust: Adjust setting for row label space on left of plot.
-        - letter_labels: Use a letter to label each subplot?
-        - cbar_extend: Extend argument to colorbar().
-        - kwargs: Extra arguments to plot_map_to_ax.
-
-    Return:
-        - The axis plotted to.
+    Return: The axis plotted to.
 
     """
-
     fig, ax = plt.subplots(
         figsize=figsize,
         ncols=ncols,
@@ -1016,6 +1106,7 @@ def plot_map(
             ticks_bottom=ticks_bottom,
             xlims=xlims,
             ylims=ylims,
+            cbar_extend=cbar_extend,
             **kwargs,
         )
     else:
@@ -1064,7 +1155,8 @@ def plot_map(
                 dat_proj=proj,
                 disp_proj=disp_proj,
                 title=ax_title,
-                colour_scale=colour_scale,
+                colour_scale=colour_scale[i] if isinstance(colour_scale, list) else colour_scale,
+                cbar_extend=cbar_extend[i] if isinstance(cbar_extend, list) else cbar_extend,
                 cbar_pad=cbar_pad,
                 cbar_ticks=cbar_ticks,
                 tick_labels=tick_labels,
@@ -1075,6 +1167,7 @@ def plot_map(
                 ticks_left=tl,
                 ticks_bottom=tb,
                 left_title=left_title,
+                title_inset_pos=title_inset_pos[i] if isinstance(title_inset_pos, list) else title_inset_pos,
                 **kwargs,
             )
 
@@ -1097,7 +1190,9 @@ def plot_map(
                 extend=cbar_extend,
             )
             if tick_labels is not None:
-                assert len(tick_labels) == len(cbar_ticks), 'Labels and ticks must have same length'
+                assert len(tick_labels) == len(cbar_ticks), (
+                    'Labels and ticks must have same length'
+                )
                 cb.ax.set_yticklabels(tick_labels)
 
         if col_labels is not None or row_labels is not None:
@@ -1111,7 +1206,10 @@ def plot_map(
 
             if row_labels is not None:
                 fig.subplots_adjust(left=row_label_adjust)
-                lab_ax = fig.add_axes([0, 0.11, row_label_adjust, 0.78], autoscale_on=True)
+                lab_ax = fig.add_axes(
+                    [0, 0.11, row_label_adjust, 0.78],
+                    autoscale_on=True,
+                )
                 lab_ax.axis('off')
 
                 for i, lab in enumerate(row_labels):
@@ -1131,9 +1229,8 @@ def plot_map(
         if show:
             plt.show()
         plt.close()
-    else:
-        if show:
-            plt.show()
+    elif show:
+        plt.show()
 
     return ax
 
@@ -1142,46 +1239,58 @@ def annual_stats(
     d,
     factor,
     day_vars=proxies,
-    mean_vars=[
-        'mixed_100_cape',
-        'mixed_100_cin',
-        'mixed_100_lifted_index',
-        'lapse_rate_700_500',
-        'temp_500',
-        'melting_level',
-        'shear_magnitude',
-    ],
-    quantile_vars={
-        0.01: ['mixed_100_cin', 'mixed_100_lifted_index', 'lapse_rate_700_500'],
-        0.99: ['mixed_100_cape', 'temp_500', 'melting_level', 'shear_magnitude'],
-    },
-    chunks={'time': -1, 'lat': 15, 'lon': 15},
+    mean_vars=None,
+    quantile_vars=None,
+    chunks=None,
     time_chunk=500,
 ):
-    """
-    Calculate annual statistics for a dataset.
+    """Calculate annual statistics for a dataset.
 
     Arguments:
         d: Data on which to calculate statistics.
-        factor: The factor by which to multiply the mean number of days (for 'day_vars' variables)
-                to get the number of days per period. Eg. 365 for annual, 91 for seasonal.
-        day_vars: Variables for which the statistic is mean number of days per year. Expected to be boolean or binary.
+        factor: The factor by which to multiply the mean number of days
+                (for 'day_vars' variables) to get the number of days per period. Eg.
+                365 for annual, 91 for seasonal.
+        day_vars: Variables for which the statistic is mean number of days per year.
+                  Expected to be boolean or binary.
         mean_vars: Variables for which to calculate the mean per year.
-        quantile_vars: {percentile: variables} dictionary showing which percentiles to use for extreme values of each variable.
+        quantile_vars: {percentile: variables} dictionary showing which percentiles to
+                       use for extreme values of each variable.
         chunks: Chunks to use for quantile calculation.
         time_chunk: Chunk for times in daily timeseries.
 
     Returns: statistics per year.
+
     """
+    if mean_vars is None:
+        mean_vars = [
+            'mixed_100_cape',
+            'mixed_100_cin',
+            'mixed_100_lifted_index',
+            'lapse_rate_700_500',
+            'temp_500',
+            'melting_level',
+            'shear_magnitude',
+        ]
+    if quantile_vars is None:
+        quantile_vars = {
+            0.01: ['mixed_100_cin', 'mixed_100_lifted_index', 'lapse_rate_700_500'],
+            0.99: ['mixed_100_cape', 'temp_500', 'melting_level', 'shear_magnitude'],
+        }
+    if chunks is None:
+        chunks = {'time': -1, 'lat': 15, 'lon': 15}
 
     # Annual hail-prone days.
-    daily = d[day_vars].resample(time='D').max(keep_attrs=True).chunk({'time': time_chunk})
+    daily = (
+        d[day_vars].resample(time='D').max(keep_attrs=True).chunk({'time': time_chunk})
+    )
 
     # Remove all 29 Februaries, because resample can introduce one if it is
     # missing, which is set to nan; but bool(np.nan) == True so it introduces an
     # erroneous True value on that day.
     daily = daily.where(
-        ~np.logical_and(daily.time.dt.month == 2, daily.time.dt.day == 29), drop=True
+        ~np.logical_and(daily.time.dt.month == 2, daily.time.dt.day == 29),  # noqa: PLR2004
+        drop=True,
     )
     with xarray.set_options(keep_attrs=True):
         days = daily.groupby('time.year').mean(keep_attrs=True) * factor
@@ -1211,26 +1320,28 @@ def annual_stats(
                 extremes[v].attrs['description'] = f'Percentile {q}'
                 extremes = extremes.rename({v: f'extreme_{v}'})
 
-    ret = xarray.merge([days, means, extremes])
-    return ret
+    return xarray.merge([days, means, extremes])
 
 
 def epoch_stats(
     d,
-    season_factors={'DJF': 90, 'MAM': 92, 'JJA': 92, 'SON': 91},
+    season_factors=None,
     proxy_vars=proxies,
     proxy_names=proxy_names,
 ):
-    """
-    Calculate annual and seasonal statistics.
+    """Calculate annual and seasonal statistics.
 
     Arguments:
         d: Data to work on.
-        factors: Factor argument (length in days) for each season.
-        proxy_vars, proxy_names: Proxy variables and a var: name dictionary giving their names.
+        season_factors: Factor argument (length in days) for each season.
+        proxy_vars: Proxy variables.
+        proxy_names: a var: name dictionary giving variable names.
 
     Returns: A single xarray object with annual and seasonal stats.
+
     """
+    if season_factors is None:
+        season_factors = {'DJF': 90, 'MAM': 92, 'JJA': 92, 'SON': 91}
 
     print('Hail days per month...')
     prox = d.reset_coords()[proxy_vars].load()
@@ -1242,7 +1353,8 @@ def epoch_stats(
     # missing, which is set to nan; but bool(np.nan) == True so it introduces an
     # erroneous True value on that day.
     daily = daily.where(
-        ~np.logical_and(daily.time.dt.month == 2, daily.time.dt.day == 29), drop=True
+        ~np.logical_and(daily.time.dt.month == 2, daily.time.dt.day == 29),  # noqa: PLR2004
+        drop=True,
     )
 
     # Resample to number of hail-prone days per month.
@@ -1251,7 +1363,9 @@ def epoch_stats(
     days_per_month['month'] = days_per_month.time.dt.month
     days_per_month = days_per_month.set_index(time=['year', 'month']).unstack('time')
     for v in proxy_vars:
-        days_per_month[v].attrs['long_name'] = f'Hail-prone days during month ({proxy_names[v]})'
+        days_per_month[v].attrs['long_name'] = (
+            f'Hail-prone days during month ({proxy_names[v]})'
+        )
         days_per_month[v].attrs['units'] = 'days per month'
 
     print('Seasonal...')
@@ -1259,11 +1373,16 @@ def epoch_stats(
     for s in ['DJF', 'MAM', 'JJA', 'SON']:
         print(f'{s}...')
         seasonal.append(
-            annual_stats(d.where(d.time.dt.season == s), factor=season_factors[s]).expand_dims(
-                {'season': [s]}
-            )
+            annual_stats(
+                d.where(d.time.dt.season == s),
+                factor=season_factors[s],
+            ).expand_dims({'season': [s]}),
         )
-    seasonal = xarray.combine_nested(seasonal, concat_dim='season', combine_attrs='no_conflicts')
+    seasonal = xarray.combine_nested(
+        seasonal,
+        concat_dim='season',
+        combine_attrs='no_conflicts',
+    )
     seasonal = seasonal.rename({n: f'seasonal_{n}' for n in seasonal.data_vars})
     seasonal = seasonal.chunk(-1)
 
@@ -1272,8 +1391,7 @@ def epoch_stats(
     annual = annual.rename({n: f'annual_{n}' for n in annual.data_vars})
     annual = annual.chunk(-1)
 
-    dat = xarray.merge([seasonal, annual, days_per_month])
-    return dat
+    return xarray.merge([seasonal, annual, days_per_month])
 
 
 def process_epoch(
@@ -1286,8 +1404,7 @@ def process_epoch(
     prox_dir='/g/data/up6/tr2908/future_hail_global/CMIP_proxies/',
     non_na_vars=proxies,
 ):
-    """
-    Process an epoch for a given simulation.
+    """Process an epoch for a given simulation.
 
     Arguments:
         epoch_name: Name of the epoch.
@@ -1296,9 +1413,10 @@ def process_epoch(
         epoch_dates: The epoch start/end times as a tuple.
         expected_times: Number of times expected in the epoch.
         data_dir: Base data directory.
-        non_na_var: A variable to check there are no NAs in.
-    """
+        prox_dir: Directory for proxy data.
+        non_na_vars: A variable to check there are no NAs in.
 
+    """
     sim_dir = f'{model_name}/{exp}'
     files = glob(f'{data_dir}/{sim_dir}/*.nc')
     if len(files) == 0:
@@ -1307,7 +1425,11 @@ def process_epoch(
 
     # Open convective data.
     dat = xarray.open_mfdataset(
-        sorted(files), parallel=True, chunks={'time': 500}, combine='nested', concat_dim='time'
+        sorted(files),
+        parallel=True,
+        chunks={'time': 500},
+        combine='nested',
+        concat_dim='time',
     ).sortby('time')
 
     # Open separately processed proxy data.
@@ -1319,14 +1441,14 @@ def process_epoch(
 
     # Convert from longitude 0-360 to -180-180.
     lon_attrs = dat.lon.attrs
-    dat['lon'] = dat.lon.where(dat.lon < 180, other=dat.lon - 360)
+    dat['lon'] = dat.lon.where(dat.lon < 180, other=dat.lon - 360)  # noqa: PLR2004
     dat = dat.sortby('lon')
     dat.lon.attrs = lon_attrs
 
     if dat.time.size != expected_times:
         msg = (
             f'Warning: {sim_dir} epoch {epoch_name}: number of times returned '
-            + f'({dat.time.size}) does not match expected size ({expected_times}).'
+            f'({dat.time.size}) does not match expected size ({expected_times}).'
         )
         print(msg)
         return None
@@ -1348,17 +1470,17 @@ def make_landsea_mask(
     out_res=1,
     percent_land_required=25,
 ):
-    """
-    Calculate a land-sea mask based on a CMIP dataset's land-sea mask.
+    """Calculate a land-sea mask based on a CMIP dataset's land-sea mask.
 
     Arguments:
         lsm_file: The CMIP land-sea mask file to open and regrid.
         out_res: Output resolution to grid to (in degrees).
-        percent_land_required: How much of a grid cell needs to be considered land to be a "land" pixel in the returned map?
+        percent_land_required: How much of a grid cell needs to be considered land to be
+                               a "land" pixel in the returned map?
 
     Returns: A land-sea mask.
-    """
 
+    """
     lsm = xarray.open_mfdataset(lsm_file).load()
 
     # Regrid to output resolution.
@@ -1370,7 +1492,7 @@ def make_landsea_mask(
             'lon': (out_lon[:-1] + out_lon[1:]) / 2,
             'lat_b': out_lat,
             'lon_b': out_lon,
-        }
+        },
     )
 
     regridder = xe.Regridder(lsm, out_grid, 'bilinear', periodic=True)
@@ -1393,8 +1515,7 @@ def plot_seasonal_maps(
     cmap=hail_cmap,
     **kwargs,
 ):
-    """
-    Plot maps per model and per season - rows per model and columns per season.
+    """Plot maps per model and per season - rows per model and columns per season.
 
     Argumnets:
         d: The data to plot.
@@ -1402,13 +1523,17 @@ def plot_seasonal_maps(
         lat/lon_range: Ranges of latitude/longitude.
         figsize: Figure width x height.
         kwargs: Extra arguments to plot_map.
-    """
 
+    """
     d = [
-        dat[variable].mean('year_num').sel(model=m, season=s, lat=lat_range, lon=lon_range)
+        dat[variable]
+        .mean('year_num')
+        .sel(model=m, season=s, lat=lat_range, lon=lon_range)
         for m, s in itertools.product(dat.model.values, dat.season.values)
     ]
-    titles = [f'{m} ({s})' for m, s in itertools.product(dat.model.values, dat.season.values)]
+    titles = [
+        f'{m} ({s})' for m, s in itertools.product(dat.model.values, dat.season.values)
+    ]
 
     _ = plot_map(
         d,
@@ -1427,8 +1552,7 @@ def plot_seasonal_maps(
 
 
 def ttest(dat, variables, fut_epoch, hist_epoch='historical', sig_level=0.05):
-    """
-    Apply Welch's t-test for across a given axis between epochs.
+    """Apply Welch's t-test for across a given axis between epochs.
 
     Arguments:
         dat: The data to work on - for one model.
@@ -1438,8 +1562,8 @@ def ttest(dat, variables, fut_epoch, hist_epoch='historical', sig_level=0.05):
         sig_level: The p value to require for significance.
 
     Returns: the t test statistic and the significance result.
-    """
 
+    """
     res = []
     for variable in variables:
         statres, pval = sp.stats.ttest_ind(
@@ -1463,22 +1587,27 @@ def ttest(dat, variables, fut_epoch, hist_epoch='historical', sig_level=0.05):
     return res
 
 
-def select_all_models(
-    dstore_files=[
-        ('/g/data/dk92/catalog/v2/esm/cmip6-oi10/catalog.json', '/g/data/oi10/replicas'),
-        ('/g/data/dk92/catalog/v2/esm/cmip6-fs38/catalog.json', '/g/data/fs38/publications'),
-    ],
-    **kwargs,
-):
-    """
-    Return modules that are suitable for this work, from a list of catalogue files.
+def select_all_models(dstore_files=None, **kwargs):
+    """Return modules that are suitable for this work, from a list of catalogue files.
 
     Arguments:
-        datastore_files: Tuples of (catalog_file, data_dir) to use.
+        dstore_files: Tuples of (catalog_file, data_dir) to use.
         **kwargs: Extra arguments to select_models().
 
     Returns: A list of suitable model details.
+
     """
+    if dstore_files is None:
+        dstore_files = [
+            (
+                '/g/data/dk92/catalog/v2/esm/cmip6-oi10/catalog.json',
+                '/g/data/oi10/replicas',
+            ),
+            (
+                '/g/data/dk92/catalog/v2/esm/cmip6-fs38/catalog.json',
+                '/g/data/fs38/publications',
+            ),
+        ]
 
     mods = []
     for [f, d] in dstore_files:
@@ -1490,26 +1619,36 @@ def select_all_models(
 
 def select_models(
     datastore_file='/g/data/dk92/catalog/v2/esm/cmip6-oi10/catalog.json',
-    variables=['tas', 'ta', 'uas', 'ua', 'vas', 'va', 'huss', 'hus', 'ps'],
-    experiments=['historical', 'ssp585'],
-    tables=['3hr', '6hrLev'],
+    variables=None,
+    experiments=None,
+    tables=None,
 ):
-    """
-    Return models that are suitable for use in this work.
+    """Return models that are suitable for use in this work.
 
     Arguments:
         datastore_file: The datastore file to use.
         variables: Required variables.
         experiments: Required experiments.
         tables: Required tables.
+
     """
+    if variables is None:
+        variables = ['tas', 'ta', 'uas', 'ua', 'vas', 'va', 'huss', 'hus', 'ps']
+    if experiments is None:
+        experiments = ['historical', 'ssp585']
+    if tables is None:
+        tables = ['3hr', '6hrLev']
 
     cmip6 = intake.open_esm_datastore(datastore_file)
 
-    subset = cmip6.search(experiment_id=experiments, variable_id=variables, table_id=tables)
+    subset = cmip6.search(
+        experiment_id=experiments,
+        variable_id=variables,
+        table_id=tables,
+    )
 
     subset = subset.df.groupby(
-        ['source_id', 'experiment_id', 'institution_id', 'member_id', 'project_id']
+        ['source_id', 'experiment_id', 'institution_id', 'member_id', 'project_id'],
     ).variable_id.unique()
 
     # Subset to models that have all variables required.
@@ -1517,10 +1656,12 @@ def select_models(
 
     # Subset to models that have both historical and ssp585 experiments.
     counts = subset.groupby(['source_id', 'member_id']).count()
-    assert np.all(counts <= 2), 'More than two options for some model(s).'
-    counts = counts[counts == 2]
+    assert np.all(counts <= 2), 'More than two options for some model(s).'  # noqa: PLR2004
+    counts = counts[counts == 2]  # noqa: PLR2004
     chosen_models = counts.index.values
-    subset = subset.reset_index().set_index(['source_id', 'member_id']).loc[chosen_models]
+    subset = (
+        subset.reset_index().set_index(['source_id', 'member_id']).loc[chosen_models]
+    )
 
     # Make the description string.
     subset = subset.reset_index()
@@ -1539,26 +1680,26 @@ def select_models(
 
     # Tidy up.
     subset = subset.drop(columns=['variable_id', 'project_id'])
-    subset = subset.rename(
-        columns={'source_id': 'model', 'member_id': 'ensemble', 'experiment_id': 'exp'}
+    return subset.rename(
+        columns={'source_id': 'model', 'member_id': 'ensemble', 'experiment_id': 'exp'},
     )
-
-    return subset
 
 
 def make_run_scripts(
-    runs, scripts_dir='scripts/', template='scripts/process_CMIP_template.sh', yrs=9
+    runs,
+    scripts_dir='scripts/',
+    template='scripts/process_CMIP_template.sh',
+    yrs=9,
 ):
-    """
-    Make scripts to produce convective indices for each model run.
+    """Make scripts to produce convective indices for each model run.
 
     Arguments:
         runs: As returned by define_runs().
         scripts_dir: The directory in which to write scripts.
         template: The script template to copy and modify.
         yrs: The years to use around the central year of each run.
-    """
 
+    """
     # Make scripts for each run.
     for _, row in runs.iterrows():
         # Make scripts directory per model.
@@ -1583,17 +1724,18 @@ def make_run_scripts(
 
 
 def make_postprocessing_scripts(
-    runs, scripts_dir='scripts/', template='scripts/post_process_CMIP_template.sh'
+    runs,
+    scripts_dir='scripts/',
+    template='scripts/post_process_CMIP_template.sh',
 ):
-    """
-    Make scripts to produce convective indices for each model run.
+    """Make scripts to produce convective indices for each model run.
 
     Arguments:
         runs: As returned by define_runs().
         scripts_dir: The directory in which to write scripts.
         template: The script template to copy and modify.
-    """
 
+    """
     # Make scripts for each run.
     for _, row in runs.iterrows():
         # Make scripts directory per model.
@@ -1614,8 +1756,7 @@ def make_postprocessing_scripts(
 
 
 def plot_run_years(runs, figsize=(10, 2.8), legend_y=9.5, file=None, show=True):
-    """
-    Make a plot to show the (overlapping) run years per model.
+    """Make a plot to show the (overlapping) run years per model.
 
     Arguments:
         runs: As from define_runs().
@@ -1623,8 +1764,8 @@ def plot_run_years(runs, figsize=(10, 2.8), legend_y=9.5, file=None, show=True):
         legend_y: Y position for legend.
         file: Plot output file.
         show: Show the plot?
-    """
 
+    """
     rename_exps = {
         'historical': 'Historical',
         'ssp585 (2C)': 'SSP5-8.5 (2C)',
@@ -1641,7 +1782,12 @@ def plot_run_years(runs, figsize=(10, 2.8), legend_y=9.5, file=None, show=True):
         mod_runs = runs.loc[runs.model == model]
         for _, run in mod_runs.iterrows():
             axs[i].fill_betweenx(
-                [0, 1], run.start_year, run.end_year + 1, label=run.exp, alpha=0.5, zorder=1
+                [0, 1],
+                run.start_year,
+                run.end_year + 1,
+                label=run.exp,
+                alpha=0.5,
+                zorder=1,
             )
 
         if i < len(np.unique(runs.model)) - 1:
@@ -1658,13 +1804,13 @@ def plot_run_years(runs, figsize=(10, 2.8), legend_y=9.5, file=None, show=True):
         if show:
             plt.show()
         plt.close()
-    else:
-        if show:
-            plt.show()
+    elif show:
+        plt.show()
 
 
-def warming_years(future_models, warming_degrees=2, baseline_range=[1980, 1999]):
-    """
+def warming_years(future_models, warming_degrees=2, baseline_range=None):
+    """Calculate warming periods.
+
     For each model, determine the 20 year period around when that model
     reaches a certain warming level over pre-industrial temperatures.
 
@@ -1674,7 +1820,10 @@ def warming_years(future_models, warming_degrees=2, baseline_range=[1980, 1999])
         baseline_range: Baseline year range.
 
     Returns: pd.DataFrame with model description, start_year, end_year.
+
     """
+    if baseline_range is None:
+        baseline_range = [1980, 1999]
 
     # Retrieve warming data.
     warming_levels = wl.warming_window(
@@ -1691,36 +1840,47 @@ def warming_years(future_models, warming_degrees=2, baseline_range=[1980, 1999])
     for mod in future_models:
         _, _, _, model, _, ensemble = mod.split('.')
 
-        levels = warming_levels.loc[warming_levels.model == f'{model}_{ensemble}'].copy()
+        levels = warming_levels.loc[
+            warming_levels.model == f'{model}_{ensemble}'
+        ].copy()
         levels['desc'] = mod
         levels = levels.drop(columns='model')
         all_levels = pd.concat([all_levels, levels])
 
-    all_levels = all_levels.reset_index(drop=True)
-
-    return all_levels
+    return all_levels.reset_index(drop=True)
 
 
 def define_runs(
     models,
     hist_start=1980,
     hist_end=1999,
-    warming_degrees=[2, 3],
-    tables=[['6hrLev', '6H'], ['3hr', '3H']],
-    variables=['va', 'ta', 'hus', 'ps', 'vas', 'huss', 'tas'],
+    warming_degrees=None,
+    tables=None,
+    variables=None,
 ):
-    # Define model runs with start/end years for the period in which they reached
-    # certain warming levels, and a historical period. Exclude models that don't cover
-    # the required times.
+    """Define model runs.
 
-    # Arguments:
-    #     models: The models to use.
-    #     hist_start, hist_end: The historical period to use.
-    #     warming_degrees: Number of degrees warming.
-    #     tables, variables: CMIP6 tables and variables to check for temporal coverage.
+    Define model runs with start/end years for the period in which they reached
+    certain warming levels, and a historical period. Exclude models that don't cover
+    the required times.
 
-    # Returns: A DataFrame with one row per run.
-    # """
+    Arguments:
+        models: The models to use.
+        hist_start: The start year of the historical period to use.
+        hist_end: The end year of the historical period to use.
+        warming_degrees: Number of degrees warming.
+        tables: CMIP6 tables to check for temporal coverage.
+        variables: CMIP6 variables to check for temporal coverage.
+
+    Returns: A DataFrame with one row per run.
+
+    """
+    if warming_degrees is None:
+        warming_degrees = [2, 3]
+    if tables is None:
+        tables = [['6hrLev', '6H'], ['3hr', '3H']]
+    if variables is None:
+        variables = ['va', 'ta', 'hus', 'ps', 'vas', 'huss', 'tas']
 
     # Remove duplicate models and keep only the first ensemble_id of duplicate models.
     unique_models = models[['model', 'ensemble']].drop_duplicates()
@@ -1737,7 +1897,7 @@ def define_runs(
     hist['epoch_name'] = hist.exp
 
     # Find start/end dates for future models for various warming levels.
-    all = hist
+    all_h = hist
     for deg in warming_degrees:
         future = models.loc[models.exp != 'historical'].copy()
         warming_period = warming_years(
@@ -1751,19 +1911,20 @@ def define_runs(
         future['epoch_name'] = f'{deg}C'
         future['exp_name'] = future.exp
         future['exp'] = future.exp + f' ({deg}C)'
-        all = pd.concat([all, future])
-    all = all.reset_index(drop=True)
+        all_h = pd.concat([all_h, future])
+    all_h = all_h.reset_index(drop=True)
 
-    # Exclude models that are not on pressure levels or do not have the temperal coverage required.
+    # Exclude models that are not on pressure levels or do not have the
+    # temperal coverage required.
     exclude = []
-    for i, run in all.iterrows():
+    for i, run in all_h.iterrows():
         if np.isin(run.model, exclude):
             continue
 
         base_path = f'{run.CMIP6_dir}/{run.desc.replace(".", "/")}'
 
         for v in variables:
-            for [p, res] in tables:
+            for [p, res] in tables:  # noqa: B007
                 path = f'{base_path}/{p}/{v}'
                 if os.path.exists(path):
                     break
@@ -1782,14 +1943,24 @@ def define_runs(
             path = f'{path}/{version}'
 
             files = sorted(glob(f'{path}/*.nc'))
-            min_time = times_in_CMIP_file(filename=files[0], res=res, calendar='standard').min()
-            max_time = times_in_CMIP_file(filename=files[-1], res=res, calendar='standard').max()
+            min_time = times_in_CMIP_file(
+                filename=files[0],
+                res=res,
+                calendar='standard',
+            ).min()
+            max_time = times_in_CMIP_file(
+                filename=files[-1],
+                res=res,
+                calendar='standard',
+            ).max()
 
-            if min_time > pd.to_datetime(f'{run.start_year}-1-1') or max_time < pd.to_datetime(
-                f'{run.end_year}-12-31'
-            ):
+            if min_time > pd.to_datetime(
+                f'{run.start_year}-1-1',
+            ) or max_time < pd.to_datetime(f'{run.end_year}-12-31'):
                 print(
-                    f'{run.model} {run.exp} requires {run.start_year}-{run.end_year}, but data for {v} covers only {min_time.year}-{max_time.year}. Excluding {run.model}.'
+                    f'{run.model} {run.exp} requires {run.start_year}-{run.end_year}, '
+                    f'but data for {v} covers only {min_time.year}-{max_time.year}. '
+                    f'Excluding {run.model}.',
                 )
                 exclude.append(run.model)
                 break
@@ -1799,19 +1970,20 @@ def define_runs(
                 ta = xarray.open_dataset(files[0])
 
                 # While we're here, collect some metadata.
-                all.loc[i, 'nominal_resolution'] = ta.attrs['nominal_resolution']
-                all.loc[i, 'vertical_levels'] = len(ta.lev.values)
+                all_h.loc[i, 'nominal_resolution'] = ta.attrs['nominal_resolution']
+                all_h.loc[i, 'vertical_levels'] = len(ta.lev.values)
 
                 sn = ta.lev.attrs['standard_name']
                 ta.close()
                 if sn != 'atmosphere_hybrid_sigma_pressure_coordinate':
                     print(
-                        f'{run.model} {run.exp} is not on pressure levels. Excluding {run.model}.'
+                        f'{run.model} {run.exp} is not on pressure levels. '
+                        f'Excluding {run.model}.',
                     )
                     exclude.append(run.model)
                     break
 
-    runs = all.iloc[~np.isin(all.model, exclude)]
+    runs = all_h.iloc[~np.isin(all_h.model, exclude)]
     runs = runs.reset_index(drop=True)
 
     return runs.reset_index(drop=True)
@@ -1822,15 +1994,16 @@ def make_backup_orography(
     CMIP6_dir='/g/data/oi10/replicas',
     backup_orog=(
         'CMIP6/CMIP/CNRM-CERFACS/CNRM-CM6-1/historical/'
-        + 'r1i1p1f2/fx/orog/gr/v20180917/'
-        + 'orog_fx_CNRM-CM6-1_historical_r1i1p1f2_gr.nc'
+        'r1i1p1f2/fx/orog/gr/v20180917/'
+        'orog_fx_CNRM-CM6-1_historical_r1i1p1f2_gr.nc'
     ),
     backup_orog_dir='/g/data/up6/tr2908/future_hail_global/interpolated_orography',
-    tables=[['6hrLev', '6H'], ['3hr', '3H']],
+    tables=None,
     grid_var='tas',
 ):
-    """
-    Make files for backup orography, interpolated from another CMIP6 model, for those models
+    """Make files for backup orography.
+
+    Backup is interpolated from another CMIP6 model, for those models
     that have not provided orography.
 
     Arguments:
@@ -1842,7 +2015,10 @@ def make_backup_orography(
         grid_var: The variable from which to get the grid to interpolate to.
 
     Returns: The run list with a column 'backup_orography' added.
+
     """
+    if tables is None:
+        tables = [['6hrLev', '6H'], ['3hr', '3H']]
 
     orog = None
     runs['backup_orography'] = False
@@ -1865,7 +2041,9 @@ def make_backup_orography(
                 path = f'{base_path}/{p}/{grid_var}'
                 if os.path.exists(path):
                     break
-            assert os.path.exists(path), f'Could not find path/res combinations for {grid_var}.'
+            assert os.path.exists(path), (
+                f'Could not find path/res combinations for {grid_var}.'
+            )
             grids = [os.path.basename(x) for x in sorted(glob(f'{path}/*'))]
             assert len(grids) == 1, f'Multiple grids to choose from for {path}.'
             grid = grids[0]
@@ -1899,37 +2077,50 @@ def make_backup_orography(
 def read_processed_data(
     data_dir='/g/data/up6/tr2908/future_hail_global/CMIP_conv_annual_stats/',
     data_exp='*common_grid.nc',
-    rename_models={'EC-Earth_Consortium.EC-Earth3': 'EC-Earth3'},
-    rename_vars={},
+    rename_models=None,
+    rename_vars=None,
     apply_landmask=False,
 ):
-    """
-    Read all processed data, regridding to a common grid on the way and applying a land mask.
+    """Read all processed data.
+
+    Regrid to a common grid on the way and applying a land mask.
 
     Arguments:
         data_dir: The data directory to read from.
         data_exp: Expression to match for data.
         rename_models: Models to shorten the names of.
         rename_vars: Variables to rename.
+        apply_landmask: Apply the landmask during processing?
 
     Returns: Dataset, landsea mask.
+
     """
+    if rename_models is None:
+        rename_models = {'EC-Earth_Consortium.EC-Earth3': 'EC-Earth3'}
+    if rename_vars is None:
+        rename_vars = {}
 
     # Regrid native grids to common grids.
     regrid_global(path=f'{data_dir}/*native_grid.nc')
 
     # Open all data.
-    dat = xarray.open_mfdataset(f'{data_dir}/{data_exp}', parallel=True, engine='netcdf4')
+    dat = xarray.open_mfdataset(
+        f'{data_dir}/{data_exp}',
+        parallel=True,
+        engine='netcdf4',
+    )
 
-    # Oddly, there seems to be an issue where epochs encoded differently in different
-    # input files (<U2 for '2C' and <U10 for 'historical') are, when evaluated and
-    # rewritten to NetCDF, written as '<U2' so that historical becomes 'hi'.
-    # Enforce all epochs being the same dtype here.
+    # Oddly, there seems to be an issue where epochs encoded differently in
+    # different input files (<U2 for '2C' and <U10 for 'historical') are, when
+    # evaluated and rewritten to NetCDF, written as '<U2' so that historical
+    # becomes 'hi'. Enforce all epochs being the same dtype here.
     dat = dat.assign_coords({'epoch': dat.epoch.astype(dat.epoch.dtype)})
 
     # Shorten model names if required.
     dat = dat.assign_coords(
-        {'model': [rename_models[x] if x in rename_models else x for x in dat.model.values]}
+        {
+            'model': [rename_models.get(x, x) for x in dat.model.values],
+        },
     )
 
     # Open landsea mask.
@@ -1942,7 +2133,8 @@ def read_processed_data(
     # Rename variables.
     dat = dat.rename(rename_vars)
 
-    # Re-arrange the data so that the seasonal/annual/monthly hail days are organised with proxy as a dimension.
+    # Re-arrange the data so that the seasonal/annual/monthly hail days are
+    # organised with proxy as a dimension.
     seasonal_proxies = [x for x in list(dat.keys()) if 'seasonal_proxy' in x]
     annual_proxies = [x for x in list(dat.keys()) if 'annual_proxy_' in x]
     prox = [
@@ -1974,16 +2166,24 @@ def read_processed_data(
 
     dat = xarray.merge([dat[rest], seasonal, annual, prox])
 
-    # Transpose - for the ttest the axis over which the t-test should be applied 
+    # Transpose - for the ttest the axis over which the t-test should be applied
     # ('year_num') must be first after model/epoch selection.
-    dat = dat.transpose('model', 'epoch', 'year_num', 'proxy', 'season', 'month', 'lat', 'lon')
+    dat = dat.transpose(
+        'model',
+        'epoch',
+        'year_num',
+        'proxy',
+        'season',
+        'month',
+        'lat',
+        'lon',
+    )
 
     return dat, lsm
 
 
-def era5_climatology_calc(era5, proxy_vars=proxies, proxy_names=proxy_names):
-    """
-    Calculate era5 climatology information.
+def era5_climatology_calc(era5, proxy_vars=proxies):
+    """Calculate era5 climatology information.
 
     Argumnets:
         era5: ERA5 data ready to use.
@@ -1991,8 +2191,8 @@ def era5_climatology_calc(era5, proxy_vars=proxies, proxy_names=proxy_names):
         proxy_names: variable: name dictionary giving proxy names.
 
     Returns: monthly and annual normalised hail proxy climatology.
-    """
 
+    """
     for p in proxy_vars:
         assert not np.any(np.isnan(era5[p])), f'NaNs in ERA5 proxy {p}.'
 
@@ -2003,7 +2203,8 @@ def era5_climatology_calc(era5, proxy_vars=proxies, proxy_names=proxy_names):
     # missing, which is set to nan; but bool(np.nan) == True so it introduces an
     # erroneous True value on that day.
     daily = daily.where(
-        ~np.logical_and(daily.time.dt.month == 2, daily.time.dt.day == 29), drop=True
+        ~np.logical_and(daily.time.dt.month == 2, daily.time.dt.day == 29),  # noqa: PLR2004
+        drop=True,
     )
     with xarray.set_options(keep_attrs=True):
         days = daily.groupby('time.year').mean(keep_attrs=True) * 365
@@ -2017,9 +2218,7 @@ def era5_climatology_calc(era5, proxy_vars=proxies, proxy_names=proxy_names):
         res['monthly_' + x] = months[x] * months['month_factor']
 
     # Rename latitude/longitude for consistency with other data.
-    res = res.rename({'latitude': 'lat', 'longitude': 'lon'})
-
-    return res
+    return res.rename({'latitude': 'lat', 'longitude': 'lon'})
 
 
 def era5_climatology(
@@ -2028,22 +2227,25 @@ def era5_climatology(
     era5_proxy_file='era5_proxies.nc',
     cache_file='/g/data/up6/tr2908/future_hail_global/era5_climatology.nc',
     landmask=None,
-    rename={},
+    rename=None,
     yrs=20,
 ):
-    """
-    Calculate the ERA5 climatology of mean annual hail-prone days.
+    """Calculate the ERA5 climatology of mean annual hail-prone days.
 
     Arguments:
         era5_dir: Processed convective files directory for ERA5.
-        erae5_file_def: The definition of files to read in for the climatology.
+        era5_file_def: The definition of files to read in for the climatology.
+        era5_proxy_file: The proxy definition file.
         cache_file: A cache file to write/read to/from (or None for no cache).
         landmask: Optionally mask for land regions using landmask.lsm.
         rename: Variables to rename.
         yrs: Years of data to expect.
 
     Returns: Mean annual hail-prone days from ERA5.
+
     """
+    if rename is None:
+        rename = {}
 
     if cache_file is None or not os.path.exists(cache_file):
         dat = xarray.open_mfdataset(f'{era5_dir}/{era5_file_def}', parallel=True)
@@ -2051,7 +2253,9 @@ def era5_climatology(
         prox = prox.transpose('time', 'latitude', 'longitude')
         prox = prox.sel(time=dat.time)
         dat = xarray.merge([dat, prox])
-        assert len(dat.time) == 365 * yrs * 4, 'Incorrect number of times in ERA5 historic period.'
+        assert len(dat.time) == 365 * yrs * 4, (
+            'Incorrect number of times in ERA5 historic period.'
+        )
 
         dat = era5_climatology_calc(dat)
 
@@ -2066,8 +2270,8 @@ def era5_climatology(
 
     # Reorganise so proxy is a dimension.
     dat = dat.rename(rename)
-    monthly = [x for x in dat.keys() if 'monthly' in x]
-    prox = [x for x in dat.keys() if x not in monthly]
+    monthly = [x for x in dat if 'monthly' in x]
+    prox = [x for x in dat if x not in monthly]
     prox = (
         dat[prox]
         .rename({f: f[6:None] for f in prox})
@@ -2078,35 +2282,41 @@ def era5_climatology(
         .rename({f: f[14:None] for f in monthly})
         .to_dataarray(name='monthly_hail_days', dim='proxy')
     )
-    dat = xarray.merge([prox, monthly])
-
-    return dat
+    return xarray.merge([prox, monthly])
 
 
 def monthly_era5_anoms(
-    era5, era5_dir='/g/data/up6/tr2908/future_hail_global/era5_conv/', anomaly_years=[2015, 2022]
+    era5,
+    era5_dir='/g/data/up6/tr2908/future_hail_global/era5_conv/',
+    anomaly_years=None,
 ):
-    """
-    Calculate ERA5 hail proxy anomalies on a monthly basis, taking the mean over all proxies.
+    """Calculate ERA5 hail proxy anomalies on a monthly basis.
+
+    Take the mean over all proxies.
 
     Arguments:
         era5: ERA5 climatology data from era5_climatology().
         era5_dir: The ERA5 data directory.
         anomaly_years: The years for which to find anomalies.
+
     """
+    if anomaly_years is None:
+        anomaly_years = [2015, 2022]
 
     anoms = []
     for year in anomaly_years:
         year_dat = era5_climatology(
-            era5_dir=era5_dir, era5_file_def=f'*{year}*.nc', yrs=1, cache_file=None
+            era5_dir=era5_dir,
+            era5_file_def=f'*{year}*.nc',
+            yrs=1,
+            cache_file=None,
         )
         year_dat = year_dat.sel(proxy=era5.proxy)
         year_anoms = (year_dat - era5).mean('proxy')
         year_anoms = year_anoms.expand_dims({'year': [year]})
         anoms.append(year_anoms)
 
-    anoms = xarray.merge(anoms).load()
-    return anoms
+    return xarray.merge(anoms).load()
 
 
 def plot_era5_anomalies(
@@ -2120,19 +2330,20 @@ def plot_era5_anomalies(
     scale_label='Hail-prone day anomaly compared to 1980-1999 climatology',
     **kwargs,
 ):
-    """
-    Plot maps of monthly ERA5 hail proxy anomalies over a selected region.
+    """Plot maps of monthly ERA5 hail proxy anomalies over a selected region.
 
     Arguments:
         anoms: Anomalies to plot.
         lats: Slice of latitudes to include.
         lons: Slice of longitudes to include.
         figsize: Figure width x height.
-        ncols, nrows: Number of rows, columns.
+        ncols: Number of columns.
+        nrows: Number of rows.
         scale_label: Legend key.
+        year: Plot for this year.
         **kwargs: Arguments to plot_map().
-    """
 
+    """
     months = np.arange(12) + 1
     month_names = {
         1: 'January',
@@ -2150,7 +2361,10 @@ def plot_era5_anomalies(
     }
 
     _ = plot_map(
-        [anoms.sel(year=year, month=m, lat=lats, lon=lons).monthly_hail_days for m in months],
+        [
+            anoms.sel(year=year, month=m, lat=lats, lon=lons).monthly_hail_days
+            for m in months
+        ],
         title=[f'{month_names[m]} {year}' for m in months],
         ncols=ncols,
         nrows=nrows,
@@ -2172,13 +2386,12 @@ def plot_era5_anomalies(
 def epoch_differences(
     dat,
     variables,
-    epochs=['2C', '3C'],
+    epochs=None,
     outstring='_',
     cache_dir='/g/data/up6/tr2908/future_hail_global/CMIP_changes/',
     expand_dims=None,
 ):
-    """
-    Calculate differences between historical epoch and warming epochs.
+    """Calculate differences between historical epoch and warming epochs.
 
     Arguments:
         dat: The data to work on.
@@ -2186,10 +2399,15 @@ def epoch_differences(
         epochs: The future epochs to test.
         outstring: string to put in the middle of output file name.
         cache_dir: The cache directory to write changes to.
-        expand_dims: Optionally pass this argument to expand_dims before saving differences.
+        expand_dims: Optionally pass this argument to expand_dims before saving
+                     differences.
 
-    Returns: mean differences, significances of differences, and historical mean for each model.
+    Returns: mean differences, significances of differences, and historical mean
+             for each model.
+
     """
+    if epochs is None:
+        epochs = ['2C', '3C']
 
     res = []
     for model in dat.model.values:
@@ -2220,7 +2438,7 @@ def epoch_differences(
             mean_diffs = xarray.merge(mean_diffs)
             sigs = xarray.merge(sigs)
 
-            for v in [i for i in mean_diffs.data_vars]:
+            for v in list(mean_diffs.data_vars):
                 mean_diffs = mean_diffs.rename({v: f'{v}_mean_diff'})
                 reference_mean = reference_mean.rename({v: f'{v}_mean_reference'})
 
@@ -2233,8 +2451,7 @@ def epoch_differences(
 
         res.append(xarray.open_dataset(out_file).expand_dims({'model': [model]}))
 
-    res = xarray.concat(res, dim='model')
-    return res
+    return xarray.concat(res, dim='model')
 
 
 def plot_diffs_for_epoch(
@@ -2244,13 +2461,12 @@ def plot_diffs_for_epoch(
     var='annual_hail_days_mean_diff',
     stipple_var='annual_hail_days_sig',
     scale_label='$\Delta$ mean annual hail-prone days',
-    figsize=(12, 9.5),
+    figsize=(12, 12),
     row_label_adjust=0.16,
     row_label_scale=1.28,
     row_label_offset=-0.056,
 ):
-    """
-    Plot a grid with differences by proxy (columns) and model (rows).
+    """Plot a grid with differences by proxy (columns) and model (rows).
 
     Arguments:
         diffs: The data to plot.
@@ -2261,8 +2477,11 @@ def plot_diffs_for_epoch(
         scale_label: The label for the scale.
         figsize: Figure size width x height.
         row*: Arguments to plot_map() for row label positions.
-    """
+        row_label_adjust: Adjust argument for label.
+        row_label_scale: Scale argument for label.
+        row_label_offset: Offset argument for label.
 
+    """
     d = diffs.sel(epoch=epoch)
 
     _ = plot_map(
@@ -2275,7 +2494,8 @@ def plot_diffs_for_epoch(
             for m, p in itertools.product(d.model.values, d.proxy.values)
         ],
         title=[
-            f'{m}, {proxy_dims[p]}' for m, p in itertools.product(d.model.values, d.proxy.values)
+            f'{m}, {proxy_dims[p]}'
+            for m, p in itertools.product(d.model.values, d.proxy.values)
         ],
         figsize=figsize,
         disp_proj=ccrs.Robinson(),
@@ -2299,15 +2519,17 @@ def plot_diffs_for_epoch(
 
 
 def crop_months_array(x):
-    """
-    Given a start month and an end month in x, return an array of length 12 with 1s where cropping occurs and 0 where it does not.
+    """Calculate cropping months.
+
+    Given a start month and an end month in x, return an array of length 12 with 1s
+    where cropping occurs and 0 where it does not.
 
     Arguments;
         x: Should contain start and end months.
 
     Returns: 12-length binary array.
-    """
 
+    """
     start = x['start']
     end = x['end']
 
@@ -2325,44 +2547,46 @@ def crop_months_array(x):
 
 def crop_periods(
     crop_periods_file='/g/data/up6/tr2908/future_hail_global/MIRCA2000/growing_periods_listed/CELL_SPECIFIC_CROPPING_CALENDARS_30MN.TXT.gz',
-    crop_codes={
-        1: 'Wheat',
-        2: 'Maize',
-        3: 'Rice',
-        4: 'Barley',
-        5: 'Rye',
-        6: 'Millet',
-        7: 'Sorghum',
-        8: 'Soybeans',
-        9: 'Sunflower',
-        10: 'Potatoes',
-        11: 'Cassava',
-        12: 'Sugar cane',
-        13: 'Sugar beet',
-        14: 'Oil palm',
-        15: 'Rapeseed / Canola',
-        16: 'Groundnuts / Peanuts',
-        17: 'Pulses',
-        18: 'Citrus',
-        19: 'Date palm',
-        20: 'Grapes / Vine',
-        21: 'Cotton',
-        22: 'Cocoa',
-        23: 'Coffee',
-        24: 'Others perennial',
-        25: 'Fodder grasses',
-        26: 'Others annual',
-    },
+    crop_codes=None,
 ):
-    """
-    Open cropping periods from MIRCA data.
+    """Open cropping periods from MIRCA data.
 
     Arguments:
         crop_periods_file: The MIRCA data file to open.
         crop_codes: Codes for each crop type.
 
     Returns: A pandas table with crop periods per latitude/longitude/crop.
+
     """
+    if crop_codes is None:
+        crop_codes = {
+            1: 'Wheat',
+            2: 'Maize',
+            3: 'Rice',
+            4: 'Barley',
+            5: 'Rye',
+            6: 'Millet',
+            7: 'Sorghum',
+            8: 'Soybeans',
+            9: 'Sunflower',
+            10: 'Potatoes',
+            11: 'Cassava',
+            12: 'Sugar cane',
+            13: 'Sugar beet',
+            14: 'Oil palm',
+            15: 'Rapeseed / Canola',
+            16: 'Groundnuts / Peanuts',
+            17: 'Pulses',
+            18: 'Citrus',
+            19: 'Date palm',
+            20: 'Grapes / Vine',
+            21: 'Cotton',
+            22: 'Cocoa',
+            23: 'Coffee',
+            24: 'Others perennial',
+            25: 'Fodder grasses',
+            26: 'Others annual',
+        }
 
     crop_periods = pd.read_csv(crop_periods_file, sep='\t')
 
@@ -2371,8 +2595,8 @@ def crop_periods(
 
     crop_periods['crop_type'] = str(np.nan)
     crop_periods['crop_name'] = np.nan
-    crop_periods.loc[crop_periods.crop <= 26, 'crop_type'] = 'Irrigated'
-    crop_periods.loc[crop_periods.crop >= 27, 'crop_type'] = 'Rainfed'
+    crop_periods.loc[crop_periods.crop <= 26, 'crop_type'] = 'Irrigated'  # noqa: PLR2004
+    crop_periods.loc[crop_periods.crop >= 27, 'crop_type'] = 'Rainfed'  # noqa: PLR2004
     crop_periods['crop_name'] = crop_periods.crop % 26
     crop_periods.loc[crop_periods.crop_name == 0, 'crop_name'] = 26
     crop_periods.crop_name = [crop_codes[x] for x in crop_periods.crop_name]
@@ -2386,30 +2610,35 @@ def cropping_mask(
     crop_res=0.5,
     cache_file='/g/data/up6/tr2908/future_hail_global/CMIP_crop_stats/crop_months_mask.nc',
 ):
-    """
-    Make a mask of cropping months for a given dataset shape.
+    """Make a mask of cropping months for a given dataset shape.
 
     Arguments:
-        shape: The DataArray to use for the shape of the mask, containing lat/lon/month as dims.
+        shape: The DataArray to use for the shape of the mask, containing
+               lat/lon/month as dims.
         cp: Crop periods per location.
         crop_res: Resolution (degrees) of crop information.
+        cache_file: File to use for cache.
 
-    Returns: A DataArray the same shape as 'shape' with a new dimension 'crop', containing a
-             mask for months in which cropping occurs per point per crop.
+    Returns: A DataArray the same shape as 'shape' with a new dimension 'crop',
+             containing a mask for months in which cropping occurs per point per crop.
+
     """
-
     if not os.path.exists(cache_file):
         crop_mask = []
         for crop in cp.crop_name.unique():
             print(crop)
             periods = cp.loc[cp.crop_name == crop]
 
-            # For each location, keep unique start/end months for the cropping period. Remove duplicates
-            # (caused by eg. both rainfed and irrigated crops being present).
+            # For each location, keep unique start/end months for the cropping period.
+            # Remove duplicates (caused by eg. both rainfed and irrigated crops being
+            # present).
             periods = periods.loc[~periods.duplicated(['lat', 'lon', 'start', 'end'])]
 
             # Make a list of all the cropping months for each location.
-            periods['cropping_months'] = periods[['start', 'end']].apply(crop_months_array, axis=1)
+            periods['cropping_months'] = periods[['start', 'end']].apply(
+                crop_months_array,
+                axis=1,
+            )
 
             # Find the union of all crop months for each location.
             crop_months = (
@@ -2420,21 +2649,26 @@ def cropping_mask(
 
             # Convert to a geopandas object with polygons
             crop_months = gp.GeoDataFrame(
-                crop_months, geometry=gp.points_from_xy(crop_months.lon, crop_months.lat)
+                crop_months,
+                geometry=gp.points_from_xy(crop_months.lon, crop_months.lat),
             )
             crop_months = crop_months.set_geometry(
-                crop_months.buffer(distance=crop_res, cap_style=3)
+                crop_months.buffer(distance=crop_res, cap_style=3),
             )
 
             # Get the data grid locations as points.
             dat_grid = shape.reset_coords()[['lat', 'lon']].to_dataframe().reset_index()
             dat_grid = gp.GeoDataFrame(
-                dat_grid, geometry=gp.points_from_xy(dat_grid.lon, dat_grid.lat)
+                dat_grid,
+                geometry=gp.points_from_xy(dat_grid.lon, dat_grid.lat),
             )
 
-            # Find data points within each cropping region polygon and create a lookup table.
+            # Find data points within each cropping region polygon and create a
+            # lookup table.
             lookup = gp.sjoin(dat_grid, crop_months, how='inner')
-            lookup = lookup.drop(columns=['geometry', 'index_right', 'lat_right', 'lon_right'])
+            lookup = lookup.drop(
+                columns=['geometry', 'index_right', 'lat_right', 'lon_right'],
+            )
             lookup = lookup.rename(columns={'lat_left': 'lat', 'lon_left': 'lon'})
 
             # Generate a mask for this crop, of the same shape as the yearly data.
@@ -2458,7 +2692,8 @@ def cropping_mask(
         crop_mask.attrs = []
         crop_mask.attrs['long_name'] = 'Crop months mask'
         crop_mask.attrs['description'] = (
-            'Derived from MIRCA2000 cropping times at 0.5 resolution, aligned with data resolution.'
+            'Derived from MIRCA2000 cropping times at 0.5 resolution, '
+            'aligned with data resolution.'
         )
         crop_mask = xarray.Dataset({'cropping': crop_mask})
         write_output(dat=crop_mask, file=cache_file, attrs=None)
@@ -2474,43 +2709,50 @@ def assert_epochs(
     data_dir='/g/data/up6/tr2908/future_hail_global/CMIP_conv_annual_stats/',
     data_exp='*common_grid.nc',
 ):
-    """
-    Ensure all data files have the correct epoch.
+    """Ensure all data files have the correct epoch.
 
     Arguments:
         runs: Run definition from define_runs().
-        data_dir/data_exp: The data files to read.
-    """
+        data_dir: Data directory.
+        data_exp: Expression to match files to read.
 
+    """
     for file in glob(f'{data_dir}/{data_exp}'):
         d = xarray.open_dataset(file)
-        line = np.logical_and(runs.desc == d.attrs['CMIP_model_spec'], runs.epoch_name == d.epoch)
+        line = np.logical_and(
+            runs.desc == d.attrs['CMIP_model_spec'],
+            runs.epoch_name == d.epoch,
+        )
         assert len(runs.loc[line]) == 1, 'Multiple or no lines selected'
         assert (
             d.attrs['epoch_dates']
-            == f'{runs.loc[line, "start_year"].values[0]}-{runs.loc[line, "end_year"].values[0]}'
+            == f'{runs.loc[line, "start_year"].values[0]}-{runs.loc[line, "end_year"].values[0]}'  # noqa: E501
         ), f'Incorrect epoch in {file}.'
         d.close()
         del d
 
 
 def multi_model_mean_diffs(dat, variables, completion='_mean_diff', sig_thresh=0.5):
-    """
-    Calculate the multi-model, multi-proxy mean difference and indicator of significance.
-    A difference is considered significant if more than a certain proportion of the models and proxy
-    combinations have both a) significant differences in the mean and b) their mean
-    difference has the same sign as the multi-model mean difference.
+    """Calculate mean differences.
+
+    Calculate the multi-model, multi-proxy mean difference and indicator of
+    significance. A difference is considered significant if more than a certain
+    proportion of the models and proxy combinations have both a) significant
+    differences in the mean and b) their mean difference has the same sign as
+    the multi-model mean difference.
 
     Arguments:
         dat: Data to work on (differences per model, significance of differences).
         variables: Variables to process.
-        completion: Completion of variables to select which mean to use, '_mean_rel_diff' for example.
-        sig_thresh: The proportion of model/proxy combinations that have to be significant and agree
-                    with sign for the result to be significant.
+        completion: Completion of variables to select which mean to use,
+                    '_mean_rel_diff' for example.
+        sig_thresh: The proportion of model/proxy combinations that have to be
+                    significant and agree with sign for the result to be significant.
 
-    Return the mean differences, significance indicator, and mean reference value, for each point.
+    Return: the mean differences, significance indicator, and mean reference
+    value, for each point.
+
     """
-
     diffs = dat[[f'{x}{completion}' for x in variables]]
     sigs = dat[[f'{x}_sig' for x in variables]]
     refs = dat[[f'{x}_mean_reference' for x in variables]]
@@ -2530,9 +2772,12 @@ def multi_model_mean_diffs(dat, variables, completion='_mean_diff', sig_thresh=0
     # Where are the differences significant AND the sign matches the mean differences?
     sig = np.logical_and(sign_agrees, sigs)
 
-    # How many models have both sig diffs and matching sign? Consider mean difference significant
-    # if more than threshold of model/proxy combinations have both these conditions true.
-    significance = sig.sum(['model', 'proxy']) >= sig.count(['model', 'proxy']) * sig_thresh
+    # How many models have both sig diffs and matching sign? Consider mean
+    # difference significant if more than threshold of model/proxy combinations
+    # have both these conditions true.
+    significance = (
+        sig.sum(['model', 'proxy']) >= sig.count(['model', 'proxy']) * sig_thresh
+    )
 
     # Calculate the mean difference in relative terms (percent of reference).
     mean_diffs_rel = mean_diffs / mean_refs * 100
@@ -2542,20 +2787,29 @@ def multi_model_mean_diffs(dat, variables, completion='_mean_diff', sig_thresh=0
 
 
 def plot_relative_changes_crops(
-    ch, cmap_colours=['cornflowerblue', 'greenyellow', 'indianred'], panelsize=(12, 4)
+    ch,
+    cmap_colours=None,
+    panelsize=(12, 4),
 ):
-    """
-    Plot changes in three classes (zero, increase, decrease) by crop.
+    """Plot changes in three classes (zero, increase, decrease) by crop.
 
     Arguments:
         ch: Crop data to plot, usually crop_hail_prone_proportion.
         cmap_colours: Colours to use in the discrete colourmap.
+        panelsize: Size of the panel.
+
     """
+    if cmap_colours is None:
+        cmap_colours = ['cornflowerblue', 'greenyellow', 'indianred']
 
     mask = ~np.isnan(ch)
     zero_changes = xarray.full_like(other=ch, fill_value=0).where(ch == 0).where(mask)
-    positive_changes = xarray.full_like(other=ch, fill_value=1).where(ch > 0).where(mask)
-    negative_changes = xarray.full_like(other=ch, fill_value=-1).where(ch < 0).where(mask)
+    positive_changes = (
+        xarray.full_like(other=ch, fill_value=1).where(ch > 0).where(mask)
+    )
+    negative_changes = (
+        xarray.full_like(other=ch, fill_value=-1).where(ch < 0).where(mask)
+    )
 
     changes = positive_changes.where(np.isnan(zero_changes), other=zero_changes)
     changes = changes.where(np.isnan(negative_changes), other=negative_changes)
@@ -2587,36 +2841,56 @@ def plot_relative_changes_crops(
 
 def crop_hail_stats(
     dat,
-    cp=crop_periods(),
-    crop_res=0.5,
     cache_dir='/g/data/up6/tr2908/future_hail_global/CMIP_crop_stats/',
 ):
-    """
-    Calculate hail proxy stats for cropping months by location.
+    """Calculate hail proxy stats for cropping months by location.
 
     Arguments:
         dat: Data to work on - should contain 'monthly_hail_days'.
-        cp: Crop period information.
-        crop_res: Resolution of crop data in degrees.
         cache_dir: Directory for per-crop cache files.
 
-    Returns: DataSet with hail prone days per cropping period per year and average proportion of
-    cropping time that was hail prone, per year and per crop.
-    """
+    Returns: DataSet with hail prone days per cropping period per year and
+    average proportion of cropping time that was hail prone, per year and
+    per crop.
 
+    """
     # Select data to analyse.
     days_per_month = dat[['monthly_hail_days']]
     days_per_month = days_per_month.chunk(
-        {'model': 1, 'proxy': 1, 'epoch': 1, 'year_num': -1, 'month': -1, 'lat': -1, 'lon': -1}
+        {
+            'model': 1,
+            'proxy': 1,
+            'epoch': 1,
+            'year_num': -1,
+            'month': -1,
+            'lat': -1,
+            'lon': -1,
+        },
     )
-    days_per_month['month_days'] = ('month', [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31])
-    days_per_month = days_per_month.rename({'monthly_hail_days': 'crop_hail_prone_days'})
+    days_per_month['month_days'] = (
+        'month',
+        [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31],
+    )
+    days_per_month = days_per_month.rename(
+        {'monthly_hail_days': 'crop_hail_prone_days'},
+    )
 
     # Find cropping times per crop per location.
     shape = days_per_month.isel(year_num=0).crop_hail_prone_days
-    crop_mask = cropping_mask(shape=shape, cache_file=f'{cache_dir}/crop_months_mask.nc')
+    crop_mask = cropping_mask(
+        shape=shape,
+        cache_file=f'{cache_dir}/crop_months_mask.nc',
+    )
     crop_mask = crop_mask.chunk(
-        {'crop': 1, 'model': 1, 'proxy': 1, 'epoch': 1, 'month': -1, 'lat': -1, 'lon': -1}
+        {
+            'crop': 1,
+            'model': 1,
+            'proxy': 1,
+            'epoch': 1,
+            'month': -1,
+            'lat': -1,
+            'lon': -1,
+        },
     )
 
     # Process cropping info per crop, and cache.
@@ -2628,9 +2902,10 @@ def crop_hail_stats(
             print(f'Processing {crop}...')
             d = days_per_month.where(crop_mask.sel(crop=[crop]) == 1)
 
-            # Sum all the hail days for each year and divide by the number of days in the cropping season; all per point.
+            # Sum all the hail days for each year and divide by the number of days in
+            # the cropping season; all per point.
             d['crop_hail_prone_proportion'] = d.crop_hail_prone_days.sum(
-                'month'
+                'month',
             ) / d.month_days.sum('month')
 
             d = d.drop('month_days')
@@ -2668,28 +2943,16 @@ def plot_crop_lines(
     crops,
     epoch='3C',
     figsize=(12, 6.2),
-    legend_renamer={
-        'epoch': 'Epoch',
-        'proxy': 'Proxy',
-        '2C': '2 $^{\circ}$C',
-        '3C': '3 $^{\circ}$C',
-        'Raupach2023_updated': 'Raupach',
-        'Raupach2023_updated_noconds': 'RaupachNEC',
-        'SHIP_0.1': 'SHIP',
-        'Eccel2012': 'Eccel',
-    },
-    crop_renamer={
-        'Fodder grasses': '  Fodder',
-        'Groundnuts / Peanuts': 'Peanuts',
-        'Barley': '  Barley',
-    },
+    legend_renamer=None,
+    crop_renamer=None,
     legend_col_length=8,
     file=None,
     average_buffer=1,
-    subset_buffer=10
+    subset_buffer=10,
 ):
-    """
-    For a given location, plot changes in hail-prone days per month, 
+    """Plot changes in hail-prone days.
+
+    For a given location, plot changes in hail-prone days per month,
     cropping months, and a map of the selected point.
 
     Arguments:
@@ -2700,26 +2963,64 @@ def plot_crop_lines(
         crops: Crops to select.
         figsize: Figure width x height.
         legend_renamer: Names for each element in the legend.
+        crop_renamer: Rename crop names? Dict with from: to pairs.
+        epoch: Epoch to plot for.
+        lat: Latitude to select.
+        lon: Longitude to select.
         legend_col_length: Number of rows in first legend (for epoch).
         file: Plot to file?
-        average_buffer: average monthly changes over this number of lat/long degrees around the location.
+        average_buffer: average monthly changes over this number of lat/long degrees
+                        around the location.
         subset_buffer: show this buffer around the location in inset maps.
+
     """
+    if legend_renamer is None:
+        legend_renamer = {
+            'epoch': 'Epoch',
+            'proxy': 'Proxy',
+            '2C': '2 $^{\circ}$C',
+            '3C': '3 $^{\circ}$C',
+            'Raupach2023_updated': 'Raupach',
+            'Raupach2023_updated_noconds': 'RaupachNEC',
+            'SHIP_0.1': 'SHIP',
+            'Eccel2012': 'Eccel',
+        }
+    if crop_renamer is None:
+        crop_renamer = {
+            'Fodder grasses': '  Fodder',
+            'Groundnuts / Peanuts': 'Peanuts',
+            'Barley': '  Barley',
+        }
 
     line_dat = dat.monthly_hail_days.chunk(
-        {'model': -1, 'epoch': -1, 'year_num': -1, 'proxy': -1, 'month': -1}
-    ).sel(lat=slice(lat-average_buffer, lat+average_buffer), 
-          lon=slice(lon-average_buffer, lon+average_buffer), 
-          epoch=['historical', epoch])
-    subset_dat = xarray.Dataset({'hpp': diffs.crop_hail_prone_proportion,
-                                 'sig': sig.crop_hail_prone_proportion})
+        {'model': -1, 'epoch': -1, 'year_num': -1, 'proxy': -1, 'month': -1},
+    ).sel(
+        lat=slice(lat - average_buffer, lat + average_buffer),
+        lon=slice(lon - average_buffer, lon + average_buffer),
+        epoch=['historical', epoch],
+    )
+    subset_dat = xarray.Dataset(
+        {
+            'hpp': diffs.crop_hail_prone_proportion,
+            'sig': sig.crop_hail_prone_proportion,
+        },
+    )
     subset_dat = subset_dat.chunk({'epoch': 1, 'crop': 1})
-    subset_dat = subset_dat.sel(lat=slice(lat-subset_buffer, lat+subset_buffer), 
-                                lon=slice(lon-subset_buffer, lon+subset_buffer), 
-                                epoch=epoch)
+    subset_dat = subset_dat.sel(
+        lat=slice(lat - subset_buffer, lat + subset_buffer),
+        lon=slice(lon - subset_buffer, lon + subset_buffer),
+        epoch=epoch,
+    )
     crop_dat = (
         dat.crop_hail_prone_days.chunk(
-            {'model': -1, 'epoch': -1, 'year_num': -1, 'crop': 1, 'proxy': -1, 'month': -1}
+            {
+                'model': -1,
+                'epoch': -1,
+                'year_num': -1,
+                'crop': 1,
+                'proxy': -1,
+                'month': -1,
+            },
         )
         .sel(lat=lat, lon=lon, method='nearest')
         .sel(crop=crops, epoch=['historical', epoch])
@@ -2737,9 +3038,11 @@ def plot_crop_lines(
 
     months_ax = fig.add_subplot(gs[0, 0:4])
     line_ax = fig.add_subplot(gs[1:5, 0:4])
-    subset_axes = [fig.add_subplot(gs[0:2, 4], projection=ccrs.PlateCarree()),
-                   fig.add_subplot(gs[2:4, 4], projection=ccrs.PlateCarree()),
-                   fig.add_subplot(gs[4:6, 4], projection=ccrs.PlateCarree())]
+    subset_axes = [
+        fig.add_subplot(gs[0:2, 4], projection=ccrs.PlateCarree()),
+        fig.add_subplot(gs[2:4, 4], projection=ccrs.PlateCarree()),
+        fig.add_subplot(gs[4:6, 4], projection=ccrs.PlateCarree()),
+    ]
 
     for i, crop in enumerate(crops):
         c = crop_dat.sel(crop=crop).isel(epoch=0)
@@ -2759,7 +3062,7 @@ def plot_crop_lines(
 
     # Top row: lines showing cropping months.
     months_ax.set_frame_on(False)
-    months_ax.set_yticks([0, 1, 2], [crop_renamer[x] if x in crop_renamer else x for x in crops])
+    months_ax.set_yticks([0, 1, 2], [crop_renamer.get(x, x) for x in crops])
     months_ax.set_ylabel('')
     months_ax.set_xlabel('')
     months_ax.set_ylim(-0.5, 2.5)
@@ -2789,22 +3092,35 @@ def plot_crop_lines(
 
     # Right plots: crop changes spatially.
     for i, crop in enumerate(crops):
-        rect = Rectangle((lon-average_buffer, lat-average_buffer),
-                         width=average_buffer*2,
-                         height=average_buffer*2,
-                         edgecolor='fuchsia',
-                         facecolor='none', 
-                         linewidth=2)
+        rect = Rectangle(
+            (lon - average_buffer, lat - average_buffer),
+            width=average_buffer * 2,
+            height=average_buffer * 2,
+            edgecolor='fuchsia',
+            facecolor='none',
+            linewidth=2,
+        )
 
-        plot_map_to_ax(dat=subset_dat.sel(crop=crop).hpp, stippling=subset_dat.sel(crop=crop).sig,
-                       ax=subset_axes[i], grid=True, cmap='RdBu_r', divergent=True, 
-                       cbar_label='Change %', title=crop, cbar_aspect=15, cbar_shrink=0.65,
-                       cbar_pad=0.03, ticks_bottom=i == len(crops)-1)
+        plot_map_to_ax(
+            dat=subset_dat.sel(crop=crop).hpp,
+            stippling=subset_dat.sel(crop=crop).sig,
+            ax=subset_axes[i],
+            grid=True,
+            cmap='RdBu_r',
+            divergent=True,
+            cbar_label='Change %',
+            title=crop,
+            cbar_aspect=15,
+            cbar_shrink=0.65,
+            cbar_pad=0.03,
+            ticks_bottom=i == len(crops) - 1,
+        )
         subset_axes[i].add_patch(rect)
 
     assert np.max(crop_dat.diff('crop')) == 0, (
-        f'Errant differences between crop values with diff of {np.max(crop_dat.diff("crop"))}'
-        + '(if nan then perhaps crop is not at this location)'
+        f'Errant differences between crop values with diff  '
+        f'of {np.max(crop_dat.diff("crop"))}'
+        '(if nan then perhaps crop is not at this location)'
     )
 
     plt.subplots_adjust(hspace=0.5, wspace=0.7)
@@ -2814,24 +3130,22 @@ def plot_crop_lines(
 
 
 def conv_properties(dat, vert_dim='model_level_number'):
-    """
-    Calculate convective properties needed in this work.
+    """Calculate convective properties needed in this work.
 
     Arguments:
+        dat: An xarray Dataset containing pressure, temperature, and
+             specific humidity, wind data, and height ('height' for all
+             variables except wind, 'wind_height' for wind levels).
+        vert_dim: The name of the vertical dimension in the dataset.
 
-       - dat: An xarray Dataset containing pressure, temperature, and
-              specific humidity, wind data, and height ('height' for all
-              variables except wind, 'wind_height' for wind levels).
-       - vert_dim: The name of the vertical dimension in the dataset.
+    Returns: Dataset containing convection properties for each point.
 
-    Returns:
-
-        - Dataset containing convection properties for each point.
     """
-
     print('Calculating dewpoint...')
     dat['dewpoint'] = metpy.calc.dewpoint_from_specific_humidity(
-        pressure=dat.pressure, temperature=dat.temperature, specific_humidity=dat.specific_humidity
+        pressure=dat.pressure,
+        temperature=dat.temperature,
+        specific_humidity=dat.specific_humidity,
     )
     dat['dewpoint'] = dat.dewpoint.metpy.convert_units('K')
     dat['dewpoint'] = dat.dewpoint.metpy.dequantify()
@@ -2865,13 +3179,18 @@ def conv_properties(dat, vert_dim='model_level_number'):
 
     print('Temperature at 500 hPa...')
     temp_500 = parcel.isobar_temperature(
-        pressure=dat.pressure, temperature=dat.temperature, isobar=500, vert_dim=vert_dim
+        pressure=dat.pressure,
+        temperature=dat.temperature,
+        isobar=500,
+        vert_dim=vert_dim,
     )
     temp_500.name = 'temp_500'
 
     print('Freezing level height...')
     flh = parcel.freezing_level_height(
-        temperature=dat.temperature, height=dat.height_asl, vert_dim=vert_dim
+        temperature=dat.temperature,
+        height=dat.height_asl,
+        vert_dim=vert_dim,
     )
 
     print('Melting level height...')
@@ -2912,21 +3231,24 @@ def conv_properties(dat, vert_dim='model_level_number'):
         lifted_index=mixed_li_100.mixed_100_lifted_index,
         vert_dim=vert_dim,
         prefix='mixed_100',
-        description=('Deep convective index using fully-mixed ' + 'lowest 100 hPa parcel.'),
+        description=(
+            'Deep convective index using fully-mixed ' + 'lowest 100 hPa parcel.'
+        ),
     )
 
     print('Calculating mixing ratio of most unstable parcel...')
     mu_mixing_ratio = metpy.calc.mixing_ratio_from_specific_humidity(
         specific_humidity=metpy.calc.specific_humidity_from_dewpoint(
-            pressure=mu_parcel.pressure * units.hPa, dewpoint=mu_parcel.dewpoint * units.K
-        )
+            pressure=mu_parcel.pressure * units.hPa,
+            dewpoint=mu_parcel.dewpoint * units.K,
+        ),
     ).metpy.dequantify()
     mu_mixing_ratio.attrs['long_name'] = 'Mixing ratio'
     mu_mixing_ratio.attrs['description'] = 'Mixing ratio of most unstable parcel'
     mu_mixing_ratio.name = 'mu_mixing_ratio'
 
     print('Merging results...')
-    out = xarray.merge(
+    return xarray.merge(
         [
             mixed_cape_cin_100,
             mu_cape_cin,
@@ -2938,34 +3260,33 @@ def conv_properties(dat, vert_dim='model_level_number'):
             mlh,
             shear,
             mixed_dci_100,
-        ]
+        ],
     )
-
-    return out
 
 
 def storm_proxies(
     dat,
     check_negative_cape=False,
-    proxies={
-        'proxy_Kunz2007': 'Kunz 2007',
-        'proxy_Eccel2012': 'Eccel 2012',
-        'proxy_Mohr2013': 'Mohr 2013',
-        'proxy_SHIP_0.1': 'SHIP > 0.1',
-        'proxy_SHIP_0.5': 'SHIP > 0.5',
-    },
+    proxies=None,
 ):
-    """
-    Calculate storm proxies.
+    """Calculate storm proxies.
 
     Arguments:
-        - dat: Data with convective properties.
-        - check_negative_cape: Check for negative cape values? (Default: False).
-        - proxies: A list of proxies to compute and which study they are from.
+        dat: Data with convective properties.
+        check_negative_cape: Check for negative cape values? (Default: False).
+        proxies: A list of proxies to compute and which study they are from.
 
-    Returns:
-        - DataSet with proxy values (binary, 1=proxy triggered, 0=proxy untriggered).
+    Returns: DataSet with proxy values (binary, 1=proxy triggered, 0=proxy untriggered).
+
     """
+    if proxies is None:
+        proxies = {
+            'proxy_Kunz2007': 'Kunz 2007',
+            'proxy_Eccel2012': 'Eccel 2012',
+            'proxy_Mohr2013': 'Mohr 2013',
+            'proxy_SHIP_0.1': 'SHIP > 0.1',
+            'proxy_SHIP_0.5': 'SHIP > 0.5',
+        }
 
     # Ignore negative CAPE.
     dat = dat.rename({'shear_magnitude': 'S06'})
@@ -2981,22 +3302,27 @@ def storm_proxies(
     # Kunz 2007.
     if 'proxy_Kunz2007' in proxies:
         out['proxy_Kunz2007'] = np.logical_or(
-            dat.mixed_100_lifted_index <= -2.07,
-            np.logical_or(dat.mu_cape >= 1474, dat.mixed_100_dci >= 25.7),
+            dat.mixed_100_lifted_index <= -2.07,  # noqa: PLR2004
+            np.logical_or(dat.mu_cape >= 1474, dat.mixed_100_dci >= 25.7),  # noqa: PLR2004
         )
 
     # Eccel 2012.
     if 'proxy_Eccel2012' in proxies:
         out['proxy_Eccel2012'] = np.logical_and(
-            dat.mixed_100_cape * dat.S06 > 10000, dat.mixed_100_cin > -50
+            dat.mixed_100_cape * dat.S06 > 10000,  # noqa: PLR2004
+            dat.mixed_100_cin > -50,  # noqa: PLR2004
         )
 
     # Mohr 2013.
     if 'proxy_Mohr2013' in proxies:
         out['proxy_Mohr2013'] = np.logical_or(
-            dat.mixed_100_lifted_index <= -1.6, dat.mixed_100_cape >= 439
+            dat.mixed_100_lifted_index <= -1.6,  # noqa: PLR2004
+            dat.mixed_100_cape >= 439,  # noqa: PLR2004
         )
-        out['proxy_Mohr2013'] = np.logical_or(out.proxy_Mohr2013, dat.mixed_100_dci >= 26.4)
+        out['proxy_Mohr2013'] = np.logical_or(
+            out.proxy_Mohr2013,
+            dat.mixed_100_dci >= 26.4,  # noqa: PLR2004
+        )
 
     # Significant hail parameter.
     if 'proxy_SHIP_0.1' in proxies or 'proxy_SHIP_0.5' in proxies:
@@ -3009,9 +3335,9 @@ def storm_proxies(
             flh=dat.freezing_level,
         )
         if 'proxy_SHIP_0.1' in proxies:
-            out['proxy_SHIP_0.1'] = out.ship > 0.1
+            out['proxy_SHIP_0.1'] = out.ship > 0.1  # noqa: PLR2004
         if 'proxy_SHIP_0.5' in proxies:
-            out['proxy_SHIP_0.5'] = out.ship > 0.5
+            out['proxy_SHIP_0.5'] = out.ship > 0.5  # noqa: PLR2004
         out.ship.attrs['long_name'] = 'Significant hail parameter (SHIP)'
 
     for proxy, val in proxies.items():
@@ -3020,27 +3346,46 @@ def storm_proxies(
     return out
 
 
-def plot_regional_crop_changes(diffs, sig, lats, lons, region_names, file, figsize=(13.6, 13.3)):
-    """
-    Plot box plots of significant crop changes by region.
+def plot_regional_crop_changes(
+    diffs,
+    sig,
+    lats,
+    lons,
+    region_names,
+    file,
+    figsize=(13.6, 13.3),
+):
+    """Plot box plots of significant crop changes by region.
 
     Arguments:
         diffs: The differences to plot.
         sig: Significance of differences.
-        lats, lons: Regional bounds.
+        lats: Regional latitude bounds.
+        lons: Regional longitude bounds.
         region_names: Title names per region.
         file: Output file.
-    """
+        figsize: Output figure size.
 
+    """
     res = []
-    for region in lats.keys():
+    for region in lats.keys():  # noqa: SIM118
         for e in diffs.epoch.values:
-            d = diffs.crop_hail_prone_proportion.sel(epoch=e, lat=lats[region], lon=lons[region])
-            s = sig.crop_hail_prone_proportion.sel(epoch=e, lat=lats[region], lon=lons[region])
+            d = diffs.crop_hail_prone_proportion.sel(
+                epoch=e,
+                lat=lats[region],
+                lon=lons[region],
+            )
+            s = sig.crop_hail_prone_proportion.sel(
+                epoch=e,
+                lat=lats[region],
+                lon=lons[region],
+            )
             d = d.where(s == True)
             d = (
-                d.expand_dims({'region': [region_names[region]]}).to_dataframe().reset_index()
-            )  # .dropna().reset_index()
+                d.expand_dims({'region': [region_names[region]]})
+                .to_dataframe()
+                .reset_index()
+            )
             res.append(d)
     res = pd.concat(res).reset_index(drop=True)
     del d, s
@@ -3077,7 +3422,11 @@ def plot_regional_crop_changes(diffs, sig, lats, lons, region_names, file, figsi
 
     regions = np.unique(res.region)
 
-    _, axs = plt.subplots(nrows=len(regions), figsize=figsize, gridspec_kw={'hspace': 0.35})
+    _, axs = plt.subplots(
+        nrows=len(regions),
+        figsize=figsize,
+        gridspec_kw={'hspace': 0.35},
+    )
     for i, r in enumerate(regions):
         d = res[res.region == r]
         d = d.sort_values('crop').reset_index()
@@ -3124,8 +3473,9 @@ def calc_detrended_annual(
     detrended_proxy_dir='/g/data/up6/tr2908/future_hail_global/CMIP_detrended/proxy_results/',
     annual_detrended_dir='/g/data/up6/tr2908/future_hail_global/CMIP_detrended/annual_stats',
 ):
-    """
-    Load annual statistics for proxy data with detrended ingredients, on the common global grid, caching outputs.
+    """Load annual statistics for proxy data with detrended ingredients.
+
+    Use the common global grid, and cache outputs.
 
     Arguments:
         detrended_proxy_dir: Directory with detrended proxy files to process.
@@ -3159,7 +3509,8 @@ def calc_detrended_annual(
             )
             annual_proxies = [x for x in list(annual.keys()) if ['proxy_' in x]]
 
-            # Re-arrange the data so that the annual hail days are organised with proxy as a dimension.
+            # Re-arrange the data so that the annual hail days are organised with
+            # proxy as a dimension.
             annual = (
                 annual[annual_proxies]
                 .rename({f'{p}': f'{p[6:None]}' for p in annual_proxies})
@@ -3169,7 +3520,7 @@ def calc_detrended_annual(
             # Get year number in abstract form.
             annual['year_num'] = ('year', np.arange(1, annual.year.size + 1))
             annual = annual.swap_dims({'year': 'year_num'}).reset_coords()
-            assert annual.year_num.size == 20, 'Incorrect number of years in annual.'
+            assert annual.year_num.size == 20, 'Incorrect number of years in annual.'  # noqa: PLR2004
             write_output(dat=annual, file=annual_file)
 
     # Regrid annual files from native to global 1 degree grid.
@@ -3181,17 +3532,17 @@ def detrended_changes(
     annual_detrended_dir='/g/data/up6/tr2908/future_hail_global/CMIP_detrended/annual_stats',
     cache_dir='/g/data/up6/tr2908/future_hail_global/CMIP_detrended/detrended_changes',
 ):
-    """
-    Calculate changes for models with detrended ingredients.
+    """Calculate changes for models with detrended ingredients.
 
     Arguments:
         hist_dat: Data containing the historical dataset to compare to.
-        annual_detrended_dir: The directory containing files output by calc_detrended_annual().
+        annual_detrended_dir: The directory containing files output by
+                              calc_detrended_annual().
         cache_dir: Directory to cache changes in.
 
     Returns: all changes organsed by model and detrended ingredient.
-    """
 
+    """
     files = glob(f'{annual_detrended_dir}/*common_grid.nc')
     cache_files = glob(f'{cache_dir}/*.nc')
 
@@ -3200,15 +3551,20 @@ def detrended_changes(
             print(f'Calculating changes for {file}')
             detrended = xarray.open_dataset(file)
             detrended_ing = re.search(
-                'detrended_(.*)_common_grid.nc', os.path.basename(file)
+                'detrended_(.*)_common_grid.nc',
+                os.path.basename(file),
             ).group(1)
 
             # Collect historic and 3D detrended results to compare.
-            hist = hist_dat.sel(model=detrended.model, proxy=detrended.proxy, epoch=['historical'])[
-                ['annual_hail_days']
-            ]
+            hist = hist_dat.sel(
+                model=detrended.model,
+                proxy=detrended.proxy,
+                epoch=['historical'],
+            )[['annual_hail_days']]
             detrended = detrended.chunk(hist.chunks)
-            detrended = xarray.merge([detrended.annual_hail_days, hist.annual_hail_days])
+            detrended = xarray.merge(
+                [detrended.annual_hail_days, hist.annual_hail_days],
+            )
 
             epoch_diffs = epoch_differences(
                 dat=detrended,
@@ -3232,62 +3588,77 @@ def detrended_changes(
 
 def plot_drivers(
     drivers,
-    ing_names={
-        'freezing_level': 'FLH',
-        'lapse_rate_700_500': 'LR',
-        'melting_level': 'MLH',
-        'mixed_100_cape': 'MLCAPE',
-        'mixed_100_cin': 'MLCIN',
-        'mixed_100_dci': 'DCI',
-        'mixed_100_lifted_index': 'LI',
-        'mu_cape': 'MUCAPE',
-        'mu_cin': 'MUCIN',
-        'mu_mixing_ratio': 'MUMR',
-        'shear_magnitude': 'S06',
-        'temp_500': 'T500',
-    },
+    ing_names=None,
     days_threshold=None,
-    refs=[],
+    refs=None,
     refs_title=None,
     **kwargs,
 ):
-    """
-    Plot drivers with optional subsetting to remove insignificant drivers.
+    """Plot drivers with optional subsetting to remove insignificant drivers.
 
     Args:
         drivers: The drivers to plot.
         ing_names: Ingredient names for plotting.
-        days_threshold: Require at least this many days in any of the plots to show an ingredient (optional).
+        days_threshold: Require at least this many days in any of the plots to
+                        show an ingredient (optional).
         kwargs: Arguments to plot_map.
-        refs: If given, plots to provide as a row of reference values (ie changes with no drivers excluded).
+        refs: If given, plots to provide as a row of reference values (ie changes
+              with no drivers excluded).
         refs_title: Title for the reference row.
+
     """
+    if ing_names is None:
+        ing_names = {
+            'freezing_level': 'FLH',
+            'lapse_rate_700_500': 'LR',
+            'melting_level': 'MLH',
+            'mixed_100_cape': 'MLCAPE',
+            'mixed_100_cin': 'MLCIN',
+            'mixed_100_dci': 'DCI',
+            'mixed_100_lifted_index': 'LI',
+            'mu_cape': 'MUCAPE',
+            'mu_cin': 'MUCIN',
+            'mu_mixing_ratio': 'MUMR',
+            'shear_magnitude': 'S06',
+            'temp_500': 'T500',
+        }
+    if refs is None:
+        refs = []
 
     # If references are provided, also plot column sums.
     refs_title = ['Sum', refs_title] if refs_title is not None else []
     sums = []
-    if refs is not []:
+    if refs != []:
         sums = [drivers.sum('detrended_ing').sel(proxy=p) for p in drivers.proxy.values]
 
     if days_threshold is not None:
         drivers = drivers.copy(deep=True)
         null_drivers = (
-            np.round(np.abs(drivers).max(['lat', 'lon', 'proxy']), 0).to_dataframe().reset_index()
+            np.round(np.abs(drivers).max(['lat', 'lon', 'proxy']), 0)
+            .to_dataframe()
+            .reset_index()
         )
-        null_drivers = null_drivers[null_drivers.annual_hail_days_mean_diff < days_threshold]
+        null_drivers = null_drivers[
+            null_drivers.annual_hail_days_mean_diff < days_threshold
+        ]
         for _, row in null_drivers.iterrows():
             drivers = drivers.drop_sel(detrended_ing=row.detrended_ing)
 
     _ = plot_map(
         [
             drivers.sel(detrended_ing=ing, proxy=p)
-            for ing, p in itertools.product(drivers.detrended_ing.values, drivers.proxy.values)
+            for ing, p in itertools.product(
+                drivers.detrended_ing.values,
+                drivers.proxy.values,
+            )
         ]
         + sums
         + refs,
         cmap='RdBu_r',
         divergent=True,
-        nrows=len(drivers.detrended_ing) + np.min([1, len(refs)]) + np.min([1, len(sums)]),
+        nrows=len(drivers.detrended_ing)
+        + np.min([1, len(refs)])
+        + np.min([1, len(sums)]),
         ncols=len(drivers.proxy),
         share_scale=True,
         hspace=0.1,
