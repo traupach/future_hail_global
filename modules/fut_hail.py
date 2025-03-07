@@ -2947,7 +2947,7 @@ def plot_crop_lines(
     crop_renamer=None,
     legend_col_length=8,
     file=None,
-    average_buffer=1,
+    average_buffer=2,
     subset_buffer=10,
 ):
     """Plot changes in hail-prone days.
@@ -3108,7 +3108,7 @@ def plot_crop_lines(
             grid=True,
             cmap='RdBu_r',
             divergent=True,
-            cbar_label='Change %',
+            cbar_label='$\Delta$ HPP [%]',
             title=crop,
             cbar_aspect=15,
             cbar_shrink=0.65,
