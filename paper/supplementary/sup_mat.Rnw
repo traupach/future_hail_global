@@ -86,33 +86,12 @@ print(tab, booktabs=TRUE, include.rownames=FALSE, size='footnotesize')
 
 \begin{figure*}[p]
     \centering
-    \includegraphics[width=\textwidth]{../../results/supplementary/hail_diffs_2C}
+    \includegraphics[width=\textwidth]{../../results/supplementary/hail_diffs_3C}
     \caption{\textbf{Differences in mean annual hail-prone days by model and
-    proxy for 2 \degr{} global warming.} Stippling shows regions for which the
+    proxy for 3 \degr{} global warming.} Stippling shows regions for which the
     difference between epochs was statistically significant ($p <$ 0.05 using
     Welch's t-test).}
-    \label{fig:hail_diffs_2C}
-\end{figure*}
-
-\begin{figure*}[p]
-    \centering
-    \includegraphics[width=\textwidth]{../../results/supplementary/hail_diffs_3C}
-    \caption{As for Supplementary Figure \ref{fig:hail_diffs_2C} but for 3
-    \degr{} global warming.}
     \label{fig:hail_diffs_3C}
-\end{figure*}
-
-\begin{figure*}[p]
-    \centering
-    \includegraphics[width=\textwidth]{../../results/supplementary/hail_changes_by_season}
-    \caption{\textbf{Multimodel, multi-proxy mean differences in hail-prone days
-    by season.} DJF stands for December, January, February; MAM stands for
-    March, April, May; JJA stands for June, July, August; SON stands for
-    September, October, November. Stippling shows regions for which at least
-    50\% of the model/proxy combinations showed a statistically  significant
-    difference ($p <$ 0.05 using Welch's t-test) and agreed on the sign of the
-    change.}
-    \label{fig:hail_changes_by_season}
 \end{figure*}
 
 \begin{figure*}[p]
@@ -124,8 +103,10 @@ print(tab, booktabs=TRUE, include.rownames=FALSE, size='footnotesize')
     Ingredients shown are annual extreme (99th percentile) convective available
     potential energy (CAPE), annual extreme (99th percentile) 0-6 km bulk wind
     shear (S06), annual extreme (1st percentile) convective inhibition (CIN),
-    and annual extreme (1st percentile) lifted index. Stippling as for
-    Supplementary Figure \ref{fig:hail_changes_by_season}.}
+    and annual extreme (1st percentile) lifted index. Stippling shows regions in
+    which at least 50\% of the model/proxy combinations agreed with the sign of
+    the mean difference and also showed significant differences in the mean ($p
+    < 0.05$ on a t-test on two related samples).}
     \label{fig:ingredients_changes_1}
 \end{figure*}
 
@@ -143,7 +124,7 @@ print(tab, booktabs=TRUE, include.rownames=FALSE, size='footnotesize')
 
 \begin{figure*}[p]
     \centering
-    \includegraphics[width=\textwidth]{../../results/supplementary/historical_crop_propertion_hail_prone}
+    \includegraphics[width=\textwidth]{../../results/supplementary/historical_crop_proportion_hail_prone}
     \caption{\textbf{Multimodel, multi-proxy mean hail-prone proportions of
     cropping seasons for the historical period.} Brackets in titles show overall
     mean hail-prone proportion of cropping seasons by crop. Plots are subset to
@@ -153,18 +134,11 @@ print(tab, booktabs=TRUE, include.rownames=FALSE, size='footnotesize')
 
 \begin{figure*}[p]
     \centering
-    \includegraphics[width=\textwidth]{../../results/supplementary/changes_crop_propertion_hail_prone_2C}
+    \includegraphics[width=\textwidth]{../../results/supplementary/changes_crop_proportion_hail_prone_3C}
     \caption{\textbf{Multimodel, multi-proxy mean change in hail-prone
-    proportions of cropping seasons for 2 \degr{} warming.} Stippling as for
-    Supplementary Figure \ref{fig:hail_changes_by_season} and region subset as
+    proportions of cropping seasons for 3 \degr{} warming.} Stippling as for
+    Supplementary Figure \ref{fig:ingredients_changes_1} and region subset as
     for Supplementary Figure \ref{fig:historic_crop_proportions}.}
-    \label{fig:crop_changes_2C}
-\end{figure*}
-
-\begin{figure*}[p]
-    \centering
-    \includegraphics[width=\textwidth]{../../results/supplementary/changes_crop_propertion_hail_prone_3C}
-    \caption{As for Supplementary Figure \ref{fig:crop_changes_2C} but for 3 \degr{} warming.}
     \label{fig:crop_changes_3C}
 \end{figure*}
 
@@ -226,12 +200,12 @@ print(tab, booktabs=TRUE, include.rownames=FALSE, size='footnotesize')
     \caption{\textbf{Changes affecting crops at a selected location in Africa.}
     The lines in the top inset plot indicate which months are considered
     cropping times for selected crops at the given location. The chosen location
-    is at the centre of the fuschia square in the inset maps. Inset maps show
-    \todo{relative} hanges in hail-prone proportion of cropping season. Lines in
-    main plot show mean changes in hail-prone days per month over a
-    \todo{4$\times$4}\degr{} region around the chosen location (shown as a
-    fuschia square in inset maps). Stippling in inset mapas for Supplementary
-    Figure \ref{fig:hail_changes_by_season}.}
+    is at the centre of the fuchsia square in the inset maps. Inset maps show
+    changes in hail-prone proportion of cropping season by crop. Lines in main
+    plot show mean changes in hail-prone days per month over a
+    4$\times$4\degr{} region around the chosen location (shown as a
+    fuchsia square in inset maps). Stippling in inset maps as for
+    \ref{fig:ingredients_changes_1}.}
     \label{fig:crop_lines_af}
 \end{figure*}
 
@@ -251,8 +225,8 @@ print(tab, booktabs=TRUE, include.rownames=FALSE, size='footnotesize')
 
 \begin{figure*}[p]
     \centering
-    \includegraphics[width=\textwidth]{../../results/supplementary/crop_lines_ca}
-    \caption{As for Figure \ref{fig:crop_lines_af} but for Canada.}
+    \includegraphics[width=\textwidth]{../../results/supplementary/crop_lines_us}
+    \caption{As for Figure \ref{fig:crop_lines_af} but for the USA.}
     \label{fig:crop_lines_ca}
 \end{figure*}
 
@@ -302,11 +276,17 @@ print(tab, booktabs=TRUE, include.rownames=FALSE, size='footnotesize')
     \includegraphics[width=\textwidth]{../../results/supplementary/run_years}
     \caption{\textbf{CMIP6 models and per-degree-framework date ranges.} The
     reference period from historical simulations is shown in blue, while periods
-    with 2 and 3 degrees C warming over the reference period, in SSP5-8.5
+    with 2 and 3 \degr{} warming over the reference period, in SSP5-8.5
     simulations, are in orange and green respectively.}
     \label{fig:epochs}
 \end{figure*}
 
+\begin{figure*}[p]
+    \centering
+    \includegraphics[width=\textwidth]{../../results/supplementary/Raupach_extra_conds_3C}
+    \caption{\textbf{Effect of extra conditions on Raupach proxy for 3 \degr{} warming}. Changes shown are multi-model mean changes in annual hail-prone days. On left, the updated Raupach proxy with extra conditions designed to remove false positives applied as used in the rest of this study and explained in Section \ref{sec:proxy-update}; on right, changes in the updated Raupach proxy without extra conditions applied.}
+    \label{fig:Raupach_extra_conds}
+\end{figure*}
 
 \section{Update to hail proxy}
 \label{sec:proxy-update}
@@ -360,6 +340,10 @@ assess the impact of this change we have tested on two datasets:
     of its values affected. The climatology and trends calculated using either
     version of the proxy are very similar.
 \end{enumerate}
+
+It is also notable that the projected changes in the Raupach proxy that we
+report in this work are not driven primarily by the ``extra conditions'', as
+shown by Figure \ref{fig:Raupach_extra_conds} here.
 
 \clearpage
 \footnotesize
