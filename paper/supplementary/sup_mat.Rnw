@@ -265,9 +265,14 @@ print(tab, booktabs=TRUE, include.rownames=FALSE, size='footnotesize')
 
 \begin{figure*}[p]
     \centering
-    \includegraphics[width=0.92\textwidth]{../../results/supplementary/era5_all_proxies}
+    \includegraphics[width=0.84\textwidth]{../../results/supplementary/era5_all_proxies}
     \caption{\textbf{Mean annual hail-prone days for ERA5 reanalysis (1980-1999)
-    for all applied hail proxies.}}
+    for all applied hail proxies.} The proxies of \cite{Kunz_NHESS_2007}
+    and\cite{Mohr_AR_2013} produced unrealistically many hail-prone days in
+    tropical regions for which they were not trained \citep{Raupach_MWR_2023},
+    and a threshold of 0.5 on SHIP, as has been used in other studies for severe
+{Prein_WCE_2018}, was found to produce too few hail-prone days in
+    comparison with the other proxies designed for hail of any size.}
     \label{fig:historical_all_proxies}
 \end{figure*}
 
