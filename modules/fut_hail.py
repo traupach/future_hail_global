@@ -3420,7 +3420,10 @@ def plot_regional_crop_changes(
     ]
     rename_leg = {'2C': '2 $^{\circ}$C', '3C': '3 $^{\circ}$C'}
 
-    regions = np.unique(res.region)
+    regions = sorted(np.unique(res.region.values))
+    print(regions)
+    if 'global' in regions:
+        regions = ['global'] + [x for x in regions if x != 'global']
 
     _, axs = plt.subplots(
         nrows=len(regions),
