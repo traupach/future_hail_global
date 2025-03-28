@@ -585,7 +585,9 @@ Raupach (\url{https://doi.org/10.5281/zenodo.15081094}). Warming levels were
 calculated using code by T. H. Raupach
 (\url{https://doi.org/10.5281/zenodo.10785698}). De-baising code was
 \texttt{python-cmethods} by B. T. Schwertfeger
-(\url{https://doi.org/10.5281/zenodo.12168002}). Code for 
+(\url{https://doi.org/10.5281/zenodo.12168002}). All study code is archived
+(\url{https://doi.org/10.5281/zenodo.15099057}); this article used version
+v1.0.0 of the study code.
 
 \bmhead{Acknowledgements}
 
