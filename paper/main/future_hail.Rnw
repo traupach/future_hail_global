@@ -486,7 +486,8 @@ yields in a warming world. For maize, an important staple grown in tropical
 regions, a potential reduction in hail hazard would only lessen the projected
 severe reduction in yield owing to increasing temperatures
 \cite{Jagermeyr_NF_2021}. It is also important to note that the timing of hail
-events within the broad cropping season strongly influences possible crop damage
+events within the broad cropping season strongly influences possible crop
+damage, because crop vulnerability to hail depends on the growth stage
 \cite{Dhillon_CJPS_2021}. Future analyses should take projected changes in
 cropping season and growth stages into account. 
 
@@ -551,7 +552,8 @@ tested but excluded from this study because they produced unrealistically many
 or too few hail-prone days in comparison with the other proxies (Supplementary
 Figure \ref{SM-fig:historical_all_proxies}). The Raupach proxy without extra
 conditions produced similar results to the Raupach proxy with extra conditions
-(Supplementary Figure \ref{SM-fig:historical_all_proxies} \todo{and changes}).
+(Supplementary Figures \ref{SM-fig:historical_all_proxies},
+\ref{SM-fig:Raupach_extra_conds}).
 
 \subsection*{Per-degree framework}
 
@@ -583,7 +585,7 @@ Raupach (\url{https://doi.org/10.5281/zenodo.15081094}). Warming levels were
 calculated using code by T. H. Raupach
 (\url{https://doi.org/10.5281/zenodo.10785698}). De-baising code was
 \texttt{python-cmethods} by B. T. Schwertfeger
-(\url{https://doi.org/10.5281/zenodo.12168002}).
+(\url{https://doi.org/10.5281/zenodo.12168002}). Code for 
 
 \bmhead{Acknowledgements}
 
