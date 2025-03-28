@@ -2,7 +2,7 @@
 
 This repository contains the complete code used for the research study "Shifting hail hazard under global warming" by T.H. Raupach, R. Portmann, C. Siderius, and S.C. Sherwood. 
 
-This code uses xarray_parcel by T. H. Raupach ().
+This code uses xarray_parcel by T. H. Raupach (https://doi.org/10.5281/zenodo.15081094).
 
 Code is by T. H. Raupach. The paper and supplementary material are by T.H. Raupach, R. Portmann, C. Siderius, and S.C. Sherwood.
 
