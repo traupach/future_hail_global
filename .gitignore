@@ -13,7 +13,7 @@ __pycache__/
 *.fdb*
 *.fls
 *.out
-paper/*.pdf
+paper/*/*.pdf
 *.synctex*
 *.tex
 *.cls
