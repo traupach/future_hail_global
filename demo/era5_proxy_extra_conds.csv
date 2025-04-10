@@ -1,0 +1,4 @@
+,variable,sign,threshold,loss,benefit,latex_variable,latex_unit,fold
+0,lapse_rate_700_500,<,-5.45,2.5,12.858926342072408,\textrm{LR},\textrm{K km}^{-1},0
+1,mixed_100_lifted_index,<,0.4,2.5,10.143266475644694,\textrm{LI}_{100},\textrm{K},0
+2,temp_500,<,265.46,2.5,9.151785714285708,T_{500},\textrm{K},0
