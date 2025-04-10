@@ -213,9 +213,9 @@ poleward in the cold (warm) season.
     \includegraphics[width=\textwidth]{../../results/main/regional_change}
     \caption{\textbf{Multi-proxy, multimodel mean changes in annual hail-prone
     days by region.} Changes are shown as a percentage of multi-proxy,
-    multimodel mean historical hail-prone days over land, for 2\degr{} warming
-    (a-c) and 3\degr{} warming (g-i) for Asia (a, g), Australasia (b, h), and
-    North America (c, i). Stippling as for Figure
+    multimodel mean historical hail-prone days over land, for 3\degr{} warming
+    for Asia (a), Australasia (b), North America (c), South America (d), Europe
+    (e), and Africa (f). Stippling as for Figure
     \ref{fig:future_changes_hail_days}. Colour bars are shared across rows; to
     increase contrast the colour bar for a is truncated.}
     \label{fig:future_changes_regional}
@@ -305,8 +305,8 @@ more poleward regions (Supplementary Figure \ref{SM-fig:crop_changes_3C}).
     Significant changes are those for which at least 50\% of the model/proxy
     combinations agreed with the sign of the mean difference and also showed
     significant differences in the mean ($p < 0.05$ using Welch's t-test).
-    Coloured boxes show interquartile ranges, whiskers show 10th-90th percentile
-    ranges.}
+    Horizontal bars show medians, coloured boxes show interquartile ranges,
+    whiskers show 10th-90th percentile ranges.}
     \label{fig:crop_changes}
 \end{figure*}
 
@@ -583,11 +583,11 @@ with identifier \url{https://doi.org/10.25914/Q1CT-RM13}.
 Convective indices were calculated using \texttt{xarray\_parcel} by T. H.
 Raupach (\url{https://doi.org/10.5281/zenodo.15081094}). Warming levels were
 calculated using code by T. H. Raupach
-(\url{https://doi.org/10.5281/zenodo.10785698}). De-baising code was
+(\url{https://doi.org/10.5281/zenodo.10785698}). De-biasing code was
 \texttt{python-cmethods} by B. T. Schwertfeger
 (\url{https://doi.org/10.5281/zenodo.12168002}). All study code is archived
 (\url{https://doi.org/10.5281/zenodo.15099057}); this article used version
-v1.0.0 of the study code.
+v1.0.1 of the study code.
 
 \bmhead{Acknowledgements}
 
