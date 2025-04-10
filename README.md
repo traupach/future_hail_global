@@ -19,7 +19,7 @@ Installation takes only a few minutes.
 * Clone the git repository.
 * Run the future_hail.ipynb notebook in a JupyterLab session. Follow instructions in the document for running extra scripts.
 
-## Demo guide
+## Demo
 
 The demo in `demo/future_hail_demo.ipynb` shows calculation of convective indices and proxy results for a single time step for a single CMIP6 model.
 
