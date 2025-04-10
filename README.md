@@ -21,7 +21,7 @@ Installation takes only a few minutes.
 
 ## Demo guide
 
-The demo in `demo/future_hail_demo.ipynb` shows calculation of convective indices and proxy results for a single day for a single CMIP dataset. 
+The demo in `demo/future_hail_demo.ipynb` shows calculation of convective indices and proxy results for a single time step for a single CMIP6 model.
 
 ## License
 
