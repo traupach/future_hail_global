@@ -19,6 +19,14 @@ Installation takes only a few minutes.
 * Clone the git repository.
 * Run the future_hail.ipynb notebook in a JupyterLab session. Follow instructions in the document for running extra scripts.
 
+## Data requirements
+
+All data are expected to be local.
+
+* CMIP6 data are expected in NetCDF format and organised as per the CMIP6 controlled vocabulary ([for example as described here](https://opus.nci.org.au/spaces/CMIP/pages/26288874/Data+Access+Information)). CMIP6 data can be downloaded via an [ESGF portal](https://esgf.nci.org.au/search). The code is designed to be general and work with any CMIP6 dataset, but has been tested only on the datasets used in this research study (CMCC-CM2-SR5, CMCC-ESM2, CNRM-CM6-1, EC-Earth3, GISS-E2-1-G, MIROC6, MPI-ESM1-2-HR, and MRI-ESM2-0).
+* MIRCA2000 data can be downloaded at [Zenodo](https://doi.org/10.5281/zenodo.7422506).
+* ERA5 data can be downloaded at the [Copernicus Climate Data Store](https://doi.org/10.24381/cds.bd0915c6).
+
 ## Demo
 
 The demo in `demo/future_hail_demo.ipynb` shows calculation of convective indices and proxy results for a single time step for a single CMIP6 model. The demo takes approximately 30 seconds to run and expected outputs are shown in the notebook file.
