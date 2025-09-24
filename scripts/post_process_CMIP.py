@@ -1,19 +1,21 @@
+"""Post process CMIP data into annual proxy statistics."""
+
 import os
 import sys
-import dask
 import warnings
-import xarray
-import numpy as np
+
+import dask
 import fut_hail as fh
-from dask.distributed import Client, Scheduler, LocalCluster
+import numpy as np
+from dask.distributed import Client
 
 # Settings.
-warnings.filterwarnings("ignore", category=FutureWarning)               # Ignore FutureWarnings (in Dask). 
+warnings.filterwarnings("ignore", category=FutureWarning)               # Ignore FutureWarnings (in Dask).
 outdir = '/g/data/up6/tr2908/future_hail_global/CMIP_conv_annual_stats' # Processing output directory.
 out_res = 1                                                             # Output resolution (degrees).
 
 # Command line arguments.
-assert len(sys.argv) == 6, 'Usage: post_process_CMIP.py <epoch_name> <model_name> <exp> <start_year> <end_year>'
+assert len(sys.argv) == 6, 'Usage: post_process_CMIP.py <epoch_name> <model_name> <exp> <start_year> <end_year>'  # noqa: PLR2004
 epoch_name = sys.argv[1]
 model_name = sys.argv[2]
 exp = sys.argv[3]
@@ -38,11 +40,11 @@ else:
                              exp=exp,
                              model_name=model_name,
                              epoch_dates=(epoch_start, epoch_end))
-    
+
     stats = stats.sortby('year')
     stats['year_num'] = ('year', np.arange(1, stats.year.size+1))
     stats = stats.swap_dims({'year': 'year_num'}).reset_coords()
 
-    comp = dict(zlib=True, shuffle=True, complevel=3)
+    comp = {"zlib": True, "shuffle": True, "complevel": 3}
     encoding = {var: comp for var in stats.data_vars}
-    stats.to_netcdf(out_file, encoding=encoding)            
+    stats.to_netcdf(out_file, encoding=encoding)

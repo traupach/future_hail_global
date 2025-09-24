@@ -32,10 +32,10 @@ from matplotlib.patches import Rectangle
 from metpy.units import units
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 
-# ruff: noqa: E712                                # Don't check rule E712 in Ruff.
+# ruff: noqa: E712  # Don't check rule E712 in Ruff.
 
 # Settings for xarray_parcel: set up parcel adiabat calculations.
-lookup_dir = '/g/data/li18/tr2908/'
+lookup_dir = '/g/data/li18/tr2908/adiabat_lookups'
 parcel.load_moist_adiabat_lookups(base_dir=lookup_dir, chunks=-1)
 
 # Proxies to consider.
@@ -115,9 +115,7 @@ def open_CMIP_file(filename, res, ex, calendar, chunks=None, **kwargs):
         **kwargs: Extra arguments to open_CMIP_file_delayed.
 
     """
-    dat = open_CMIP_file_delayed(filename=filename, chunks=chunks, **kwargs)[
-        ex.name
-    ].data
+    dat = open_CMIP_file_delayed(filename=filename, chunks=chunks, **kwargs)[ex.name].data
     times = times_in_CMIP_file(filename=filename, res=res, calendar=calendar)
     shape = (times.size,) + ex.shape[1:]
     return dask.array.from_delayed(value=dat, shape=shape, dtype=ex.dtype)
@@ -134,6 +132,9 @@ def open_CMIP(path, res, variable, chunks=None, max_year=2100):
         max_year: Open files with years up to this year.
 
     """
+    if chunks is None:
+        chunks = {}
+
     # List files to open.
     all_files = sorted(glob(f'{path}/*.nc'))
 
@@ -211,9 +212,7 @@ def times_in_CMIP_file(filename, res, calendar):
         re.search(r'.*_([0-9]{12})-[0-9]{12}\.nc', basename).group(1),
         re.search(r'.*_[0-9]{12}-([0-9]{12})\.nc', basename).group(1),
     ]
-    time_range = [
-        f'{x[0:4]}-{x[4:6]}-{x[6:8]} {x[8:10]}:{x[10:12]}' for x in time_range
-    ]
+    time_range = [f'{x[0:4]}-{x[4:6]}-{x[6:8]} {x[8:10]}:{x[10:12]}' for x in time_range]
 
     res = res.replace('H', 'h')
 
@@ -242,9 +241,7 @@ def geopotential_height(dat, vert_dim='lev', Rd=287.04749, g=9.80665):
              the surface.
 
     """
-    assert np.all(dat[vert_dim].diff(vert_dim) == 1), (
-        'Vert dim should be an integer increasing index.'
-    )
+    assert np.all(dat[vert_dim].diff(vert_dim) == 1), 'Vert dim should be an integer increasing index.'
 
     # Calculate virtual temperature.
     virt_temp = dat.temperature * (1 + 0.608 * dat.specific_humidity)
@@ -294,27 +291,122 @@ def geopotential_height(dat, vert_dim='lev', Rd=287.04749, g=9.80665):
     return level_heights, above_surface
 
 
+def model_orography(
+    model,
+    grid=None,
+    CMIP6_dir='/g/data/oi10/replicas',
+    orog_path='fx/orog/',
+    cache_orog_path='/g/data/up6/tr2908/future_hail_global/orography/',
+    match_dat=None,
+    match_res='6hrLev',
+    match_var='ta',
+):
+    """Read all CMIP6 data for a given model, at 6H resolution.
+
+    Arguments:
+        model: Model spec (e.g. CMIP6.ScenarioMIP.MRI.MRI-ESM2-0.ssp585.r1i1p1f1)
+        grid: Which grid to use?
+        CMIP6_dir: Directory for CMIP6 data.
+        orog_path: Path to orography.
+        cache_orog_path: Path to directory containing orography files. Models missing
+                         orography will use interpolated orography from here; models
+                         with orography will output orography to here.
+        match_dat: Ensure that latitude/longitude values are the same as those in match_dat,
+                   within a small tolerance.
+        match_res: Input resolution to match to if match_dat is not provided.
+        match_var: Variable to match to if match_dat is not provided.
+
+    Returns: An xarray object with orography.
+
+    """
+    # Parse model string. Return values are project, mip, source, model_name, exp, ensemble.
+    _, _, _, model_name, exp, ensemble = model.split('.')
+
+    # Use cached orography if it exists.
+    orog_cache = f'{cache_orog_path}/orog_{model_name}.{exp}.{ensemble}.nc'
+    if os.path.exists(orog_cache):
+        return xarray.open_dataset(orog_cache)
+
+    model_dir = model.replace('.', '/')
+    base_path = f'{CMIP6_dir}/{model_dir}'
+
+    if grid is None:
+        grids = [os.path.basename(x) for x in sorted(glob(f'{base_path}/{orog_path}/*'))]
+        assert len(grids) == 1, f'Multiple grids to choose from for {base_path}/{orog_path}/.'
+        grid = grids[0]
+
+    orog_p = f'{base_path}/{orog_path}/{grid}/'
+
+    if match_dat is None:
+        path = f'{base_path}/{match_res}/{match_var}/{grid}'
+        version = [os.path.basename(x) for x in sorted(glob(f'{path}/v*'))][-1]  # Use latest version.
+        path = f'{path}/{version}'
+        print(path, flush=True)
+        match_dat = open_CMIP(path=path, res='6h', variable=match_var)
+
+    # Read orography.
+    dat = xarray.Dataset()
+    if os.path.exists(orog_p):
+        # Use model orography if it is provided.
+        orog_version = [os.path.basename(x) for x in sorted(glob(f'{orog_p}/*'))][0]  # noqa: RUF015
+        orog = xarray.open_mfdataset(f'{orog_p}/{orog_version}/*.nc', use_cftime=True)['orog']
+
+        # If orography coordinates differ slightly from other-data coordinates,
+        # use main data coordinates.
+        if not np.all(match_dat.lat.values == orog.lat.values):
+            assert np.max(np.abs(match_dat.lat.values - orog.lat.values)) < 1e-5, (  # noqa: PLR2004
+                'Mismatch in orography latitudes.'
+            )
+            orog = orog.assign_coords({'lat': match_dat.lat.values})
+        if not np.all(match_dat.lon.values == orog.lon.values):
+            assert np.max(np.abs(match_dat.lon.values - orog.lon.values)) < 1e-5, (  # noqa: PLR2004
+                'Mismatch in orography longitudes.'
+            )
+            orog = orog.assign_coords({'lon': match_dat.lon.values})
+
+        dat['orog'] = orog
+        dat.orog.attrs['CMIP_model_spec'] = model
+        dat.orog.attrs['CMIP_model_name'] = model_name
+        dat.orog.attrs['CMIP_model_version'] = orog_version
+        dat.orog.attrs['CMIP_grid_spec'] = grid
+
+        # Some datasets use NaN in the orography for ocean; set NaNs to zero.
+        dat['orog'] = dat.orog.where(~np.isnan(dat.orog), other=0)
+
+        # Cache orography.
+        dat.to_netcdf(orog_cache)
+    else:
+        # Otherwise use the backup orography.
+        print('Using backup orography...', flush=True)
+        orog_file = f'{cache_orog_path}/orog_{model_name}.{exp}.{ensemble}.nc'
+        assert os.path.exists(orog_file), 'Interpolated backup orography is missing.'
+        orog = xarray.open_mfdataset(orog_file).orog
+        assert np.all(orog.lat == match_dat.lat), 'Coordinate error with backup orog.'
+        assert np.all(orog.lon == match_dat.lon), 'Coordinate error with backup orog.'
+
+        assert not np.any(np.isnan(orog)), 'NaNs in backup orography.'
+        dat['orog'] = orog
+
+    return dat
+
+
 def read_all_CMIP_data(
     model,
     CMIP6_dir='/g/data/oi10/replicas',
-    orog_path='fx/orog/',
-    backup_orog_path='/g/data/up6/tr2908/future_hail_global/interpolated_orography/',
     max_year=2100,
     pressure_var='ta',
-    out_res='6H',
+    out_res='6h',
     chunks=None,
     grid=None,
     tables=None,
     variables=None,
+    **kwargs,
 ):
     """Read all CMIP6 data for a given model, at 6H resolution.
 
     Arguments:
         model: Model spec (e.g. CMIP6.ScenarioMIP.MRI.MRI-ESM2-0.ssp585.r1i1p1f1)
         CMIP6_dir: Directory for CMIP6 data.
-        orog_path: Path to orography.
-        backup_orog_path: Path to directory containing interpolated orography files for
-                          models missing orography.
         max_year: Read in data to this year only.
         pressure_var: The variable to use for pressure definition.
         out_res: Output resolution.
@@ -322,13 +414,14 @@ def read_all_CMIP_data(
         grid: Grid to use.
         tables: [path, res] groups to search for variables in, in order of preference.
         variables: variables to read.
+        **kwargs: Arguments to model_orography.
 
     Returns: An xarray object with all CMIP6 data for the given model at the correct
              resolution.
 
     """
     if tables is None:
-        tables = [['6hrLev', '6H'], ['3hr', '3H']]
+        tables = [['6hrLev', '6h'], ['3hr', '3h']]
     if variables is None:
         variables = ['va', 'ua', 'ta', 'hus', 'ps', 'vas', 'uas', 'huss', 'tas']
     if chunks is None:
@@ -340,7 +433,7 @@ def read_all_CMIP_data(
 
     # Parse model string. Return values are project, mip, source, model_name,
     # exp, ensemble.
-    _, _, _, model_name, exp, ensemble = model.split('.')
+    _, _, _, model_name, _, _ = model.split('.')
 
     for v in variables:
         for [p, res] in tables:  # noqa: B007
@@ -355,9 +448,7 @@ def read_all_CMIP_data(
             grid = grids[0]
 
         path = f'{path}/{grid}'
-        version = [os.path.basename(x) for x in sorted(glob(f'{path}/v*'))][
-            -1
-        ]  # Use latest version.
+        version = [os.path.basename(x) for x in sorted(glob(f'{path}/v*'))][-1]  # Use latest version.
         path = f'{path}/{version}'
 
         print(path, flush=True)
@@ -366,10 +457,7 @@ def read_all_CMIP_data(
 
         # Keep data only every 6H.
         if res != out_res:
-            assert 'time' in dat, (
-                f'Must include data natively at {out_res} '
-                'before data that requires resampling.'
-            )
+            assert 'time' in dat, f'Must include data natively at {out_res} before data that requires resampling.'
             keep_times = xarray.cftime_range(
                 dat.time.values[0],
                 dat.time.values[-1],
@@ -386,25 +474,17 @@ def read_all_CMIP_data(
         d.attrs['CMIP_model_name'] = model_name
         d.attrs['CMIP_model_version'] = version
         d.attrs['CMIP_grid_spec'] = grid
-        d.attrs['processing_note'] = (
-            f'Data subset to {out_res} temporal resolution and maximum year {max_year}.'
-        )
+        d.attrs['processing_note'] = f'Data subset to {out_res} temporal resolution and maximum year {max_year}.'
 
         # Chunk.
         dat[v] = d.chunk(chunks)
 
         # Check all grid point match.
         if 'lat' in dat.coords:
-            assert np.all(dat.lat == d.lat), (
-                'Latitudes for {v} do not match other variables.'
-            )
-            assert np.all(dat.lon == d.lon), (
-                'Longitudes for {v} do not match other variables.'
-            )
+            assert np.all(dat.lat == d.lat), 'Latitudes for {v} do not match other variables.'
+            assert np.all(dat.lon == d.lon), 'Longitudes for {v} do not match other variables.'
             if 'lev' in d.coords:
-                assert np.all(dat.lev == d.lev), (
-                    'Levels for {v} do not match other variables.'
-                )
+                assert np.all(dat.lev == d.lev), 'Levels for {v} do not match other variables.'
 
         # Process pressure as required.
         if v == pressure_var:
@@ -415,75 +495,34 @@ def read_all_CMIP_data(
                 # Some modules use p = a*p0 + b*ps.
                 dat['a'] = ex.a
                 dat['p0'] = ex.p0
-                assert dat.lev.attrs['formula'] == 'p = a*p0 + b*ps', (
-                    'Pressure formula problem.'
-                )
+                assert dat.lev.attrs['formula'] == 'p = a*p0 + b*ps', 'Pressure formula problem.'
 
             else:
                 # Some modules use ap, in which a is already multiplied by p.
                 dat['a'] = ex.ap
                 dat['p0'] = xarray.ones_like(dat.a)
-                assert dat.lev.attrs['formula'] == 'p = ap + b*ps', (
-                    'Pressure formula problem.'
-                )
+                assert dat.lev.attrs['formula'] == 'p = ap + b*ps', 'Pressure formula problem.'
 
             dat['b'] = ex.b
             del ex
 
     # Rename variables.
-    dat = dat.rename(
-        {
-            'vas': 'surface_wind_v',
-            'uas': 'surface_wind_u',
-            'va': 'wind_v',
-            'ua': 'wind_u',
-            'ta': 'temperature',
-            'tas': 'surface_temperature',
-            'hus': 'specific_humidity',
-            'huss': 'surface_specific_humidity',
-            'ps': 'surface_pressure',
-        },
-    )
+    renamer = {
+        'vas': 'surface_wind_v',
+        'uas': 'surface_wind_u',
+        'va': 'wind_v',
+        'ua': 'wind_u',
+        'ta': 'temperature',
+        'tas': 'surface_temperature',
+        'hus': 'specific_humidity',
+        'huss': 'surface_specific_humidity',
+        'ps': 'surface_pressure',
+    }
+
+    dat = dat.rename({x: renamer[x] for x in renamer if x in dat})
 
     # Read orography.
-    orog_p = f'{base_path}/{orog_path}/{grids[0]}/'
-    if os.path.exists(orog_p):
-        # Use model orography if it is provided.
-        orog_version = [os.path.basename(x) for x in sorted(glob(f'{orog_p}/*'))][0]  # noqa: RUF015
-        orog = xarray.open_mfdataset(f'{orog_p}/{orog_version}/*.nc', use_cftime=True)[
-            'orog'
-        ]
-
-        # If orography coordinates differ slightly from other-data coordinates, use main
-        # data coordinates.
-        if not np.all(dat.lat.values == orog.lat.values):
-            assert np.max(np.abs(dat.lat.values - orog.lat.values)) < 1e-5, (  # noqa: PLR2004
-                'Mismatch in orography latitudes.'
-            )
-            orog = orog.assign_coords({'lat': dat.lat.values})
-        if not np.all(dat.lon.values == orog.lon.values):
-            assert np.max(np.abs(dat.lon.values - orog.lon.values)) < 1e-5, (  # noqa: PLR2004
-                'Mismatch in orography longitudes.'
-            )
-            orog = orog.assign_coords({'lon': dat.lon.values})
-
-        dat['orog'] = orog
-        dat.orog.attrs['CMIP_model_spec'] = model
-        dat.orog.attrs['CMIP_model_name'] = model_name
-        dat.orog.attrs['CMIP_model_version'] = orog_version
-        dat.orog.attrs['CMIP_grid_spec'] = grids[0]
-    else:
-        # Otherwise use the backup orography.
-        print('Using backup orography...', flush=True)
-        orog_file = f'{backup_orog_path}/orog_{model_name}.{exp}.{ensemble}.nc'
-        assert os.path.exists(orog_file), 'Interpolated backup orography is missing.'
-        orog = xarray.open_mfdataset(orog_file).orog
-        assert np.all(orog.lat == dat.lat), 'Coordinate error with backup orog.'
-        assert np.all(orog.lon == dat.lon), 'Coordinate error with backup orog.'
-        dat['orog'] = orog
-
-    # Some datasets use NaN in the orography for ocean; set NaNs to zero.
-    dat['orog'] = dat.orog.where(~np.isnan(dat.orog), other=0)
+    dat['orog'] = model_orography(model=model, match_dat=dat, **kwargs).orog
 
     # Add pressure at each level.
     dat['pressure'] = (dat.a * dat.p0 + dat.b * dat.surface_pressure) / 100
@@ -551,9 +590,7 @@ def regrid_global(
             attrs = d.attrs
             attrs.update(
                 {
-                    'history': (
-                        f'Regridded to {out_res} x {out_res}degree grid using xESMF.'
-                    ),
+                    'history': (f'Regridded to {out_res} x {out_res}degree grid using xESMF.'),
                 },
             )
 
@@ -620,9 +657,7 @@ def conv_CMIP(
             day_dat = dat.sel(time=f'{day.year}-{day.month:02}-{day.day:02}')
 
             # Calculate geopotential heights.
-            day_dat['height_asl'], day_dat['wind_height_above_surface'] = (
-                geopotential_height(day_dat)
-            )
+            day_dat['height_asl'], day_dat['wind_height_above_surface'] = geopotential_height(day_dat)
 
             # Load for speed.
             day_dat = day_dat.load()
@@ -766,9 +801,7 @@ def plot_map_to_ax(
 
     if discrete:
         assert cbar_ticks is not None, 'Discrete colorbar requires cbar_ticks'
-        assert cbar_ticks == sorted(cbar_ticks), (
-            'cbar_ticks must be sorted for discrete plot.'
-        )
+        assert cbar_ticks == sorted(cbar_ticks), 'cbar_ticks must be sorted for discrete plot.'
         cbar_ticks = np.array([*cbar_ticks, np.max(cbar_ticks) + 1])
         norm = colors.BoundaryNorm(cbar_ticks, ncolors=len(cbar_ticks) - 1)
         cbar_ticks = (cbar_ticks[0:-1] + cbar_ticks[1:]) / 2
@@ -862,9 +895,7 @@ def plot_map_to_ax(
     if ylims is not None:
         ax.set_ylim(ylims)
     if colourbar == True and tick_labels is not None:
-        assert len(tick_labels) == len(cbar_ticks), (
-            'Labels and ticks must have same length'
-        )
+        assert len(tick_labels) == len(cbar_ticks), 'Labels and ticks must have same length'
         res.colorbar.ax.set_yticklabels(tick_labels)
     if left_title is not None:
         if title_inset:
@@ -954,8 +985,7 @@ def plot_map_to_ax(
                     )
                     if yadj < 0:
                         print(
-                            'Warning: ha=center and negative y adjustment '
-                            'are not supported.',
+                            'Warning: ha=center and negative y adjustment are not supported.',
                         )
                 else:
                     assert 1 == 0, 'Invalid value of ha.'  # noqa: PLR0133
@@ -1046,6 +1076,7 @@ def plot_map(
         shared_scale_quantiles: Quantiles to use in the shared scale.
         ticks_bottom: Display bottom ticks?
         ticks_left: Display left ticks?
+        title_inset_pos: Position for inset title.
         kwargs: Extra arguments to plot_map_to_ax.
 
     Return: The axis plotted to.
@@ -1122,9 +1153,7 @@ def plot_map(
                 np.nanquantile(all_vals, shared_scale_quantiles[0]),
                 np.nanquantile(all_vals, shared_scale_quantiles[1]),
             )
-            assert not (np.isnan(colour_scale[0]) or np.isnan(colour_scale[1])), (
-                'share_scale cannot be used with subplots missing data.'
-            )
+            assert not (np.isnan(colour_scale[0]) or np.isnan(colour_scale[1])), 'share_scale cannot be used with subplots missing data.'
 
         for i, d in enumerate(dat):
             ax_title = None
@@ -1190,9 +1219,7 @@ def plot_map(
                 extend=cbar_extend,
             )
             if tick_labels is not None:
-                assert len(tick_labels) == len(cbar_ticks), (
-                    'Labels and ticks must have same length'
-                )
+                assert len(tick_labels) == len(cbar_ticks), 'Labels and ticks must have same length'
                 cb.ax.set_yticklabels(tick_labels)
 
         if col_labels is not None or row_labels is not None:
@@ -1239,8 +1266,19 @@ def annual_stats(
     d,
     factor,
     day_vars=proxies,
-    mean_vars=None,
-    quantile_vars=None,
+    mean_vars=[  # noqa: B006
+        'mixed_100_cape',
+        'mixed_100_cin',
+        'mixed_100_lifted_index',
+        'lapse_rate_700_500',
+        'temp_500',
+        'melting_level',
+        'shear_magnitude',
+    ],
+    quantile_vars={  # noqa: B006
+        0.01: ['mixed_100_cin', 'mixed_100_lifted_index', 'lapse_rate_700_500'],
+        0.99: ['mixed_100_cape', 'temp_500', 'melting_level', 'shear_magnitude'],
+    },
     chunks=None,
     time_chunk=500,
 ):
@@ -1262,28 +1300,11 @@ def annual_stats(
     Returns: statistics per year.
 
     """
-    if mean_vars is None:
-        mean_vars = [
-            'mixed_100_cape',
-            'mixed_100_cin',
-            'mixed_100_lifted_index',
-            'lapse_rate_700_500',
-            'temp_500',
-            'melting_level',
-            'shear_magnitude',
-        ]
-    if quantile_vars is None:
-        quantile_vars = {
-            0.01: ['mixed_100_cin', 'mixed_100_lifted_index', 'lapse_rate_700_500'],
-            0.99: ['mixed_100_cape', 'temp_500', 'melting_level', 'shear_magnitude'],
-        }
     if chunks is None:
         chunks = {'time': -1, 'lat': 15, 'lon': 15}
 
     # Annual hail-prone days.
-    daily = (
-        d[day_vars].resample(time='D').max(keep_attrs=True).chunk({'time': time_chunk})
-    )
+    daily = d[day_vars].resample(time='D').max(keep_attrs=True).chunk({'time': time_chunk})
 
     # Remove all 29 Februaries, because resample can introduce one if it is
     # missing, which is set to nan; but bool(np.nan) == True so it introduces an
@@ -1310,12 +1331,7 @@ def annual_stats(
             for v in quantile_vars[q]:
                 quant_dat = d[v].chunk(chunks)
                 quant_dat = quant_dat.persist()
-                quants = (
-                    quant_dat.groupby('time.year')
-                    .quantile(q, keep_attrs=True)
-                    .drop('quantile')
-                    .load()
-                )
+                quants = quant_dat.groupby('time.year').quantile(q, keep_attrs=True).drop('quantile').load()
                 extremes = xarray.merge([extremes, quants])
                 extremes[v].attrs['description'] = f'Percentile {q}'
                 extremes = extremes.rename({v: f'extreme_{v}'})
@@ -1363,9 +1379,7 @@ def epoch_stats(
     days_per_month['month'] = days_per_month.time.dt.month
     days_per_month = days_per_month.set_index(time=['year', 'month']).unstack('time')
     for v in proxy_vars:
-        days_per_month[v].attrs['long_name'] = (
-            f'Hail-prone days during month ({proxy_names[v]})'
-        )
+        days_per_month[v].attrs['long_name'] = f'Hail-prone days during month ({proxy_names[v]})'
         days_per_month[v].attrs['units'] = 'days per month'
 
     print('Seasonal...')
@@ -1446,10 +1460,7 @@ def process_epoch(
     dat.lon.attrs = lon_attrs
 
     if dat.time.size != expected_times:
-        msg = (
-            f'Warning: {sim_dir} epoch {epoch_name}: number of times returned '
-            f'({dat.time.size}) does not match expected size ({expected_times}).'
-        )
+        msg = f'Warning: {sim_dir} epoch {epoch_name}: number of times returned ({dat.time.size}) does not match expected size ({expected_times}).'
         print(msg)
         return None
 
@@ -1526,14 +1537,10 @@ def plot_seasonal_maps(
 
     """
     d = [
-        dat[variable]
-        .mean('year_num')
-        .sel(model=m, season=s, lat=lat_range, lon=lon_range)
+        dat[variable].mean('year_num').sel(model=m, season=s, lat=lat_range, lon=lon_range)
         for m, s in itertools.product(dat.model.values, dat.season.values)
     ]
-    titles = [
-        f'{m} ({s})' for m, s in itertools.product(dat.model.values, dat.season.values)
-    ]
+    titles = [f'{m} ({s})' for m, s in itertools.product(dat.model.values, dat.season.values)]
 
     _ = plot_map(
         d,
@@ -1659,9 +1666,7 @@ def select_models(
     assert np.all(counts <= 2), 'More than two options for some model(s).'  # noqa: PLR2004
     counts = counts[counts == 2]  # noqa: PLR2004
     chosen_models = counts.index.values
-    subset = (
-        subset.reset_index().set_index(['source_id', 'member_id']).loc[chosen_models]
-    )
+    subset = subset.reset_index().set_index(['source_id', 'member_id']).loc[chosen_models]
 
     # Make the description string.
     subset = subset.reset_index()
@@ -1840,9 +1845,7 @@ def warming_years(future_models, warming_degrees=2, baseline_range=None):
     for mod in future_models:
         _, _, _, model, _, ensemble = mod.split('.')
 
-        levels = warming_levels.loc[
-            warming_levels.model == f'{model}_{ensemble}'
-        ].copy()
+        levels = warming_levels.loc[warming_levels.model == f'{model}_{ensemble}'].copy()
         levels['desc'] = mod
         levels = levels.drop(columns='model')
         all_levels = pd.concat([all_levels, levels])
@@ -1878,7 +1881,7 @@ def define_runs(
     if warming_degrees is None:
         warming_degrees = [2, 3]
     if tables is None:
-        tables = [['6hrLev', '6H'], ['3hr', '3H']]
+        tables = [['6hrLev', '6h'], ['3hr', '3h']]
     if variables is None:
         variables = ['va', 'ta', 'hus', 'ps', 'vas', 'huss', 'tas']
 
@@ -1928,18 +1931,14 @@ def define_runs(
                 path = f'{base_path}/{p}/{v}'
                 if os.path.exists(path):
                     break
-            assert os.path.exists(path), (
-                f'Could not find path/res combinations for {v} under {base_path}.'
-            )
+            assert os.path.exists(path), f'Could not find path/res combinations for {v} under {base_path}.'
 
             grids = [os.path.basename(x) for x in sorted(glob(f'{path}/*'))]
             assert len(grids) == 1, f'Multiple grids to choose from for {path}/{v}.'
             grid = grids[0]
 
             path = f'{path}/{grid}'
-            version = [os.path.basename(x) for x in sorted(glob(f'{path}/v*'))][
-                -1
-            ]  # Use latest version.
+            version = [os.path.basename(x) for x in sorted(glob(f'{path}/v*'))][-1]  # Use latest version.
             path = f'{path}/{version}'
 
             files = sorted(glob(f'{path}/*.nc'))
@@ -1977,8 +1976,7 @@ def define_runs(
                 ta.close()
                 if sn != 'atmosphere_hybrid_sigma_pressure_coordinate':
                     print(
-                        f'{run.model} {run.exp} is not on pressure levels. '
-                        f'Excluding {run.model}.',
+                        f'{run.model} {run.exp} is not on pressure levels. Excluding {run.model}.',
                     )
                     exclude.append(run.model)
                     break
@@ -1992,12 +1990,8 @@ def define_runs(
 def make_backup_orography(
     runs,
     CMIP6_dir='/g/data/oi10/replicas',
-    backup_orog=(
-        'CMIP6/CMIP/CNRM-CERFACS/CNRM-CM6-1/historical/'
-        'r1i1p1f2/fx/orog/gr/v20180917/'
-        'orog_fx_CNRM-CM6-1_historical_r1i1p1f2_gr.nc'
-    ),
-    backup_orog_dir='/g/data/up6/tr2908/future_hail_global/interpolated_orography',
+    backup_orog=('CMIP6/CMIP/CNRM-CERFACS/CNRM-CM6-1/historical/r1i1p1f2/fx/orog/gr/v20180917/orog_fx_CNRM-CM6-1_historical_r1i1p1f2_gr.nc'),
+    backup_orog_dir='/g/data/up6/tr2908/future_hail_global/orography',
     tables=None,
     grid_var='tas',
 ):
@@ -2018,7 +2012,7 @@ def make_backup_orography(
 
     """
     if tables is None:
-        tables = [['6hrLev', '6H'], ['3hr', '3H']]
+        tables = [['6hrLev', '6h'], ['3hr', '3h']]
 
     orog = None
     runs['backup_orography'] = False
@@ -2041,16 +2035,12 @@ def make_backup_orography(
                 path = f'{base_path}/{p}/{grid_var}'
                 if os.path.exists(path):
                     break
-            assert os.path.exists(path), (
-                f'Could not find path/res combinations for {grid_var}.'
-            )
+            assert os.path.exists(path), f'Could not find path/res combinations for {grid_var}.'
             grids = [os.path.basename(x) for x in sorted(glob(f'{path}/*'))]
             assert len(grids) == 1, f'Multiple grids to choose from for {path}.'
             grid = grids[0]
             path = f'{path}/{grid}'
-            version = [os.path.basename(x) for x in sorted(glob(f'{path}/v*'))][
-                -1
-            ]  # Use latest version.
+            version = [os.path.basename(x) for x in sorted(glob(f'{path}/v*'))][-1]  # Use latest version.
             path = f'{path}/{version}'
             print(path)
 
@@ -2065,11 +2055,7 @@ def make_backup_orography(
             regridder = xe.Regridder(orog, dat, 'bilinear', periodic=True)
             orog = regridder(orog, keep_attrs=True)
 
-            orog.attrs['note'] = (
-                'Model orography unavailable, so orography provided by '
-                + backup_orog
-                + ' and regridded to model grid using xESMF.'
-            )
+            orog.attrs['note'] = 'Model orography unavailable, so orography provided by ' + backup_orog + ' and regridded to model grid using xESMF.'
 
             orog.to_netcdf(out_file)
 
@@ -2137,32 +2123,12 @@ def read_processed_data(
     # organised with proxy as a dimension.
     seasonal_proxies = [x for x in list(dat.keys()) if 'seasonal_proxy' in x]
     annual_proxies = [x for x in list(dat.keys()) if 'annual_proxy_' in x]
-    prox = [
-        x
-        for x in list(dat.keys())
-        if 'proxy_' in x and x not in seasonal_proxies and x not in annual_proxies
-    ]
-    rest = [
-        x
-        for x in list(dat.keys())
-        if x not in seasonal_proxies and x not in annual_proxies and x not in prox
-    ]
+    prox = [x for x in list(dat.keys()) if 'proxy_' in x and x not in seasonal_proxies and x not in annual_proxies]
+    rest = [x for x in list(dat.keys()) if x not in seasonal_proxies and x not in annual_proxies and x not in prox]
 
-    seasonal = (
-        dat[seasonal_proxies]
-        .rename({f'{p}': f'{p[15:None]}' for p in seasonal_proxies})
-        .to_dataarray(dim='proxy', name='seasonal_hail_days')
-    )
-    annual = (
-        dat[annual_proxies]
-        .rename({f'{p}': f'{p[13:None]}' for p in annual_proxies})
-        .to_dataarray(dim='proxy', name='annual_hail_days')
-    )
-    prox = (
-        dat[prox]
-        .rename({f'{p}': f'{p[6:None]}' for p in prox})
-        .to_dataarray(dim='proxy', name='monthly_hail_days')
-    )
+    seasonal = dat[seasonal_proxies].rename({f'{p}': f'{p[15:None]}' for p in seasonal_proxies}).to_dataarray(dim='proxy', name='seasonal_hail_days')
+    annual = dat[annual_proxies].rename({f'{p}': f'{p[13:None]}' for p in annual_proxies}).to_dataarray(dim='proxy', name='annual_hail_days')
+    prox = dat[prox].rename({f'{p}': f'{p[6:None]}' for p in prox}).to_dataarray(dim='proxy', name='monthly_hail_days')
 
     dat = xarray.merge([dat[rest], seasonal, annual, prox])
 
@@ -2253,9 +2219,7 @@ def era5_climatology(
         prox = prox.transpose('time', 'latitude', 'longitude')
         prox = prox.sel(time=dat.time)
         dat = xarray.merge([dat, prox])
-        assert len(dat.time) == 365 * yrs * 4, (
-            'Incorrect number of times in ERA5 historic period.'
-        )
+        assert len(dat.time) == 365 * yrs * 4, 'Incorrect number of times in ERA5 historic period.'
 
         dat = era5_climatology_calc(dat)
 
@@ -2272,16 +2236,8 @@ def era5_climatology(
     dat = dat.rename(rename)
     monthly = [x for x in dat if 'monthly' in x]
     prox = [x for x in dat if x not in monthly]
-    prox = (
-        dat[prox]
-        .rename({f: f[6:None] for f in prox})
-        .to_dataarray(name='annual_hail_days', dim='proxy')
-    )
-    monthly = (
-        dat[monthly]
-        .rename({f: f[14:None] for f in monthly})
-        .to_dataarray(name='monthly_hail_days', dim='proxy')
-    )
+    prox = dat[prox].rename({f: f[6:None] for f in prox}).to_dataarray(name='annual_hail_days', dim='proxy')
+    monthly = dat[monthly].rename({f: f[14:None] for f in monthly}).to_dataarray(name='monthly_hail_days', dim='proxy')
     return xarray.merge([prox, monthly])
 
 
@@ -2361,10 +2317,7 @@ def plot_era5_anomalies(
     }
 
     _ = plot_map(
-        [
-            anoms.sel(year=year, month=m, lat=lats, lon=lons).monthly_hail_days
-            for m in months
-        ],
+        [anoms.sel(year=year, month=m, lat=lats, lon=lons).monthly_hail_days for m in months],
         title=[f'{month_names[m]} {year}' for m in months],
         ncols=ncols,
         nrows=nrows,
@@ -2485,18 +2438,9 @@ def plot_diffs_for_epoch(
     d = diffs.sel(epoch=epoch)
 
     _ = plot_map(
-        [
-            d.sel(model=m, proxy=p)[var]
-            for m, p in itertools.product(d.model.values, d.proxy.values)
-        ],
-        stippling=[
-            d.sel(model=m, proxy=p)[stipple_var]
-            for m, p in itertools.product(d.model.values, d.proxy.values)
-        ],
-        title=[
-            f'{m}, {proxy_dims[p]}'
-            for m, p in itertools.product(d.model.values, d.proxy.values)
-        ],
+        [d.sel(model=m, proxy=p)[var] for m, p in itertools.product(d.model.values, d.proxy.values)],
+        stippling=[d.sel(model=m, proxy=p)[stipple_var] for m, p in itertools.product(d.model.values, d.proxy.values)],
+        title=[f'{m}, {proxy_dims[p]}' for m, p in itertools.product(d.model.values, d.proxy.values)],
         figsize=figsize,
         disp_proj=ccrs.Robinson(),
         ncols=len(d.proxy),
@@ -2534,10 +2478,7 @@ def crop_months_array(x):
     end = x['end']
 
     assert start != end, 'start == end'
-    if start < end:
-        months = np.arange(start, end + 1)
-    else:
-        months = np.concatenate([np.arange(1, end + 1), np.arange(start, 13)])
+    months = np.arange(start, end + 1) if start < end else np.concatenate([np.arange(1, end + 1), np.arange(start, 13)])
 
     month_array = np.repeat(0, 12)
     month_array[months - 1] = 1
@@ -2641,11 +2582,7 @@ def cropping_mask(
             )
 
             # Find the union of all crop months for each location.
-            crop_months = (
-                periods.groupby(['lat', 'lon'])
-                .cropping_months.apply(lambda x: np.amax(np.stack(x), 0))
-                .reset_index()
-            )
+            crop_months = periods.groupby(['lat', 'lon']).cropping_months.apply(lambda x: np.amax(np.stack(x), 0)).reset_index()
 
             # Convert to a geopandas object with polygons
             crop_months = gp.GeoDataFrame(
@@ -2691,10 +2628,7 @@ def cropping_mask(
         crop_mask = xarray.concat(crop_mask, dim='crop')
         crop_mask.attrs = []
         crop_mask.attrs['long_name'] = 'Crop months mask'
-        crop_mask.attrs['description'] = (
-            'Derived from MIRCA2000 cropping times at 0.5 resolution, '
-            'aligned with data resolution.'
-        )
+        crop_mask.attrs['description'] = 'Derived from MIRCA2000 cropping times at 0.5 resolution, aligned with data resolution.'
         crop_mask = xarray.Dataset({'cropping': crop_mask})
         write_output(dat=crop_mask, file=cache_file, attrs=None)
 
@@ -2724,10 +2658,9 @@ def assert_epochs(
             runs.epoch_name == d.epoch,
         )
         assert len(runs.loc[line]) == 1, 'Multiple or no lines selected'
-        assert (
-            d.attrs['epoch_dates']
-            == f'{runs.loc[line, "start_year"].values[0]}-{runs.loc[line, "end_year"].values[0]}'  # noqa: E501
-        ), f'Incorrect epoch in {file}.'
+        assert d.attrs['epoch_dates'] == f'{runs.loc[line, "start_year"].values[0]}-{runs.loc[line, "end_year"].values[0]}', (
+            f'Incorrect epoch in {file}.'
+        )
         d.close()
         del d
 
@@ -2775,9 +2708,7 @@ def multi_model_mean_diffs(dat, variables, completion='_mean_diff', sig_thresh=0
     # How many models have both sig diffs and matching sign? Consider mean
     # difference significant if more than threshold of model/proxy combinations
     # have both these conditions true.
-    significance = (
-        sig.sum(['model', 'proxy']) >= sig.count(['model', 'proxy']) * sig_thresh
-    )
+    significance = sig.sum(['model', 'proxy']) >= sig.count(['model', 'proxy']) * sig_thresh
 
     # Calculate the mean difference in relative terms (percent of reference).
     mean_diffs_rel = mean_diffs / mean_refs * 100
@@ -2804,12 +2735,8 @@ def plot_relative_changes_crops(
 
     mask = ~np.isnan(ch)
     zero_changes = xarray.full_like(other=ch, fill_value=0).where(ch == 0).where(mask)
-    positive_changes = (
-        xarray.full_like(other=ch, fill_value=1).where(ch > 0).where(mask)
-    )
-    negative_changes = (
-        xarray.full_like(other=ch, fill_value=-1).where(ch < 0).where(mask)
-    )
+    positive_changes = xarray.full_like(other=ch, fill_value=1).where(ch > 0).where(mask)
+    negative_changes = xarray.full_like(other=ch, fill_value=-1).where(ch < 0).where(mask)
 
     changes = positive_changes.where(np.isnan(zero_changes), other=zero_changes)
     changes = changes.where(np.isnan(negative_changes), other=negative_changes)
@@ -2860,7 +2787,7 @@ def crop_hail_stats(
         {
             'model': 1,
             'proxy': 1,
-            'epoch': 1,
+            'epoch': -1,
             'year_num': -1,
             'month': -1,
             'lat': -1,
@@ -2886,12 +2813,14 @@ def crop_hail_stats(
             'crop': 1,
             'model': 1,
             'proxy': 1,
-            'epoch': 1,
+            'epoch': -1,
             'month': -1,
             'lat': -1,
             'lon': -1,
         },
     )
+
+    days_per_month = days_per_month.persist()
 
     # Process cropping info per crop, and cache.
     for crop in crop_mask.crop.values:
@@ -2908,17 +2837,13 @@ def crop_hail_stats(
                 'month',
             ) / d.month_days.sum('month')
 
-            d = d.drop('month_days')
-            d.crop_hail_prone_days.attrs['long_name'] = (
-                'Hail-prone days during cropping period month'
-            )
+            d = d.drop_vars('month_days')
+            d.crop_hail_prone_days.attrs['long_name'] = 'Hail-prone days during cropping period month'
             d.crop_hail_prone_days.attrs['units'] = 'days per period'
-            d.crop_hail_prone_proportion.attrs['long_name'] = (
-                'Hail-prone proportion of cropping period'
-            )
+            d.crop_hail_prone_proportion.attrs['long_name'] = 'Hail-prone proportion of cropping period'
             d.crop_hail_prone_proportion.attrs['units'] = ''
 
-            # Compute and load for this crop.
+            # Compute and save for this crop.
             d = d.load()
             write_output(dat=d, file=outfile, attrs=None)
             del d
@@ -3118,9 +3043,7 @@ def plot_crop_lines(
         subset_axes[i].add_patch(rect)
 
     assert np.max(crop_dat.diff('crop')) == 0, (
-        f'Errant differences between crop values with diff  '
-        f'of {np.max(crop_dat.diff("crop"))}'
-        '(if nan then perhaps crop is not at this location)'
+        f'Errant differences between crop values with diff  of {np.max(crop_dat.diff("crop"))}(if nan then perhaps crop is not at this location)'
     )
 
     plt.subplots_adjust(hspace=0.5, wspace=0.7)
@@ -3231,9 +3154,7 @@ def conv_properties(dat, vert_dim='model_level_number'):
         lifted_index=mixed_li_100.mixed_100_lifted_index,
         vert_dim=vert_dim,
         prefix='mixed_100',
-        description=(
-            'Deep convective index using fully-mixed ' + 'lowest 100 hPa parcel.'
-        ),
+        description=('Deep convective index using fully-mixed ' + 'lowest 100 hPa parcel.'),
     )
 
     print('Calculating mixing ratio of most unstable parcel...')
@@ -3332,7 +3253,7 @@ def storm_proxies(
             lapse=dat.lapse_rate_700_500,
             temp_500=dat.temp_500,
             shear=dat.S06,
-            flh=dat.freezing_level,
+            flh_agl=dat.freezing_level - dat.surface_height,
         )
         if 'proxy_SHIP_0.1' in proxies:
             out['proxy_SHIP_0.1'] = out.ship > 0.1  # noqa: PLR2004
@@ -3381,11 +3302,7 @@ def plot_regional_crop_changes(
                 lon=lons[region],
             )
             d = d.where(s == True)
-            d = (
-                d.expand_dims({'region': [region_names[region]]})
-                .to_dataframe()
-                .reset_index()
-            )
+            d = d.expand_dims({'region': [region_names[region]]}).to_dataframe().reset_index()
             res.append(d)
     res = pd.concat(res).reset_index(drop=True)
     del d, s
@@ -3515,9 +3432,7 @@ def calc_detrended_annual(
             # Re-arrange the data so that the annual hail days are organised with
             # proxy as a dimension.
             annual = (
-                annual[annual_proxies]
-                .rename({f'{p}': f'{p[6:None]}' for p in annual_proxies})
-                .to_dataarray(dim='proxy', name='annual_hail_days')
+                annual[annual_proxies].rename({f'{p}': f'{p[6:None]}' for p in annual_proxies}).to_dataarray(dim='proxy', name='annual_hail_days')
             )
 
             # Get year number in abstract form.
@@ -3577,7 +3492,16 @@ def detrended_changes(
                 outstring=f'_{detrended_ing}_',
                 expand_dims={'detrended_ing': [detrended_ing]},
             )
+
+            detrended.close()
+            epoch_diffs.close()
+            del detrended
+            del detrended_ing
             del epoch_diffs
+            del hist
+
+        print('Returning to ensure all outputs closed; rerun function to read changes.')
+        return None
 
     # Read all cache files.
     res = []
@@ -3636,14 +3560,8 @@ def plot_drivers(
 
     if days_threshold is not None:
         drivers = drivers.copy(deep=True)
-        null_drivers = (
-            np.round(np.abs(drivers).max(['lat', 'lon', 'proxy']), 0)
-            .to_dataframe()
-            .reset_index()
-        )
-        null_drivers = null_drivers[
-            null_drivers.annual_hail_days_mean_diff < days_threshold
-        ]
+        null_drivers = np.round(np.abs(drivers).max(['lat', 'lon', 'proxy']), 0).to_dataframe().reset_index()
+        null_drivers = null_drivers[null_drivers.annual_hail_days_mean_diff < days_threshold]
         for _, row in null_drivers.iterrows():
             drivers = drivers.drop_sel(detrended_ing=row.detrended_ing)
 
@@ -3659,9 +3577,7 @@ def plot_drivers(
         + refs,
         cmap='RdBu_r',
         divergent=True,
-        nrows=len(drivers.detrended_ing)
-        + np.min([1, len(refs)])
-        + np.min([1, len(sums)]),
+        nrows=len(drivers.detrended_ing) + np.min([1, len(refs)]) + np.min([1, len(sums)]),
         ncols=len(drivers.proxy),
         share_scale=True,
         hspace=0.1,

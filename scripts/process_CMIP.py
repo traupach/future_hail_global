@@ -1,22 +1,23 @@
+"""Do convective calculations for a CMIP6 dataset."""
+
 import os
 import sys
-import dask
 import warnings
-import numpy as np
+
+import dask
 import fut_hail as fh
-import modules.parcel_functions as parcel
-from dask.distributed import Client, Scheduler, LocalCluster
+from dask.distributed import Client
 
 # Settings.
-warnings.filterwarnings("ignore", category=FutureWarning)                    # Ignore FutureWarnings (in Dask). 
+warnings.filterwarnings("ignore", category=FutureWarning)                    # Ignore FutureWarnings (in Dask).
 outdir = '/g/data/up6/tr2908/future_hail_global/CMIP_conv/'                  # Processing output directory.
-proxy_results_file = '../../../aus400_hail/results/results_era5.json'        # Trained proxy definition file. 
+proxy_results_file = '../../../aus400_hail/results/results_era5.json'        # Trained proxy definition file.
 proxy_conds_file = '../../../aus400_hail/results/era5_proxy_extra_conds.csv' # Extra proxy conditions file.
 days_per_outfile = 20                                                        # Days per output file.
 CMIP6_dir = '/g/data/oi10/replicas'                                          # CMIP6 data directory.
 
 # Command line arguments.
-assert len(sys.argv) == 3, 'Usage: process_CMIP.py <model> <year>.'
+assert len(sys.argv) == 3, 'Usage: process_CMIP.py <model> <year>.'  # noqa: PLR2004
 model = sys.argv[1]
 year = int(sys.argv[2])
 
@@ -34,6 +35,4 @@ dat = fh.read_all_CMIP_data(model=model, CMIP6_dir=CMIP6_dir)
 print('Done reading data', flush=True)
 
 # Process for the given year.
-fh.conv_CMIP(dat=dat, year=year, proxy_results_file=proxy_results_file, 
-             proxy_conds_file=proxy_conds_file, outdir=f'{outdir}', 
-             days_per_outfile=30)
+fh.conv_CMIP(dat=dat, year=year, outdir=f'{outdir}', days_per_outfile=30)
