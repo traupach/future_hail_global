@@ -7,6 +7,9 @@
 \usepackage{parskip}
 \usepackage{url}
 \usepackage{booktabs}
+\usepackage{placeins}
+
+\usepackage[font=small]{caption}
 
 \urlstyle{same}
 \newcommand{\todo}[1]{\textcolor{red}{\textbf{(#1)}}}
@@ -38,6 +41,305 @@ results_proxy_update = fromJSON(file='../../results/results_proxy_update.json')
 library(tidyverse)
 library(xtable)
 @
+
+\section{Update to hail proxy}
+\label{sec:proxy-update}
+
+The instability-shear proxy of \cite{Raupach_MWR_2023} was slightly updated for
+this study, to be more globally applicable. This proxy indicates hail-prone
+conditions when
+
+\begin{eqnarray}
+    \textrm{MLCAPE}_{100} \times {S_{06}}^\alpha & \geq & \beta, \\
+    \textrm{LR} & < & -5.45 \textrm{ K km}^{-1} \label{eq:extra_conditions_1} \\
+    \textrm{LI}_{100} & < & 0.4 \textrm{ K} \label{eq:extra_conditions_2} \\
+    T_{500} & < & 265.46 \textrm{ K} \label{eq:extra_conditions_3},
+\end{eqnarray}
+
+where MLCAPE$_{100}$ (J kg$^{-1}$) is convective available potential energy
+calculated using a well-mixed parcel over the lowest 100 hPa of the atmosphere,
+$S_{06}$ (m s$^{-1}$) is 0-6 km bulk vertical wind shear, $\alpha$ and $\beta$
+are parameters that vary with the melting level height, LR (K km$^{-1}$) is the
+lapse rate between 700 hPa and 500 hPa, LI$_{100}$ (K) is the lifted index
+defined using same parcel as that used by MLCAPE$_{100}$, and $T_{500}$ (K) is
+the temperature at 500 hPa \citep{Raupach_MWR_2023}. 
+
+The idea behind the two parameters $\alpha$ and $\beta$ is that there is a
+latitudinal dependence on the proportion of instability versus shear in
+environments in which hailstorms occur in Australia \citep{Raupach_MWR_2023}.
+Storms in the higher-latitude south, where shear is generally high but melting
+level height is low, are more easily discriminated by MLCAPE values, while
+storms in the tropics, where MLCAPE and melting level height are both generally
+high, are more easily discriminated by shear \citep{Raupach_MWR_2023}. The proxy
+uses melting level height (MLH, in m) to adjust the values of $\alpha$ and
+$\beta$ and therefore to adjust the discriminator line between hail and no-hail
+conditions in instability-shear space.
+
+Figure \ref{fig:proxy_by_MLH} shows the original \cite{Raupach_MWR_2023} proxy
+discriminator lines for various values of melting level height (MLH) above the
+surface. When the MLH is below about 1500 m, the value of $\alpha$ becomes
+negative and the value of $\beta$ becomes very small, and the proxy stops
+detecting high-CAPE, high-shear conditions. So that the proxy is more reliable
+in colder regions, in this work we have modified the proxy such that when the
+MLH is below 2000 m, the values of $\alpha$ and $\beta$ for an MLH of 2000 m are
+used. The equations for $\alpha$ and $\beta$ used here are thus
+
+\begin{figure*}[!ht]
+    \centering
+    \includegraphics[width=\textwidth]{../../results/supplementary/proxy_by_MLH}
+    \caption{\textbf{Original proxy for various values of melting level height
+    (MLH).} CAPE stands for convective available potential energy. $S_{06}$ is
+    0-6 km bulk vertical wind shear. The same discriminator lines are shown on
+    logarithmic and linear scales.}
+    \label{fig:proxy_by_MLH}
+\end{figure*}
+
+\begin{equation}
+\alpha = 
+    \begin{cases} 
+        0.00127 \times \textrm{MLH} - 1.88272 & \textrm{ if }\quad\textrm{MLH} \geq 2000 \textrm{ m} \\
+        0.00127 \times 2000 - 1.88272 & \textrm{ if }\quad\textrm{MLH} < 2000 \textrm{ m}\\
+    \end{cases},
+\end{equation}
+
+and 
+
+\begin{equation}
+\log_{10}(\beta) =
+    \begin{cases}
+    0.00204 \times \textrm{MLH} - 1.75631 & \textrm{ if }\quad\textrm{MLH} \geq 2000 \textrm{ m} \\
+    0.00204 \times 2000 - 1.75631 & \textrm{ if }\quad\textrm{MLH} < 2000 \textrm{ m} \\
+    \end{cases}.
+\end{equation}
+
+With and without the slight modification for MLH $< 2000$, the three original
+``extra conditions'' defined in \cite{Raupach_MWR_2023} (and here in Equations
+\ref{eq:extra_conditions_1}, \ref{eq:extra_conditions_2}, and
+\ref{eq:extra_conditions_3}) are similarly effective in removing false positives
+from the whole proxy training data set. To assess the impact of this change we
+have tested on two datasets:
+
+\begin{enumerate}
+    \item On the original training dataset from \cite{Raupach_MWR_2023}: proxy
+    performance metrics for the proxy with no extra conditions are similar
+    between versions while the performance of the proxy with extra conditions is
+    not affected by the change.
+    \item On the climatology data used in \cite{Raupach_npjCAS_2023} covering
+    storm-prone hours of the day from 1979-2022 across all of Australia: the
+    proxy changes affect the ocean areas in the south and southeast of the
+    domain. However, over the whole map no location had more than
+    \Sexpr{ceiling(as.numeric(results_proxy_update['max_percent_diff_per_pixel_all'])*100)/100}\%
+    \% of its values affected and over land no location had more than
+    \Sexpr{ceiling(as.numeric(results_proxy_update['max_percent_diff_per_pixel_land'])*100)/100}\%
+    of its values affected. The climatology and trends calculated using either
+    version of the proxy are very similar.
+\end{enumerate}
+
+It is also notable that the projected changes in the Raupach proxy that we
+report in this work are not driven primarily by the ``extra conditions'', as
+shown by Figure \ref{fig:Raupach_extra_conds} here.
+
+\section{Proxy formulas}
+\label{sec:proxy-formulas}
+
+In addition to the Raupach proxy defined in Section \ref{sec:proxy-update}, we
+used the proxy of \cite{Eccel_IJC_2012}, wherein an environment is considered
+hail prone when 
+
+\begin{eqnarray}
+\textrm{MLCAPE}_{100} \times S_{06} > 10000,&\textrm{and} \\
+\textrm{MLCIN}_{100} > -50,
+\end{eqnarray}
+
+where MLCIN$_{100}$ (J kg$^{-1}$) is the 
+convective inhibition, for a well-mixed parcel over the lowest 100
+hPa. We also used the
+significant hail parameter \citep[SHIP,][]{SPC_SHIP} which is defined by
+calculating an initial value SHIP$_i$ as
+
+\begin{equation}
+\textrm{SHIP}_i = \frac{\textrm{MUCAPE} \times \textrm{MR} \times \textrm{LR} \times -T_{500} \times S_{06}}{42000000},
+\label{eq:SHIP}
+\end{equation}
+
+where MUCAPE and MUCIN (both J kg$^{-1}$) are the convective available potential
+energy and convective inhibition for the ``most unstable'' parcel, defined as
+the parcel with the largest equivalent potential temperature over the lowest 250
+hPa of the atmosphere, MR (g kg$^{-1}$) is the mixing ratio for that parcel, and
+$T_{500}$ is the temperature at 500 hPa in degrees C. SHIP$_i$ is only defined
+when 
+
+\begin{eqnarray}
+7 \leq \textrm{S06} \leq 27 \textrm{ m s}^{-1}, & \textrm{and} \\
+11 \leq \textrm{MR} \leq 13.6 \textrm{ g kg}^{-1}, &
+\end{eqnarray}
+
+and if $T_{500} > -5.5$ degrees C, then a value of $T_{500} = -5.5$ is used.
+Once SHIP$_i$ has been calculated using Equation \ref{eq:SHIP} and these
+constraints, the following modifications are made to get the final value of
+SHIP:
+
+\begin{eqnarray}
+\textrm{SHIP} = \textrm{SHIP}_i \times \frac{\textrm{MUCAPE}}{1300}, & \textrm{if MUCAPE} < 1300 \textrm{ J kg}^{-1} \\ 
+\textrm{SHIP} = \textrm{SHIP}_i \times \frac{\textrm{LR}}{5.8}, & \textrm{if LR} < 5.8 \textrm{ K km}^{-1} \\
+\textrm{SHIP} = \textrm{SHIP}_i \times \frac{\textrm{FLH}}{2400}, & \textrm{if FLH} < 2400 \textrm{ m AGL},
+\end{eqnarray}
+
+where FLH is freezing-level height (height of dry-bulb zero degrees C) and AGL
+stands for above ground level (\cite{Raupach_MWR_2023} used FLH above sea level
+for Australia, but here we use FLH AGL as per both the original SHIP definition
+and \cite{Prein_WCE_2018}). We considered an environment to be hail prone when
+SHIP $> 0.1$, as per \cite{Raupach_MWR_2023}.
+
+\section{Validation of proxy climatologies}
+
+For global climatologies we compare to those of \cite{Prein_WCE_2018}, which is
+proxy-based, and the satellite-based climatology of \cite{Bang_JAMC_2019}, while
+noting that both these comparison global climatologies are for severe or large
+hail, and the proxies we use are designed to detect any hail-prone conditions.
+For each region, we present the minimum, mean and maximum number of annual
+hail-prone days over the model-proxy ensemble for the historical period,
+including both the CMIP6 models and ERA5 reanalysis for three proxies (27
+ensemble members), and compare to the global and local climatologies. In most
+regions, at least some of the proxies used here show high hail probability over
+the ocean which is not reproduced in the \cite{Prein_WCE_2018} and
+\cite{Bang_JAMC_2019} climatologies. We consider the greater inter-proxy spread
+over the oceans to reflect the higher uncertainty with respect to hail-prone
+conditions over maritime areas than land areas \citep{Sari_JGRA_2025,
+Knight_2001} and focus mainly on land comparisons in the below analyses.
+
+\todo{Generally agreement is strong, with the exception of the Tibetan Plateau
+and the tropical oceans, and the highest hail risk region in the USA}
+
+We do not attempt to compare the number of hail days per year because of its
+dependance on the support over which it is calculated.
+
+\subsection{Asia}
+
+\begin{figure}[!h]
+\includegraphics[width=\textwidth]{../../results/supplementary/proxy_climatology_asia}
+\caption{Minimum, mean, and maximum annual hail-prone days across the model-proxy ensemble for the historical period, including both CMIP6 models and ERA5 reanalysis, for Asia.}
+\label{fig:proxy_climatology_asia}
+\end{figure}
+
+In Asia, our ensemble (Figure \ref{fig:proxy_climatology_asia}) highlights the
+southern flank of the Himalaya and particularly its southeastern end between as
+the most hail prone region, with another hotspot in the Guangdong and Guangxi
+provinces of China, and low hail probability across the Tibetan plateau. This
+pattern matches that shown in \cite{Bang_JAMC_2019} satellite data, and is
+similar to that in \cite{Prein_WCE_2018} except that \cite{Prein_WCE_2018} shows
+another hotspot in the northeast of Pakistan which is not shown in either the
+proxies used here or the \cite{Bang_JAMC_2019} climatology. Regional studies
+confirm that the north-western Himalaya \citep{Bhat_NH_2024}, North, Northeast,
+and East India \citep{Rao_NH_2025}, Northern Thailand \cite{Mahavik_NH_2025},
+and Southwest China \citep{Li_JAMC_2018} are hail hotspots. Hail is also
+reported across some parts of Central India \citep{Rao_NH_2025,
+Ravindren_NH_2025} where the global satellite and proxy products show only
+moderate hail probability. Station-based climatologies in China show high hail
+occurrence over the Tibetan Plateau \citep{Zhang_JAMC_2008, Li_JAMC_2018},
+disagreeing with global proxy and satellite studies.
+
+\FloatBarrier
+
+\subsection{Oceania}
+
+\begin{figure}[!h]
+\includegraphics[width=\textwidth]{../../results/supplementary/proxy_climatology_oceania}
+\caption{As for Figure \ref{fig:proxy_climatology_asia} but for Oceania.}
+\label{fig:proxy_climatology_oceania}
+\end{figure}
+
+In Oceania, our proxy results (Figure \ref{fig:proxy_climatology_oceania}) agree
+with the locations of known hail hotspots. \citep{Prein_WCE_2018} and
+\cite{Bang_JAMC_2019} both show regions of higher hail probability on the mid
+eastern and northern coasts of Australia. Our proxies show hail probability also
+in the southwest of Australia, which agrees with the \citep{Prein_WCE_2018}
+climatology. \cite{Bang_JAMC_2019} shows low but non-zero hail probability
+across the western Maritime Continent, agreeing with our global proxies but
+disagreeing with \cite{Prein_WCE_2018}. A maxima in hail probability off the
+east coast of Australia is shown in our proxies and \cite{Prein_WCE_2018}, but
+not replicated by satellite detections \citep{Bang_JAMC_2019}. Our proxies and
+that of \cite{Prein_WCE_2018} agree on the North Island of New Zealand showing
+higher hail probability than the South Island. Regional studies confirm the hail
+peak on Australia's east coast \citep{Raupach_npjCAS_2023, Brook_MWR_2024} and
+the possibility of a hail hotspot in the southwest \citep{Raupach_npjCAS_2023,
+Brook_MWR_2024, Bedka_JAMC_2018}, while hail in Australia's tropics is subject
+to uncertainty \citep{Raupach_MWR_2023, Bedka_JAMC_2018, Prein_WCE_2018}. In New
+Zealand, hailstorm occurrence is recorded as increasing towards the west and
+south \citep{Steiner_NZJGG_1989}, but recent data are scarce. Damaging
+hailstorms occur in Indonesia \citep{Sari_JGRA_2025}.
+
+\FloatBarrier
+
+\subsection{North America}
+
+\begin{figure}[!h]
+\includegraphics[width=\textwidth]{../../results/supplementary/proxy_climatology_north_america}
+\caption{As for Figure \ref{fig:proxy_climatology_asia} but for North America.}
+\label{fig:proxy_climatology_north_america}
+\end{figure}
+
+Our proxy ensemble (Figure \ref{fig:proxy_climatology_north_america}) shows
+hail-prone areas in North America to the east of the Rocky Mountains with the
+highest occurrence of hail-prone conditions in the southeast United States,
+along the Gulf of Mexico and eastern Florida; hail-prone conditions extend into
+north into Canada to about 50 \degr{} and further in Alberta, and south into
+Central America, with a thin region of increased probability along the west
+coast of Mexico. The severe hail climatology of \cite{Prein_WCE_2018} highlights
+a similar region of risk and agrees with increased hail risk in Mexico's west,
+albeit a little further inland. However, \cite{Prein_WCE_2018} has the highest
+probability area in the USA further west and across the Great Plains.
+Satellite-based detections also highlight similar regions as our proxies, but
+put the greatest occurrence across the US Great Plains and Cuba. \todo{Do
+individual proxies pick out the Gulf area?}. Regional climatologies confirm that
+the most hail-prone areas of the United States is the Great Plains east of the
+Rocky Mountains, and that there is a strong east-west divide with little hail
+occurrence to the west of the Rocky Mountains \citep{Cintineo_WF_2012,
+Allen_EJSSM_2015, Allen_JAMES_2015, Murillo_MWR_2021}. A radar-based climatology
+shows outlier hotspots in Florida and the eastern sides of Georgia and South
+Carolina \citep{Cintineo_WF_2012}, and hail reports exist in most areas east of
+the Rocky Mountains \citep{Allen_JAMES_2015}. In Canada, the highest hail
+probability region is across southern Manitoba and Saskatchewan and extending
+northwards into Alberta \citep{Brunet_JAMC_2024} which agrees well with our
+ensemble climatology. In Mexico, hailstorms occur over the high-elevation parts
+of the Trans-Mexican Volcanic Belt in the south of the country and the Sierra
+Madre Occidental in the north west \citep{Leon-Cruz_IJC_2023}. The occurrence of
+hail over the Sierra Madre Occidental aligns with our ensemble's increased hail
+probability in the northwest coastal region of Mexico. 
+
+\FloatBarrier
+
+\subsection{South America}
+
+\begin{figure}[!h]
+\includegraphics[width=\textwidth]{../../results/supplementary/proxy_climatology_south_america}
+\caption{As for Figure \ref{fig:proxy_climatology_asia} but for South America.}
+\label{fig:proxy_climatology_south_america}
+\end{figure}
+
+
+
+\FloatBarrier
+
+\subsection{Europe}
+
+\begin{figure}[!h]
+\includegraphics[width=\textwidth]{../../results/supplementary/proxy_climatology_europe}
+\caption{As for Figure \ref{fig:proxy_climatology_asia} but for Europe.}
+\label{fig:proxy_climatology_europe}
+\end{figure}
+
+\FloatBarrier
+
+\subsection{Africa}
+
+\begin{figure}[!h]
+\includegraphics[width=\textwidth]{../../results/supplementary/proxy_climatology_africa}
+\caption{As for Figure \ref{fig:proxy_climatology_asia} but for Africa.}
+\label{fig:proxy_climatology_africa}
+\end{figure}
+
+\FloatBarrier
 
 \section{Supplementary tables and figures}
 
@@ -202,10 +504,10 @@ print(tab, booktabs=TRUE, include.rownames=FALSE, size='footnotesize')
     cropping times for selected crops at the given location. The chosen location
     is at the centre of the fuchsia square in the inset maps. Inset maps show
     changes in hail-prone proportion of cropping season by crop. Lines in main
-    plot show mean changes in hail-prone days per month over a
-    4$\times$4\degr{} region around the chosen location (shown as a
-    fuchsia square in inset maps). Stippling in inset maps as for
-    \ref{fig:ingredients_changes_1}.}
+    plot show mean changes in hail-prone days per month over a 4$\times$4\degr{}
+    region around the chosen location (shown as a fuchsia square in inset maps),
+    with vertical lines indicating the inter-model range per proxy. Stippling in
+    inset maps as for Figure \ref{fig:ingredients_changes_1}.}
     \label{fig:crop_lines_af}
 \end{figure*}
 
@@ -293,64 +595,6 @@ print(tab, booktabs=TRUE, include.rownames=FALSE, size='footnotesize')
     \label{fig:Raupach_extra_conds}
 \end{figure*}
 
-\section{Update to hail proxy}
-\label{sec:proxy-update}
-
-The instability-shear proxy of \cite{Raupach_MWR_2023} was slightly updated for
-this study, to be more globally applicable. This proxy indicates hail-prone
-conditions when
-
-\begin{equation}
-    \textrm{CAPE} \times {\textrm{S}_{06}}^\alpha \geq \beta,
-\end{equation}
-
-where CAPE is convective available potential energy, S$_{06}$ is 0-6 km bulk
-vertical wind shear, and $\alpha$ and $\beta$ are parameters that vary with the
-melting level height \citep{Raupach_MWR_2023}. Figure \ref{fig:proxy_by_MLH}
-shows the \cite{Raupach_MWR_2023} proxy discriminator lines for various values
-of melting level height (MLH) above the surface. When the MLH is below about
-1500 m, the value of $\alpha$ becomes negative and the value of $\beta$ becomes
-very small, and the proxy stops detecting high-CAPE, high-shear conditions.
-
-\begin{figure*}[!ht]
-    \centering
-    \includegraphics[width=\textwidth]{../../results/supplementary/proxy_by_MLH}
-    \caption{\textbf{Original proxy for various values of melting level height
-    (MLH).} CAPE stands for convective available potential energy. $S_{06}$ is
-    0-6 km bulk vertical wind shear. The same discriminator lines are shown on
-    logarithmic and linear scales.}
-    \label{fig:proxy_by_MLH}
-\end{figure*}
-
-So that the proxy is more reliable in colder regions, in this work we have
-modified the proxy such that when the MLH is below 2000 m, the values of
-$\alpha$ and $\beta$ for an MLH of 2000 m are used. With and without this
-modification the three original ``extra conditions'' defined in
-\cite{Raupach_MWR_2023} are similarly effective in removing false positives from
-the whole proxy training data set. We thus use these unmodified conditions. To
-assess the impact of this change we have tested on two datasets:
-
-\begin{enumerate}
-    \item On the original training dataset from \cite{Raupach_MWR_2023}, proxy
-    performance metrics for the proxy with no extra conditions are similar
-    between versions while the performance of the proxy with extra conditions is
-    not affected by the change.
-    \item On the climatology data used in \cite{Raupach_npjCAS_2023} covering
-    storm-prone hours of the day from 1979-2022 across all of Australia, the
-    proxy changes affect the ocean areas in the south and southeast of the
-    domain. However, over the whole map no location had more than
-    \Sexpr{ceiling(results_proxy_update$max_percent_diff_per_pixel_all*100)/100}\%
-    \% of its values affected and over land no location had more than
-    \Sexpr{ceiling(results_proxy_update$max_percent_diff_per_pixel_land*100)/100}\%
-    of its values affected. The climatology and trends calculated using either
-    version of the proxy are very similar.
-\end{enumerate}
-
-It is also notable that the projected changes in the Raupach proxy that we
-report in this work are not driven primarily by the ``extra conditions'', as
-shown by Figure \ref{fig:Raupach_extra_conds} here.
-
-\clearpage
 \footnotesize
 
 \bibliographystyle{unsrtnat}
