@@ -11,27 +11,22 @@ from glob import glob
 import cartopy.crs as ccrs
 import cftime
 import dask
-import geopandas
 import geopandas as gp
 import intake
 import matplotlib.pyplot as plt
-import matplotlib.ticker as mticker
 import metpy
 import modules.parcel_functions as parcel
 import modules.warming_levels as wl
 import numpy as np
 import pandas as pd
+import plotmap
 import scipy as sp
 import seaborn as sns
 import xarray
 import xesmf as xe
-from cartopy.io import shapereader
-from matplotlib import colors
 from matplotlib.colors import BoundaryNorm, LinearSegmentedColormap
 from matplotlib.patches import Rectangle
 from metpy.units import units
-from mpl_toolkits.axes_grid1.inset_locator import inset_axes
-from plotmap import plot_map, plot_map_to_ax
 
 # ruff: noqa: E712  # Don't check rule E712 in Ruff.
 
@@ -938,6 +933,9 @@ def make_landsea_mask(
 
     return lsm.land.load()
 
+def plot_map(dat, cmap=hail_cmap, num_contours=len(cmap_colours), **kwargs):
+    """Wrap plotmap."""
+    plotmap.plot_map(dat, cmap=cmap, num_contours=num_contours, **kwargs)
 
 def plot_seasonal_maps(
     dat,
@@ -2448,7 +2446,7 @@ def plot_crop_lines(
             linewidth=2,
         )
 
-        plot_map_to_ax(
+        plotmap.plot_map_to_ax(
             dat=subset_dat.sel(crop=crop).hpp,
             stippling=subset_dat.sel(crop=crop).sig,
             ax=subset_axes[i],
