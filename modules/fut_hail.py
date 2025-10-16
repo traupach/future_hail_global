@@ -1688,8 +1688,15 @@ def monthly_era5_anoms(
             cache_file=None,
         )
         year_dat = year_dat.sel(proxy=era5.proxy)
+
+        # Normalise using the same historical normalisation factor used in the era5 data.
+        year_dat['annual_hail_days_historical'] = (year_dat.annual_hail_days / 
+                                                   era5.proxy_max_annual_hail_days * 100).load()
+        year_dat = year_dat.drop_vars('annual_hail_days')
+
         year_anoms = (year_dat - era5).mean('proxy')
         year_anoms = year_anoms.expand_dims({'year': [year]})
+
         anoms.append(year_anoms)
 
     return xarray.merge(anoms).load()
