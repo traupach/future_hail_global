@@ -679,6 +679,7 @@ def conv_CMIP(
     if len(conv) != 0:
         write_output(dat=xarray.merge(conv), attrs=attrs, file=outfile)
 
+
 def annual_stats(
     d,
     factor,
@@ -933,9 +934,11 @@ def make_landsea_mask(
 
     return lsm.land.load()
 
+
 def plot_map(dat, cmap=hail_cmap, num_contours=len(cmap_colours), **kwargs):
     """Wrap plotmap."""
     plotmap.plot_map(dat, cmap=cmap, num_contours=num_contours, **kwargs)
+
 
 def plot_seasonal_maps(
     dat,
@@ -978,6 +981,17 @@ def plot_seasonal_maps(
     )
 
 
+def parallel_ttest(a, b):
+    """Apply ttest_ind for a and b, for use with apply_ufunc."""
+    # Make sure core dimension (years) is first for ttest call.
+    a = np.moveaxis(a, -1, 0)
+    b = np.moveaxis(b, -1, 0)
+
+    # Calculate t test on chunk.
+    statres, pval = sp.stats.ttest_ind(a=a, b=b, equal_var=False)
+    return np.stack([statres, pval], axis=-1)
+
+
 def ttest(dat, variables, fut_epoch, hist_epoch='historical', sig_level=0.05):
     """Apply Welch's t-test for across a given axis between epochs.
 
@@ -991,19 +1005,30 @@ def ttest(dat, variables, fut_epoch, hist_epoch='historical', sig_level=0.05):
     Returns: the t test statistic and the significance result.
 
     """
+    dat = dat.chunk({'epoch': 1, 'year_num': -1, 'proxy': -1, 'lat': 15, 'lon': 15})
+
     res = []
     for variable in variables:
-        statres, pval = sp.stats.ttest_ind(
-            a=dat.sel(epoch=fut_epoch)[variable].values,
-            b=dat.sel(epoch=hist_epoch)[variable].values,
-            equal_var=False,
-        )
+        print(f'Running t-test for {variable}')
 
-        res_dims = list(dat.sel(epoch=fut_epoch)[variable].dims)[1:]
+        tt = xarray.apply_ufunc(
+            parallel_ttest,
+            dat.sel(epoch=fut_epoch)[variable],
+            dat.sel(epoch=hist_epoch)[variable],
+            dask='parallelized',
+            input_core_dims=[['year_num'], ['year_num']],
+            output_core_dims=[['stat']],
+            output_dtypes=['float64'],
+            dask_gufunc_kwargs={'output_sizes': {'stat': 2}},
+        ).compute()
+
+        res_dims = list(dat.sel(epoch=fut_epoch)[variable].dims)
+        res_dims = [x for x in res_dims if x != 'year_num']
+
         r = xarray.Dataset(
             {
-                variable + '_ttest_stat': (res_dims, statres),
-                variable + '_sig': (res_dims, pval < sig_level),
+                variable + '_ttest_stat': (res_dims, tt.isel(stat=0).data),
+                variable + '_sig': (res_dims, tt.isel(stat=1).data < sig_level),
             },
             coords={x: dat[x].values for x in res_dims},
         )
@@ -1565,6 +1590,14 @@ def read_processed_data(
         'lon',
     )
 
+    # Normalise annual hail days by maximum per model-proxy - for historical epoch only (in annual_hail_days_historical) and across all epochs (in annual_hail_days).
+    dat['model_proxy_max_annual_hail_days'] = dat.annual_hail_days.max(['epoch', 'lat', 'lon']).load()
+    dat['model_proxy_max_annual_hail_days_historical'] = (dat.annual_hail_days.sel(epoch='historical').max(['lat', 'lon'])).load()
+    dat['annual_hail_days_historical'] = dat.annual_hail_days / dat.model_proxy_max_annual_hail_days_historical * 100
+    dat['annual_hail_days'] = dat.annual_hail_days / dat.model_proxy_max_annual_hail_days * 100
+
+    dat = dat.chunk({'model': 1, 'epoch': -1, 'season': -1, 'year_num': -1, 'lat': -1, 'lon': -1, 'proxy': 1, 'month': 1})
+
     return dat, lsm
 
 
@@ -1615,6 +1648,7 @@ def era5_climatology(
     landmask=None,
     rename=None,
     yrs=20,
+    normalise_by=None,
 ):
     """Calculate the ERA5 climatology of mean annual hail-prone days.
 
@@ -1626,6 +1660,8 @@ def era5_climatology(
         landmask: Optionally mask for land regions using landmask.lsm.
         rename: Variables to rename.
         yrs: Years of data to expect.
+        normalise_by: Use a different normalisation factor than the maximum over
+        the read data?
 
     Returns: Mean annual hail-prone days from ERA5.
 
@@ -1658,7 +1694,12 @@ def era5_climatology(
     prox = [x for x in dat if x not in monthly]
     prox = dat[prox].rename({f: f[6:None] for f in prox}).to_dataarray(name='annual_hail_days', dim='proxy')
     monthly = dat[monthly].rename({f: f[14:None] for f in monthly}).to_dataarray(name='monthly_hail_days', dim='proxy')
-    return xarray.merge([prox, monthly])
+    era5 = xarray.merge([prox, monthly])
+
+    era5['proxy_max_annual_hail_days'] = era5.annual_hail_days.max(['lat', 'lon']).load()
+    normalisation_factor = era5.proxy_max_annual_hail_days if normalise_by is None else normalise_by
+    era5['annual_hail_days_historical'] = era5.annual_hail_days / normalisation_factor * 100
+    return era5.drop_vars('annual_hail_days')
 
 
 def monthly_era5_anoms(
@@ -1686,14 +1727,9 @@ def monthly_era5_anoms(
             era5_file_def=f'*{year}*.nc',
             yrs=1,
             cache_file=None,
+            normalise_by=era5.proxy_max_annual_hail_days,
         )
         year_dat = year_dat.sel(proxy=era5.proxy)
-
-        # Normalise using the same historical normalisation factor used in the era5 data.
-        year_dat['annual_hail_days_historical'] = (year_dat.annual_hail_days / 
-                                                   era5.proxy_max_annual_hail_days * 100).load()
-        year_dat = year_dat.drop_vars('annual_hail_days')
-
         year_anoms = (year_dat - era5).mean('proxy')
         year_anoms = year_anoms.expand_dims({'year': [year]})
 
@@ -1794,7 +1830,10 @@ def epoch_differences(
         print(f'Processing {model}...')
         out_file = f'{cache_dir}/{model}{outstring}epoch_diffs.nc'
         if not os.path.exists(out_file):
-            d = dat.sel(model=model).chunk({'lat': 50, 'lon': 50})
+            d = dat.sel(model=model)
+            d = d.chunk(-1).chunk({'epoch': 1})
+            if 'crop' in d.coords:
+                d = d.chunk({'crop': 13})
             reference = d.sel(epoch='historical')[variables]
             reference_mean = reference.mean(['year_num']).load()
 
@@ -1840,7 +1879,7 @@ def plot_diffs_for_epoch(
     file=None,
     var='annual_hail_days_mean_diff',
     stipple_var='annual_hail_days_sig',
-    scale_label='$\Delta$ mean annual hail-prone days',
+    scale_label='$\Delta$ normalised mean annual hail-prone days',
     figsize=(12, 12),
     row_label_adjust=0.16,
     row_label_scale=1.28,
@@ -2828,8 +2867,6 @@ def calc_detrended_annual(
         detrended_proxy_dir: Directory with detrended proxy files to process.
         annual_detrended_dir: Directory for output annual detrended files.
 
-    Returns: All annual detrended data.
-
     """
     # Each file in the detrended proxy directory has proxy results for a scenario
     # in which one ingredient has been detrended.
@@ -2874,6 +2911,7 @@ def calc_detrended_annual(
 
 def detrended_changes(
     hist_dat,
+    lsm=None,
     annual_detrended_dir='/g/data/up6/tr2908/future_hail_global/CMIP_detrended/annual_stats',
     cache_dir='/g/data/up6/tr2908/future_hail_global/CMIP_detrended/detrended_changes',
 ):
@@ -2881,6 +2919,7 @@ def detrended_changes(
 
     Arguments:
         hist_dat: Data containing the historical dataset to compare to.
+        lsm: Land sea mask to use.
         annual_detrended_dir: The directory containing files output by
                               calc_detrended_annual().
         cache_dir: Directory to cache changes in.
@@ -2899,6 +2938,15 @@ def detrended_changes(
                 'detrended_(.*)_common_grid.nc',
                 os.path.basename(file),
             ).group(1)
+
+            if lsm is not None:
+                detrended = detrended.where(lsm == 1)
+
+            # Normalise by same factor as hist_dat.
+            detrended['annual_hail_days'] = detrended.annual_hail_days / hist_dat.model_proxy_max_annual_hail_days * 100
+            detrended = detrended.load()
+
+            detrended = detrended
 
             # Collect historic and 3D detrended results to compare.
             hist = hist_dat.sel(
