@@ -1005,7 +1005,7 @@ def ttest(dat, variables, fut_epoch, hist_epoch='historical', sig_level=0.05):
     Returns: the t test statistic and the significance result.
 
     """
-    dat = dat.chunk({'epoch': 1, 'year_num': -1, 'proxy': -1, 'lat': 15, 'lon': 15})
+    dat = dat.chunk(-1).chunk({'epoch': 1, 'lat': 15, 'lon': 15})
 
     res = []
     for variable in variables:
@@ -2384,12 +2384,13 @@ def plot_crop_lines(
         }
 
     line_dat = dat.monthly_hail_days.chunk(
-        {'model': -1, 'epoch': -1, 'year_num': -1, 'proxy': -1, 'month': -1},
+        {'model': 1, 'epoch': -1, 'year_num': -1, 'proxy': -1, 'month': -1,
+        'lat': 10, 'lon': 10},
     ).sel(
         lat=slice(lat - average_buffer, lat + average_buffer),
         lon=slice(lon - average_buffer, lon + average_buffer),
         epoch=['historical', epoch],
-    )
+    ).load()
     subset_dat = xarray.Dataset(
         {
             'hpp': diffs.crop_hail_prone_proportion,
@@ -2401,21 +2402,23 @@ def plot_crop_lines(
         lat=slice(lat - subset_buffer, lat + subset_buffer),
         lon=slice(lon - subset_buffer, lon + subset_buffer),
         epoch=epoch,
-    )
+    ).load()
     crop_dat = (
         dat.crop_hail_prone_days.chunk(
             {
-                'model': -1,
+                'model': 1,
                 'epoch': -1,
                 'year_num': -1,
                 'crop': 1,
                 'proxy': -1,
                 'month': -1,
+                'lat': 10,
+                'lon': 10,
             },
         )
         .sel(lat=lat, lon=lon, method='nearest')
         .sel(crop=crops, epoch=['historical', epoch])
-    )
+    ).load()
 
     line_dat = line_dat.mean(['year_num', 'lat', 'lon']).load()
     crop_dat = crop_dat.mean(['year_num', 'model', 'proxy']).load()
@@ -2461,7 +2464,7 @@ def plot_crop_lines(
     months_ax.tick_params(axis='y', right=False)
 
     # Bottom rows: lines showing monthly changes in hail-prone days.
-    line_ax.set_ylabel('$\Delta$ Hail-prone days')
+    line_ax.set_ylabel('$\Delta$ normalised hail-prone days')
     line_ax.set_xlabel('Month')
     line_ax.spines[['right', 'top']].set_visible(False)
     line_ax.axhline(y=0, color='black')
