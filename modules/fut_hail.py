@@ -1590,9 +1590,10 @@ def read_processed_data(
         'lon',
     )
 
-    # Normalise annual hail days by maximum per model-proxy - for historical epoch only (in annual_hail_days_historical) and across all epochs (in annual_hail_days).
-    dat['model_proxy_max_annual_hail_days'] = dat.annual_hail_days.max(['epoch', 'lat', 'lon']).load()
-    dat['model_proxy_max_annual_hail_days_historical'] = (dat.annual_hail_days.sel(epoch='historical').max(['lat', 'lon'])).load()
+    # Normalise annual hail days by maximum per model-proxy - for historical epoch only (in annual_hail_days_historical) and 
+    # across all epochs (in annual_hail_days).
+    dat['model_proxy_max_annual_hail_days'] = dat.annual_hail_days.max(['epoch', 'lat', 'lon', 'year_num']).load()
+    dat['model_proxy_max_annual_hail_days_historical'] = (dat.annual_hail_days.sel(epoch='historical').max(['lat', 'lon', 'year_num'])).load()
     dat['annual_hail_days_historical'] = dat.annual_hail_days / dat.model_proxy_max_annual_hail_days_historical * 100
     dat['annual_hail_days'] = dat.annual_hail_days / dat.model_proxy_max_annual_hail_days * 100
 
@@ -1601,13 +1602,16 @@ def read_processed_data(
     return dat, lsm
 
 
-def era5_climatology_calc(era5, proxy_vars=proxies):
+def era5_climatology_calc(era5, landmask=None, proxy_vars=proxies, normalise_by=None):
     """Calculate era5 climatology information.
 
     Argumnets:
         era5: ERA5 data ready to use.
+        landmask: Landmask to apply.
         proxy_vars: Proxy variable names.
         proxy_names: variable: name dictionary giving proxy names.
+        normalise_by: Factor to normalise annual_hail_days by. If None, use max over all years.
+        rename: Rename any proxies?
 
     Returns: monthly and annual normalised hail proxy climatology.
 
@@ -1627,17 +1631,47 @@ def era5_climatology_calc(era5, proxy_vars=proxies):
     )
     with xarray.set_options(keep_attrs=True):
         days = daily.groupby('time.year').mean(keep_attrs=True) * 365
-        days = days.chunk(-1)
-    res = days.mean('year')
+        days = days.chunk({'year': 1})
 
+    # Calculate monthly amounts.
+    res = days
     months = daily.groupby('time.month').mean(keep_attrs=True)
     months['month_factor'] = ('month', [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31])
-
     for x in proxy_vars:
         res['monthly_' + x] = months[x] * months['month_factor']
 
+    # Reorganise so proxy is a dimension.
+    monthly = [x for x in res if 'monthly' in x]
+    prox = [x for x in res if x not in monthly]
+    prox = res[prox].rename({f: f[6:None] for f in prox}).to_dataarray(name='annual_hail_days', dim='proxy')
+    monthly = (
+        res[monthly]
+        .rename({f: f[14:None] for f in monthly})
+        .to_dataarray(
+            name='monthly_hail_days',
+            dim='proxy',
+        )
+    )
+    res = xarray.merge([prox, monthly])
+
     # Rename latitude/longitude for consistency with other data.
-    return res.rename({'latitude': 'lat', 'longitude': 'lon'})
+    res = res.rename({'latitude': 'lat', 'longitude': 'lon'})
+
+    if landmask is not None:
+        res = res.where(landmask == True)
+
+    # Calculate maximum annual hail days to use as normalisation factor.
+    res['proxy_max_annual_hail_days'] = res.annual_hail_days.max(['lat', 'lon', 'year']).load()
+    res['normalisation_factor'] = res.proxy_max_annual_hail_days if normalise_by is None else normalise_by
+    res['annual_hail_days_historical'] = res.annual_hail_days / res.normalisation_factor * 100
+    res = res.drop_vars('annual_hail_days')
+
+    # Calculate annual mean hail prone days.
+    res['annual_hail_days_historical'] = res.annual_hail_days_historical.mean('year')
+    res.annual_hail_days_historical.attrs['note'] = 'Normalised by normalisation_factor.'
+    res.monthly_hail_days.attrs['note'] = 'Not normalised.'
+
+    return res
 
 
 def era5_climatology(
@@ -1646,7 +1680,6 @@ def era5_climatology(
     era5_proxy_file='era5_proxies.nc',
     cache_file='/g/data/up6/tr2908/future_hail_global/era5_climatology.nc',
     landmask=None,
-    rename=None,
     yrs=20,
     normalise_by=None,
 ):
@@ -1658,7 +1691,6 @@ def era5_climatology(
         era5_proxy_file: The proxy definition file.
         cache_file: A cache file to write/read to/from (or None for no cache).
         landmask: Optionally mask for land regions using landmask.lsm.
-        rename: Variables to rename.
         yrs: Years of data to expect.
         normalise_by: Use a different normalisation factor than the maximum over
         the read data?
@@ -1666,9 +1698,6 @@ def era5_climatology(
     Returns: Mean annual hail-prone days from ERA5.
 
     """
-    if rename is None:
-        rename = {}
-
     if cache_file is None or not os.path.exists(cache_file):
         dat = xarray.open_mfdataset(f'{era5_dir}/{era5_file_def}', parallel=True)
         prox = xarray.open_dataset(f'{era5_dir}/{era5_proxy_file}')
@@ -1677,7 +1706,7 @@ def era5_climatology(
         dat = xarray.merge([dat, prox])
         assert len(dat.time) == 365 * yrs * 4, 'Incorrect number of times in ERA5 historic period.'
 
-        dat = era5_climatology_calc(dat)
+        dat = era5_climatology_calc(era5=dat, landmask=landmask, normalise_by=normalise_by)
 
         if cache_file is not None:
             write_output(dat, attrs={}, file=cache_file)
@@ -1685,21 +1714,7 @@ def era5_climatology(
     if cache_file is not None:
         dat = xarray.open_dataset(cache_file)
 
-    if landmask is not None:
-        dat = dat.where(landmask == True).load()
-
-    # Reorganise so proxy is a dimension.
-    dat = dat.rename(rename)
-    monthly = [x for x in dat if 'monthly' in x]
-    prox = [x for x in dat if x not in monthly]
-    prox = dat[prox].rename({f: f[6:None] for f in prox}).to_dataarray(name='annual_hail_days', dim='proxy')
-    monthly = dat[monthly].rename({f: f[14:None] for f in monthly}).to_dataarray(name='monthly_hail_days', dim='proxy')
-    era5 = xarray.merge([prox, monthly])
-
-    era5['proxy_max_annual_hail_days'] = era5.annual_hail_days.max(['lat', 'lon']).load()
-    normalisation_factor = era5.proxy_max_annual_hail_days if normalise_by is None else normalise_by
-    era5['annual_hail_days_historical'] = era5.annual_hail_days / normalisation_factor * 100
-    return era5.drop_vars('annual_hail_days')
+    return dat
 
 
 def monthly_era5_anoms(
@@ -2383,14 +2398,17 @@ def plot_crop_lines(
             'Barley': '  Barley',
         }
 
-    line_dat = dat.monthly_hail_days.chunk(
-        {'model': 1, 'epoch': -1, 'year_num': -1, 'proxy': -1, 'month': -1,
-        'lat': 10, 'lon': 10},
-    ).sel(
-        lat=slice(lat - average_buffer, lat + average_buffer),
-        lon=slice(lon - average_buffer, lon + average_buffer),
-        epoch=['historical', epoch],
-    ).load()
+    line_dat = (
+        dat.monthly_hail_days.chunk(
+            {'model': 1, 'epoch': -1, 'year_num': -1, 'proxy': -1, 'month': -1, 'lat': 10, 'lon': 10},
+        )
+        .sel(
+            lat=slice(lat - average_buffer, lat + average_buffer),
+            lon=slice(lon - average_buffer, lon + average_buffer),
+            epoch=['historical', epoch],
+        )
+        .load()
+    )
     subset_dat = xarray.Dataset(
         {
             'hpp': diffs.crop_hail_prone_proportion,
