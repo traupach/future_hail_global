@@ -1746,6 +1746,7 @@ def monthly_era5_anoms(
         )
         year_dat = year_dat.sel(proxy=era5.proxy)
         year_anoms = (year_dat - era5).mean('proxy')
+        year_anoms = year_anoms.drop_dims(['year'])
         year_anoms = year_anoms.expand_dims({'year': [year]})
 
         anoms.append(year_anoms)
@@ -1923,7 +1924,6 @@ def plot_diffs_for_epoch(
         stippling=[d.sel(model=m, proxy=p)[stipple_var] for m, p in itertools.product(d.model.values, d.proxy.values)],
         title=[f'{m}, {proxy_dims[p]}' for m, p in itertools.product(d.model.values, d.proxy.values)],
         figsize=figsize,
-        disp_proj=ccrs.Robinson(),
         ncols=len(d.proxy),
         nrows=len(d.model),
         share_scale=True,
@@ -2239,7 +2239,6 @@ def plot_relative_changes_crops(
             share_scale=True,
             nrows=1,
             ncols=2,
-            disp_proj=ccrs.Robinson(),
             cmap=tri_cmap,
             divergent=True,
         )
@@ -3077,7 +3076,6 @@ def plot_drivers(
         ncols=len(drivers.proxy),
         share_scale=True,
         hspace=0.1,
-        disp_proj=ccrs.Robinson(),
         grid=False,
         row_labels=[ing_names[x] for x in drivers.detrended_ing.values] + refs_title,
         col_labels=[proxy_dims[f] for f in drivers.proxy.values],
