@@ -3,6 +3,9 @@
 import os
 import sys
 import warnings
+from pathlib import Path
+
+sys.path.append(f'{Path("~/git/plotmap").expanduser()!s}')
 
 import dask
 import fut_hail as fh

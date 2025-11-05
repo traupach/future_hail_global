@@ -697,6 +697,9 @@ def annual_stats(
         0.01: ['mixed_100_cin', 'mixed_100_lifted_index', 'lapse_rate_700_500'],
         0.99: ['mixed_100_cape', 'temp_500', 'melting_level', 'shear_magnitude'],
     },
+    mean_for_extreme_vars={  # noqa: B006
+        'mixed_100_cape': ['mixed_100_cin', 'shear_magnitude', 'melting_level'],
+    },
     chunks=None,
     time_chunk=500,
 ):
@@ -712,6 +715,9 @@ def annual_stats(
         mean_vars: Variables for which to calculate the mean per year.
         quantile_vars: {percentile: variables} dictionary showing which percentiles to
                        use for extreme values of each variable.
+        mean_for_extreme_vars: {variable: list} pairs. For each variable, calculate the mean of all
+                               variables in the list when the named variable is at extreme values 
+                               (over the 99th percentile).
         chunks: Chunks to use for quantile calculation.
         time_chunk: Chunk for times in daily timeseries.
 
@@ -754,7 +760,19 @@ def annual_stats(
                 extremes[v].attrs['description'] = f'Percentile {q}'
                 extremes = extremes.rename({v: f'extreme_{v}'})
 
-    return xarray.merge([days, means, extremes])
+    means_at_extremes = xarray.Dataset()
+    if mean_for_extreme_vars is not None:
+        for e in mean_for_extreme_vars:
+            ext_dat = d[e].chunk(-1)
+            extreme_threshold = ext_dat.quantile(0.99, keep_attrs=True).drop('quantile').load()
+
+            for v in mean_for_extreme_vars[e]:
+                means_at_extreme = d[v].where(ext_dat > extreme_threshold).groupby('time.year').mean(keep_attrs=True)
+                means_at_extremes = xarray.merge([means_at_extremes, means_at_extreme])
+                means_at_extremes[v].attrs['description'] = f'Mean {v} when {e} > 99th percentile'
+                means_at_extremes = means_at_extremes.rename({v: f'mean_{v}_at_extreme_{e}'})
+
+    return xarray.merge([days, means, extremes, means_at_extremes])
 
 
 def epoch_stats(
@@ -808,6 +826,8 @@ def epoch_stats(
             annual_stats(
                 d.where(d.time.dt.season == s),
                 factor=season_factors[s],
+                quantile_vars=None,
+                mean_for_extreme_vars=None,
             ).expand_dims({'season': [s]}),
         )
     seasonal = xarray.combine_nested(
@@ -2909,6 +2929,7 @@ def calc_detrended_annual(
                 factor=365,
                 mean_vars=None,
                 quantile_vars=None,
+                mean_for_extreme_vars=None,
                 day_vars=[x for x in list(d.variables) if 'proxy' in x],
             )
             annual_proxies = [x for x in list(annual.keys()) if ['proxy_' in x]]
