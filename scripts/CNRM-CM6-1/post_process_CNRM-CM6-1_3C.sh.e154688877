@@ -1,8 +1,0 @@
-stty: 'standard input': Inappropriate ioctl for device
-ERROR: Directory '/g/data/xp65/public/modules' not found
-/local/spool/pbs/mom_priv/jobs/154688877.gadi-pbs.SC: line 2: 1: command not found
-/local/spool/pbs/mom_priv/jobs/154688877.gadi-pbs.SC: line 2: 95: command not found
-/local/spool/pbs/mom_priv/jobs/154688877.gadi-pbs.SC: line 2: 0c#: command not found
-ERROR: Directory '/g/data3/xp65/public/modules' not found
-ERROR: Unable to locate a modulefile for 'conda/analysis3-25.11'
-/local/spool/pbs/mom_priv/jobs/154688877.gadi-pbs.SC: line 26: dask: command not found
