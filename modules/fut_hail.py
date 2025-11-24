@@ -688,6 +688,7 @@ def annual_stats(
         'mixed_100_cape',
         'mixed_100_cin',
         'mixed_100_lifted_index',
+        'mu_mixing_ratio',
         'lapse_rate_700_500',
         'temp_500',
         'melting_level',
@@ -882,6 +883,7 @@ def process_epoch(
         chunks={'time': 500},
         combine='nested',
         concat_dim='time',
+        engine="h5netcdf",
     ).sortby('time')
 
     # Open separately processed proxy data.
@@ -1133,8 +1135,12 @@ def select_models(
     chosen_models = counts.index.values
     subset = subset.reset_index().set_index(['source_id', 'member_id']).loc[chosen_models]
 
-    # Make the description string.
+    # Cast to fix string concat error.
     subset = subset.reset_index()
+    cols = ['project_id','institution_id','source_id','experiment_id','member_id']
+    subset[cols] = subset[cols].astype('string[python]')
+
+    # Make the description string.
     subset['desc'] = (
         'CMIP6.'
         + subset['project_id']

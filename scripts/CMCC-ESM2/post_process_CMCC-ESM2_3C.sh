@@ -6,7 +6,7 @@
 
 #PBS -q hugemem
 #PBS -P li18
-#PBS -l storage=gdata/hh5+gdata/up6+gdata/oi10+gdata/dk92+gdata/li18
+#PBS -l storage=gdata/xp65+gdata/up6+gdata/oi10+gdata/dk92+gdata/li18
 #PBS -l ncpus=48
 #PBS -l walltime=04:00:00
 #PBS -l mem=512GB
@@ -17,8 +17,8 @@
 #PBS -N job_post_process_CMIP
 #PBS -r y
 
-module use /g/data3/hh5/public/modules
-module load conda/analysis3-22.10
+module use /g/data3/xp65/public/modules
+module load conda/analysis3-25.11
 
 export PYTHONPATH=$PYTHONPATH:../../modules:../../../xarray_parcel/:../../../aus400_hail/:../../../warming_levels/
 
