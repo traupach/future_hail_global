@@ -1777,7 +1777,7 @@ def monthly_era5_anoms(
 
         anoms.append(year_anoms)
 
-    return xarray.merge(anoms).load()
+    return xarray.merge(anoms, join='outer', compat='no_conflicts').load()
 
 
 def plot_era5_anomalies(
