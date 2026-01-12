@@ -712,7 +712,7 @@ interests.
 
 THR designed the study, performed the analyses, wrote the manuscript, and
 created the figures. RP suggested the crop analysis. RP, CS, and SCS contributed
-to72 design of analyses, interpretation of results, and editing of the paper.
+to design of analyses, interpretation of results, and editing of the paper.
 
 \bibliography{library}
 
