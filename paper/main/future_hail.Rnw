@@ -670,7 +670,8 @@ temperature anomalies (Supplementary Figure \ref{SM-fig:epochs}).
 For each hail proxy ingredient, de-biased versions of the 3 \degr{} epoch were
 calculated using \texttt{python-cmethods} \cite{Schwertfeger_2024} using the
 quantile-mapping method with 100 quantiles and the historical period as the
-baseline. Annual hail-prone days in the detrended datasets were normalised by the same factor used in the non-detrended data.
+baseline. Annual hail-prone days in the de-biased datasets were normalised by
+the same factor used in the non-de-biased data.
 
 \backmatter
 
@@ -694,9 +695,12 @@ v1.0.2 of the code.
 
 \bmhead{Acknowledgements}
 
-This research was undertaken with the assistance of resources and services from
-the NCI, which is supported by the Australian Government. THR acknowledges
-financial support from QBE Insurance. We thank the anonymous reviewers for reviewing our manuscript.
+This research was supported by the Australian Government's National
+Collaborative Research Infrastructure Strategy (NCRIS), with access to
+computational resources provided by the National Computational Infrastructure
+(NCI) through the National Computational Merit Allocation Scheme and the UNSW
+HPC Scheme (DOI: 10.26190/PMN5-7J50). THR acknowledges financial support from
+QBE Insurance. We thank the anonymous reviewers for reviewing our manuscript.
 
 \bmhead{Competing interests}
 
@@ -708,7 +712,7 @@ interests.
 
 THR designed the study, performed the analyses, wrote the manuscript, and
 created the figures. RP suggested the crop analysis. RP, CS, and SCS contributed
-to design of analyses, interpretation of results, and editing of the paper.
+to72 design of analyses, interpretation of results, and editing of the paper.
 
 \bibliography{library}
 

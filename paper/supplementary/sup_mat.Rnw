@@ -541,13 +541,13 @@ print(tab, booktabs=TRUE, include.rownames=FALSE,
 
 \begin{figure*}[h]
     \centering
-    \includegraphics[width=0.68\textwidth]{../../results/supplementary/all_drivers}
+    \includegraphics[width=0.81\textwidth]{../../results/supplementary/all_drivers}
     \caption{\textbf{Drivers of changes across models.} Rows show de-biased
     ingredients: freezing level height (FLH), lapse rate (LR), melting level
-    height (MLH), mixed-layer CAPE (MLCAPE), mixed-layer CIN (MLCIN), deep
-    convective index (DCI), lifted index (LI), most-unstable CAPE (MUCAPE),
-    most-unstable CIN (MUCIN), most-unstable mixing ratio (MUMR), 0-6 km bulk
-    shear (S06), and temperature at 500 hPa (T500).}
+    height (MLH), mixed-layer CAPE (MLCAPE$_{100}$), mixed-layer CIN
+    (MLCIN$_{100}$), lifted index (LI), most-unstable CAPE (MUCAPE$_{250}$),
+    most-unstable mixing ratio (MUMR), 0-6 km bulk shear (S06), and temperature
+    at 500 hPa (T500).}
     \label{fig:drivers}
 \end{figure*}
 
@@ -722,9 +722,9 @@ where MLCAPE$_{100}$ (J kg$^{-1}$) is convective available potential energy
 calculated using a well-mixed parcel over the lowest 100 hPa of the atmosphere,
 $S_{06}$ (m s$^{-1}$) is 0-6 km bulk vertical wind shear, LR (K km$^{-1}$) is
 the lapse rate between 700 hPa and 500 hPa, LI$_{100}$ (K) is the lifted index
-defined using same parcel as that used by MLCAPE$_{100}$, $T_{500}$ (K) is the
-temperature at 500 hPa, and $\alpha$ and $\beta$ are parameters that vary with
-the melting level height such that
+\citep{Galway_BAMS_1956} defined using same parcel as that used by
+MLCAPE$_{100}$, $T_{500}$ (K) is the temperature at 500 hPa, and $\alpha$ and
+$\beta$ are parameters that vary with the melting level height such that
 
 \begin{equation}
 \alpha = 
@@ -746,12 +746,13 @@ and
     \label{eq:newbeta}
 \end{equation}
 
-\noindent where MLH (m) is melting level height above sea level. The idea behind
-the parameters $\alpha$ and $\beta$ is that there is a latitudinal dependence on
-the proportion of instability versus shear in environments in which hailstorms
-occur in Australia \citep{Raupach_MWR_2023}. Storms in the south, where shear is
-generally high and melting level height is low, are more easily discriminated by
-MLCAPE values, while storms in the tropics, where MLCAPE and melting level
+\noindent where MLH (m) is melting level height, where wet-bulb temperature is
+zero C, above sea level. The idea behind the parameters $\alpha$ and $\beta$ is
+that there is a latitudinal dependence on the proportion of instability versus
+shear in environments in which hailstorms occur in Australia
+\citep{Raupach_MWR_2023}. Storms in the south, where shear is generally high and
+melting level height is low, are more easily discriminated by MLCAPE$_{100}$
+values, while storms in the tropics, where MLCAPE$_{100}$ and melting level
 height are both generally high, are more easily discriminated by shear
 \citep{Raupach_MWR_2023}. The proxy uses MLH to adjust the values of $\alpha$
 and $\beta$ and therefore to adjust the discriminator between hail and no-hail
@@ -854,16 +855,15 @@ The SHIP proxy refers to the significant hail parameter
 SHIP$_i$, as
 
 \begin{equation}
-\textrm{SHIP}_i = \frac{\textrm{MUCAPE} \times \textrm{MR} \times \textrm{LR} \times -T_{500} \times S_{06}}{42000000},
+\textrm{SHIP}_i = \frac{\textrm{MUCAPE}_{250} \times \textrm{MR} \times \textrm{LR} \times -T_{500} \times S_{06}}{42000000},
 \label{eq:SHIP}
 \end{equation}
 
-where MUCAPE and MUCIN (both J kg$^{-1}$) are the convective available potential
-energy and convective inhibition for the ``most unstable'' parcel, defined as
-the parcel with the largest equivalent potential temperature over the lowest 250
-hPa of the atmosphere, MR (g kg$^{-1}$) is the mixing ratio for that parcel, and
-$T_{500}$ is the temperature at 500 hPa in \degr{}. SHIP$_i$ is only defined
-when 
+where MUCAPE$_{250}$ (J kg$^{-1}$) is the convective available potential energy
+for the ``most unstable'' parcel, defined as the parcel with the largest
+equivalent potential temperature over the lowest 250 hPa of the atmosphere, MR
+(g kg$^{-1}$) is the mixing ratio for that parcel, and $T_{500}$ is the
+temperature at 500 hPa in \degr{}. SHIP$_i$ is only defined when 
 
 \begin{eqnarray}
 7 \leq \textrm{S06} \leq 27 \textrm{ m s}^{-1}, & \textrm{and} \\
@@ -876,7 +876,7 @@ constraints, the following modifications are made to get the final value of
 SHIP:
 
 \begin{eqnarray}
-\textrm{SHIP} = \textrm{SHIP}_i \times \frac{\textrm{MUCAPE}}{1300}, & \textrm{if MUCAPE} < 1300 \textrm{ J kg}^{-1} \\ 
+\textrm{SHIP} = \textrm{SHIP}_i \times \frac{\textrm{MUCAPE}_{250}}{1300}, & \textrm{if MUCAPE}_{250} < 1300 \textrm{ J kg}^{-1} \\ 
 \textrm{SHIP} = \textrm{SHIP}_i \times \frac{\textrm{LR}}{5.8}, & \textrm{if LR} < 5.8 \textrm{ K km}^{-1} \\
 \textrm{SHIP} = \textrm{SHIP}_i \times \frac{\textrm{FLH}}{2400}, & \textrm{if FLH} < 2400 \textrm{ m AGL},
 \end{eqnarray}
