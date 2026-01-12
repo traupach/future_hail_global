@@ -691,7 +691,7 @@ calculated using code by T. H. Raupach
 \texttt{python-cmethods} by B. T. Schwertfeger
 (\url{https://doi.org/10.5281/zenodo.12168002}). All study code is archived
 (\url{https://doi.org/10.5281/zenodo.15099057}); this article used version
-v1.0.2 of the code.
+v1.0.3 of the code.
 
 \bmhead{Acknowledgements}
 
