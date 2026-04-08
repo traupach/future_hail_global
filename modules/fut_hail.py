@@ -1967,6 +1967,7 @@ def plot_diffs_for_epoch(
         divergent=True,
         scale_label=scale_label,
         file=file,
+        nan_colour='white',   
     )
 
 
