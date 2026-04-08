@@ -10,7 +10,7 @@ from glob import glob
 
 import cartopy.crs as ccrs
 import cftime
-import cmocean
+import colorcet as cc
 import dask
 import geopandas as gp
 import intake
@@ -1830,7 +1830,7 @@ def plot_era5_anomalies(
         figsize=figsize,
         hspace=0.22,
         wspace=0.01,
-        cmap=cmocean.cm.balance,
+        cmap=cc.cm['CET_D1'],
         divergent=True,
         share_scale=True,
         share_axes=True,
@@ -1963,7 +1963,7 @@ def plot_diffs_for_epoch(
         row_label_adjust=row_label_adjust,
         row_label_scale=row_label_scale,
         row_label_offset=row_label_offset,
-        cmap=cmocean.cm.balance,
+        cmap=cc.cm['CET_D1'],
         divergent=True,
         scale_label=scale_label,
         file=file,
@@ -2544,7 +2544,7 @@ def plot_crop_lines(
             stippling=subset_dat.sel(crop=crop).sig,
             ax=subset_axes[i],
             grid=True,
-            cmap=cmocean.cm.balance,
+            cmap=cc.cm['CET_D1'],
             divergent=True,
             cbar_label='$\Delta$ HPP [%]',
             title=crop,
@@ -3096,7 +3096,7 @@ def plot_drivers(
         ]
         + sums
         + refs,
-        cmap=cmocean.cm.balance,
+        cmap=cc.cm['CET_D1'],
         divergent=True,
         nrows=len(drivers.detrended_ing) + np.min([1, len(refs)]) + np.min([1, len(sums)]),
         ncols=len(drivers.proxy),
