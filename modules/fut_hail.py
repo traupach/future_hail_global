@@ -2803,7 +2803,7 @@ def plot_regional_crop_changes(
 
     """
     res = []
-    for region in lats.keys():  # noqa: SIM118
+    for region in lats:
         for e in diffs.epoch.values:
             d = diffs.crop_hail_prone_proportion.sel(
                 epoch=e,
@@ -2852,6 +2852,8 @@ def plot_regional_crop_changes(
     rename_leg = {'2C': '2 $^{\circ}$C', '3C': '3 $^{\circ}$C'}
 
     regions = sorted(np.unique(res.region.values))
+    if 'Global' in regions:
+        regions = ['Global'] + [x for x in regions if x != 'Global']
     print(regions)
     if 'global' in regions:
         regions = ['global'] + [x for x in regions if x != 'global']
@@ -2894,13 +2896,18 @@ def plot_regional_crop_changes(
             axs[i].set_xticks(np.arange(len(np.unique(d.crop))))
             axs[i].set_xticklabels(np.unique(d.crop), rotation=90)
 
-    # Do legend.
+    # Make legend.
     handles, labels = axs[i].get_legend_handles_labels()
     axs[i].legend(handles, [rename_leg[lab] for lab in labels], title='Epoch')
     sns.move_legend(axs[i], 'upper left', bbox_to_anchor=(0.85, -1.1))
 
     # Save plot.
     plt.savefig(fname=file, bbox_inches='tight')
+
+    # Return sample sizes as a table.
+    n = res.dropna().groupby(['region', 'crop', 'epoch']).size().reset_index(name='n')
+    n = n.pivot(index='crop', columns=['region', 'epoch'], values='n')
+    return n
 
 
 def calc_detrended_annual(
