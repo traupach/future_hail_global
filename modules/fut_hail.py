@@ -10,6 +10,7 @@ from glob import glob
 
 import cartopy.crs as ccrs
 import cftime
+import cmocean
 import dask
 import geopandas as gp
 import intake
@@ -64,27 +65,27 @@ proxy_names = {
 proxy_dims = {p[6:None]: proxy_names[p] for p in proxies}
 
 # Pretty colors for hail maps.
-cmap_colours = [
-    [0.9, 0.9, 0.9, 1],
-    [0.92941176, 0.97254902, 1.0, 1.0],
-    [0.85882353, 0.90980392, 0.98823529, 1.0],
-    [0.85490196, 0.90980392, 0.99215686, 1.0],
-    [0.57254902, 0.75686275, 0.98039216, 1.0],
-    [0.51372549, 0.66666667, 0.97254902, 1.0],
-    [0.4745098, 0.60784314, 0.96862745, 1.0],
-    [0.39607843, 0.54117647, 0.96862745, 1.0],
-    [0.29411765, 0.66666667, 0.21960784, 1.0],
-    [0.35686275, 0.76470588, 0.34509804, 1.0],
-    [0.74117647, 0.83921569, 0.5254902, 1.0],
-    [0.7372549, 0.96470588, 0.53333333, 1.0],
-    [0.99607843, 0.96862745, 0.32156863, 1.0],
-    [0.95294118, 0.69019608, 0.24313725, 1.0],
-    [0.91372549, 0.2, 0.14117647, 1.0],
-    [0.86666667, 0.18823529, 0.13333333, 1.0],
-    [0.63529412, 0.12941176, 0.08235294, 1.0],
-]
-hail_cmap = LinearSegmentedColormap.from_list('', cmap_colours)
-
+# cmap_colours = [
+#     [0.9, 0.9, 0.9, 1],
+#     [0.92941176, 0.97254902, 1.0, 1.0],
+#     [0.85882353, 0.90980392, 0.98823529, 1.0],
+#     [0.85490196, 0.90980392, 0.99215686, 1.0],
+#     [0.57254902, 0.75686275, 0.98039216, 1.0],
+#     [0.51372549, 0.66666667, 0.97254902, 1.0],
+#     [0.4745098, 0.60784314, 0.96862745, 1.0],
+#     [0.39607843, 0.54117647, 0.96862745, 1.0],
+#     [0.29411765, 0.66666667, 0.21960784, 1.0],
+#     [0.35686275, 0.76470588, 0.34509804, 1.0],
+#     [0.74117647, 0.83921569, 0.5254902, 1.0],
+#     [0.7372549, 0.96470588, 0.53333333, 1.0],
+#     [0.99607843, 0.96862745, 0.32156863, 1.0],
+#     [0.95294118, 0.69019608, 0.24313725, 1.0],
+#     [0.91372549, 0.2, 0.14117647, 1.0],
+#     [0.86666667, 0.18823529, 0.13333333, 1.0],
+#     [0.63529412, 0.12941176, 0.08235294, 1.0],
+# ]
+# hail_cmap = LinearSegmentedColormap.from_list('', cmap_colours)
+hail_cmap = 'rocket_r'
 
 @dask.delayed
 def open_CMIP_file_delayed(filename, chunks=None):
@@ -957,7 +958,7 @@ def make_landsea_mask(
     return lsm.land.load()
 
 
-def plot_map(dat, cmap=hail_cmap, num_contours=len(cmap_colours), **kwargs):
+def plot_map(dat, cmap=hail_cmap, num_contours=20, **kwargs):
     """Wrap plotmap."""
     plotmap.plot_map(dat, cmap=cmap, num_contours=num_contours, **kwargs)
 
@@ -1829,7 +1830,7 @@ def plot_era5_anomalies(
         figsize=figsize,
         hspace=0.22,
         wspace=0.01,
-        cmap='RdBu_r',
+        cmap=cmocean.cm.balance,
         divergent=True,
         share_scale=True,
         share_axes=True,
@@ -1955,14 +1956,14 @@ def plot_diffs_for_epoch(
         share_scale=True,
         share_axes=True,
         grid=False,
-        contour=True,
+        contour=False,
         col_labels=[proxy_dims[f] for f in list(d.proxy.values)],
         row_labels=list(d.model.values),
         row_label_rotation=0,
         row_label_adjust=row_label_adjust,
         row_label_scale=row_label_scale,
         row_label_offset=row_label_offset,
-        cmap='RdBu_r',
+        cmap=cmocean.cm.balance,
         divergent=True,
         scale_label=scale_label,
         file=file,
@@ -2543,7 +2544,7 @@ def plot_crop_lines(
             stippling=subset_dat.sel(crop=crop).sig,
             ax=subset_axes[i],
             grid=True,
-            cmap='RdBu_r',
+            cmap=cmocean.cm.balance,
             divergent=True,
             cbar_label='$\Delta$ HPP [%]',
             title=crop,
@@ -3095,7 +3096,7 @@ def plot_drivers(
         ]
         + sums
         + refs,
-        cmap='RdBu_r',
+        cmap=cmocean.cm.balance,
         divergent=True,
         nrows=len(drivers.detrended_ing) + np.min([1, len(refs)]) + np.min([1, len(sums)]),
         ncols=len(drivers.proxy),
