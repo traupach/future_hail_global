@@ -3085,7 +3085,7 @@ def plot_drivers(
     refs_title = ['Sum', refs_title] if refs_title is not None else []
     sums = []
     if refs != []:
-        sums = [drivers.sum('detrended_ing').sel(proxy=p) for p in drivers.proxy.values]
+        sums = [drivers.sum('detrended_ing', min_count=1).sel(proxy=p) for p in drivers.proxy.values]
 
     if days_threshold is not None:
         drivers = drivers.copy(deep=True)
