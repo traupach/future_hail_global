@@ -15,8 +15,8 @@ __pycache__/
 *.out
 paper/*/*.pdf
 *.synctex*
-paper/main/*.tex
-paper/supp_mat/*.tex
+paper/*/*.tex
+*.lof
 *.cls
 *.bst
 
