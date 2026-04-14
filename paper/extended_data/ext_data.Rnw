@@ -1,0 +1,147 @@
+\documentclass[pdflatex, sn-nature]{sn-jnl}
+
+\usepackage{xr}
+\usepackage{fullpage}
+\usepackage{amsmath}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{placeins}
+
+\usepackage[font=small]{caption}
+
+\externaldocument[main-]{../main/future_hail}
+
+%\urlstyle{same}
+\newcommand{\degr}{$^{\circ{}}$C}
+
+\renewcommand{\figurename}{Extended Data Figure}
+\renewcommand\refname{Extended Data}
+
+\begin{document}
+
+\title{Shifting hail hazard under global warming and effects on crop hail exposure: extended data}
+
+\author*[1,2,3,4]{\fnm{Timothy H.} \sur{Raupach}}\email{timothy.h.raupach@gmail.com}
+\author[5,6]{\fnm{Raphael} \sur{Portmann}}
+\author[7]{\fnm{Christian} \sur{Siderius}}
+\author[2,3,4]{\fnm{Steven C.} \sur{Sherwood}}
+
+\affil[1]{\orgdiv{Institute for Climate Risk and Response}, \orgname{UNSW Sydney}, \orgaddress{\street{Mathews Building Level 4}, \city{The University of New South Wales, Sydney}, \postcode{2051}, \state{NSW}, \country{Australia}}}
+\affil[2]{\orgdiv{Climate Change Research Centre}, \orgname{UNSW Sydney}, \orgaddress{\country{Australia}}}
+\affil[3]{\orgdiv{ARC Centre of Excellence for Climate Extremes}, \orgname{UNSW Sydney}, \orgaddress{\country{Australia}}}
+\affil[4]{\orgdiv{ARC Centre of Excellence for 21st Century Weather}, \orgname{UNSW Sydney}, \orgaddress{\country{Australia}}}
+\affil[5]{\orgdiv{Agroscope}, \orgname{Swiss Federal Office for Agriculture}, \orgaddress{\city{Zurich}, \country{Switzerland (prev. address)}}}
+\affil[6]{\orgname{Planval}, \orgaddress{\city{Bern}, \country{Switzerland}}}
+\affil[7]{\orgname{Uncharted Waters}, \orgaddress{\city{Sydney}, \country{Australia}}}
+
+\maketitle
+
+\begin{figure*}[p]
+    \centering
+    \includegraphics[width=\textwidth]{../../results/extended_data/historical_by_model}
+    \caption{\textbf{Mean annual hail-prone days in historical (1980-1999)
+    runs.} There is one row per model (each CMIP6 model and ERA5 reanalysis),
+    and one column per proxy. Inset numbers in square brackets show the normalisation factor by which each map was scaled, the maximum annual hail-prone days over the historical period.}
+    \label{fig:historical_annual_means}
+\end{figure*}
+
+\begin{figure*}[h]
+    \centering
+    \includegraphics[width=\textwidth]{../../results/extended_data/hail_diffs_3C}
+    \caption{\textbf{Differences in mean annual hail-prone days by model and
+    proxy for 3 \degr{} global warming.} Stippling shows regions for which the
+    difference between epochs was statistically significant ($p <$ 0.05 using
+    Welch's t-test).}
+    \label{fig:hail_diffs_3C}
+\end{figure*}
+
+\begin{figure*}[h]
+    \centering
+    \includegraphics[width=\textwidth]{../../results/extended_data/historical_crop_proportion_hail_prone}
+    \caption{\textbf{Multimodel, multi-proxy mean hail-prone proportions of
+    cropping seasons for the historical period.} Brackets in titles show overall
+    mean hail-prone proportion of cropping seasons by crop. Plots are subset to
+    remove areas with no crop data.}
+    \label{fig:historic_crop_proportions}
+\end{figure*}
+
+\begin{figure*}[h]
+    \centering
+    \includegraphics[width=\textwidth]{../../results/extended_data/crop_changes_africa}
+    \caption{\textbf{Regional, relative changes in hail-prone proportion of
+    cropping season}. Multimodel, multi-proxy mean change in hail-prone
+    proportions of cropping seasons for 3 \degr{} warming, for Africa, with
+    changes shown as percentages of the historical hail-prone proportion of
+    cropping season. Crops for which there were no significant changes recorded
+    are not shown. Stippling shows regions in which at least 50\% of the
+    model/proxy combinations agreed with the sign of the mean difference and
+    also showed significant differences in the mean ($p < 0.05$ on a t-test on
+    two related samples). The colour bar is truncated to the range of stippled
+    values and is non-linear with zero at the centre.}
+    \label{fig:crop_changes_africa}
+\end{figure*}
+
+\begin{figure*}[h]
+    \centering
+    \includegraphics[width=\textwidth]{../../results/extended_data/crop_changes_asia}
+    \caption{As for Extended Data Figure \ref{fig:crop_changes_africa} but for
+    Asia.}
+    \label{fig:crop_changes_asia}
+\end{figure*}
+
+\begin{figure*}[h]
+    \centering
+    \includegraphics[width=\textwidth]{../../results/extended_data/crop_changes_europe}
+    \caption{As for Extended Data Figure \ref{fig:crop_changes_africa} but for
+    Europe.}
+    \label{fig:crop_changes_europe}
+\end{figure*}
+
+\begin{figure*}[h]
+    \centering
+    \includegraphics[width=\textwidth]{../../results/extended_data/crop_changes_north_america}
+    \caption{As for Extended Data Figure \ref{fig:crop_changes_africa} but for
+    North America.}
+    \label{fig:crop_changes_north_america}
+\end{figure*}
+
+\begin{figure*}[h]
+    \centering
+    \includegraphics[width=\textwidth]{../../results/extended_data/crop_changes_oceania}
+    \caption{As for Extended Data Figure \ref{fig:crop_changes_africa} but for
+    Oceania.}
+    \label{fig:crop_changes_oceania}
+\end{figure*}
+
+\begin{figure*}[h]
+    \centering
+    \includegraphics[width=\textwidth]{../../results/extended_data/crop_changes_south_america}
+    \caption{As for Extended Data Figure \ref{fig:crop_changes_africa} but for
+    South America.}
+    \label{fig:crop_changes_south_america}
+\end{figure*}
+
+\FloatBarrier
+
+\begin{table}
+<<cron_n_table, echo=FALSE, results="asis">>=
+lines <- readLines("../../results/crop_n_table.tex")
+lines <- gsub('North America', 'N. America', lines)
+lines <- gsub('South America', 'S. America', lines)
+lines <- gsub('region', 'Region', lines)
+lines <- gsub('epoch', 'Epoch', lines)
+lines <- gsub('crop', 'Crop', lines)
+lines <- gsub('Groundnuts', 'G.nuts', lines)
+lines <- gsub('2C', '2\\\\degr{}', lines)
+lines <- gsub('3C', '3\\\\degr{}', lines)
+lines <- gsub(' / ', '/', lines)
+cat(lines, sep = '\n')
+@
+\caption{Numbers of samples (grid points with significant changes) used to
+generate each box plot in Figure \ref{main-fig:crop_changes}. ``N. America''
+stands for North America, ``S. America'' for South America, and ``G.nuts'' for
+groundnuts.}
+\label{tab:bar_ns}
+\end{table}
+
+\end{document}
