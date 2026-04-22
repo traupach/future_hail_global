@@ -1789,7 +1789,7 @@ def plot_era5_anomalies(
     figsize=(12, 9),
     ncols=3,
     nrows=4,
-    scale_label='Hail-prone day anomaly compared to 1980-1999 climatology',
+    scale_label='Norm. hail-prone day anomaly compared to 1980-1999 climatology',
     **kwargs,
 ):
     """Plot maps of monthly ERA5 hail proxy anomalies over a selected region.
@@ -2947,7 +2947,7 @@ def calc_detrended_annual(
                 mean_for_extreme_vars=None,
                 day_vars=[x for x in list(d.variables) if 'proxy' in x],
             )
-            annual_proxies = [x for x in list(annual.keys()) if ['proxy_' in x]]
+            annual_proxies = [x for x in list(annual.keys()) if 'proxy_' in x]
 
             # Re-arrange the data so that the annual hail days are organised with
             # proxy as a dimension.
