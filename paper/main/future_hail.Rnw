@@ -530,23 +530,229 @@ authors declare no other competing financial or non-financial interests.
 \listoffigures
 
 \bmhead{References}
-\bibliography{library}
+%\bibliography{library}
 
-% \begingroup
-% \renewcommand{\refname}{\vspace{-0.5\baselineskip}}
-% \begin{thebibliography}{10}
-% \expandafter\ifx\csname url\endcsname\relax
-%   \def\url#1{\burl{#1}}\fi
-% \expandafter\ifx\csname urlprefix\endcsname\relax\def\urlprefix{URL }\fi
-% \providecommand{\bibinfo}[2]{#2}
-% \providecommand{\eprint}[2][]{\url{#2}}
-% \providecommand{\doi}[1]{\url{https://doi.org/#1}}
-% \bibcommenthead
+\begingroup
+\renewcommand{\refname}{\vspace{-0.5\baselineskip}}
+\begin{thebibliography}{10}
+\expandafter\ifx\csname url\endcsname\relax
+  \def\url#1{\burl{#1}}\fi
+\expandafter\ifx\csname urlprefix\endcsname\relax\def\urlprefix{URL }\fi
+\providecommand{\bibinfo}[2]{#2}
+\providecommand{\eprint}[2][]{\url{#2}}
+\providecommand{\doi}[1]{\url{https://doi.org/#1}}
+\bibcommenthead
 
-% %bibitems
+\bibitem{Raupach_NREE_2021}
+\bibinfo{author}{Raupach, T.~H.} \emph{et~al.}
+\newblock \bibinfo{title}{The effects of climate change on hailstorms}.
+\newblock \emph{\bibinfo{journal}{Nat. Rev. Earth Environ.}} \textbf{\bibinfo{volume}{2}}, \bibinfo{pages}{213--226} (\bibinfo{year}{2021}).
 
-% \end{thebibliography}
-% \endgroup
+\bibitem{Bang_JAMC_2019}
+\bibinfo{author}{Bang, S.~D.} \& \bibinfo{author}{Cecil, D.~J.}
+\newblock \bibinfo{title}{Constructing a multifrequency passive microwave hail retrieval and climatology in the {GPM} domain}.
+\newblock \emph{\bibinfo{journal}{J. Appl. Meteorol.}} \textbf{\bibinfo{volume}{58}}, \bibinfo{pages}{1889--1904} (\bibinfo{year}{2019}).
+
+\bibitem{Prein_WCE_2018}
+\bibinfo{author}{Prein, A.~F.} \& \bibinfo{author}{Holland, G.~J.}
+\newblock \bibinfo{title}{Global estimates of damaging hail hazard}.
+\newblock \emph{\bibinfo{journal}{Weather Clim. Extremes}} \textbf{\bibinfo{volume}{22}}, \bibinfo{pages}{10--23} (\bibinfo{year}{2018}).
+
+\bibitem{Eyring_GMD_2016}
+\bibinfo{author}{Eyring, V.} \emph{et~al.}
+\newblock \bibinfo{title}{Overview of the {Coupled Model Intercomparison Project Phase 6 (CMIP6}) experimental design and organization}.
+\newblock \emph{\bibinfo{journal}{Geosci. Model Dev.}} \textbf{\bibinfo{volume}{9}}, \bibinfo{pages}{1937--1958} (\bibinfo{year}{2016}).
+
+\bibitem{Knight_2001}
+\bibinfo{author}{Knight, C.~A.} \& \bibinfo{author}{Knight, N.~C.}
+\newblock \bibinfo{title}{ in \textit{Hailstorms}} (ed.\bibinfo{editor}{Doswell, C.~A.}) \emph{\bibinfo{booktitle}{Severe Convective Storms}} \bibinfo{pages}{223--254} (\bibinfo{publisher}{American Meteorological Society}, \bibinfo{address}{Boston, MA}, \bibinfo{year}{2001}).
+
+\bibitem{Brooks_AR_2003}
+\bibinfo{author}{Brooks, H.~E.}, \bibinfo{author}{Lee, J.~W.} \& \bibinfo{author}{Craven, J.~P.}
+\newblock \bibinfo{title}{The spatial distribution of severe thunderstorm and tornado environments from global reanalysis data}.
+\newblock \emph{\bibinfo{journal}{Atmos. Res.}} \textbf{\bibinfo{volume}{67-68}}, \bibinfo{pages}{73--94} (\bibinfo{year}{2003}).
+\newblock \bibinfo{note}{European Conference on Severe Storms 2002}.
+
+\bibitem{Brooks_AR_2013}
+\bibinfo{author}{Brooks, H.~E.}
+\newblock \bibinfo{title}{Severe thunderstorms and climate change}.
+\newblock \emph{\bibinfo{journal}{Atmos. Res.}} \textbf{\bibinfo{volume}{123}}, \bibinfo{pages}{129--138} (\bibinfo{year}{2013}).
+
+\bibitem{Lin_JAS_2022}
+\bibinfo{author}{Lin, Y.} \& \bibinfo{author}{Kumjian, M.~R.}
+\newblock \bibinfo{title}{Influences of {CAPE} on hail production in simulated supercell storms}.
+\newblock \emph{\bibinfo{journal}{J. Atmos. Sci.}} \textbf{\bibinfo{volume}{79}}, \bibinfo{pages}{179--204} (\bibinfo{year}{2022}).
+
+\bibitem{Fischer_JAS_2025}
+\bibinfo{author}{Fischer, J.}, \bibinfo{author}{Kunz, M.}, \bibinfo{author}{Lombardo, K.} \& \bibinfo{author}{Kumjian, M.~R.}
+\newblock \bibinfo{title}{Hail trajectories in a wide spectrum of supercell-like updrafts}.
+\newblock \emph{\bibinfo{journal}{J. Atmos. Sci.}} \textbf{\bibinfo{volume}{82}}, \bibinfo{pages}{1403 -- 1422} (\bibinfo{year}{2025}).
+
+\bibitem{Raupach_MWR_2023}
+\bibinfo{author}{Raupach, T.~H.}, \bibinfo{author}{Soderholm, J.}, \bibinfo{author}{Protat, A.} \& \bibinfo{author}{Sherwood, S.~C.}
+\newblock \bibinfo{title}{An improved instability–shear hail proxy for {A}ustralia}.
+\newblock \emph{\bibinfo{journal}{Mon. Weather Rev.}} \textbf{\bibinfo{volume}{151}}, \bibinfo{pages}{545--567} (\bibinfo{year}{2023}).
+
+\bibitem{Tippett_CCCR_2015}
+\bibinfo{author}{Tippett, M.~K.}, \bibinfo{author}{Allen, J.~T.}, \bibinfo{author}{Gensini, V.~A.} \& \bibinfo{author}{Brooks, H.~E.}
+\newblock \bibinfo{title}{Climate and hazardous convective weather}.
+\newblock \emph{\bibinfo{journal}{Curr. Clim. Change Rep.}} \textbf{\bibinfo{volume}{1}}, \bibinfo{pages}{60--73} (\bibinfo{year}{2015}).
+
+\bibitem{Seeley_GRL_2015}
+\bibinfo{author}{Seeley, J.~T.} \& \bibinfo{author}{Romps, D.~M.}
+\newblock \bibinfo{title}{Why does tropical convective available potential energy ({CAPE}) increase with warming?}
+\newblock \emph{\bibinfo{journal}{Geophys. Res. Lett.}} \textbf{\bibinfo{volume}{42}}, \bibinfo{pages}{10,429--10,437} (\bibinfo{year}{2015}).
+
+\bibitem{Prein_NCC_2020}
+\bibinfo{author}{Prein, A.~F.} \& \bibinfo{author}{Heymsfield, A.~J.}
+\newblock \bibinfo{title}{Increased melting level height impacts surface precipitation phase and intensity}.
+\newblock \emph{\bibinfo{journal}{Nat. Clim. Change}} \textbf{\bibinfo{volume}{10}}, \bibinfo{pages}{771--776} (\bibinfo{year}{2020}).
+
+\bibitem{Mahoney_NCC_2012}
+\bibinfo{author}{Mahoney, K.}, \bibinfo{author}{Alexander, M.~A.}, \bibinfo{author}{Thompson, G.}, \bibinfo{author}{Barsugli, J.~J.} \& \bibinfo{author}{Scott, J.~D.}
+\newblock \bibinfo{title}{Changes in hail and flood risk in high-resolution simulations over {C}olorado's mountains}.
+\newblock \emph{\bibinfo{journal}{Nat. Clim. Change}} \textbf{\bibinfo{volume}{2}}, \bibinfo{pages}{125--131} (\bibinfo{year}{2012}).
+
+\bibitem{Trapp_GRL_2009}
+\bibinfo{author}{Trapp, R.~J.}, \bibinfo{author}{Diffenbaugh, N.~S.} \& \bibinfo{author}{Gluhovsky, A.}
+\newblock \bibinfo{title}{Transient response of severe thunderstorm forcing to elevated greenhouse gas concentrations}.
+\newblock \emph{\bibinfo{journal}{Geophys. Res. Lett.}} \textbf{\bibinfo{volume}{36}}, \bibinfo{pages}{L01703} (\bibinfo{year}{2009}).
+
+\bibitem{Radler_npjCAS_2019}
+\bibinfo{author}{R\"adler, A.~T.}, \bibinfo{author}{Groenemeijer, P.~H.}, \bibinfo{author}{Faust, E.}, \bibinfo{author}{Sausen, R.} \& \bibinfo{author}{P\'u\v{c}ik, T.}
+\newblock \bibinfo{title}{Frequency of severe thunderstorms across {E}urope expected to increase in the 21st century due to rising instability}.
+\newblock \emph{\bibinfo{journal}{npj Clim. Atmos. Sci.}} \textbf{\bibinfo{volume}{2}}, \bibinfo{pages}{30} (\bibinfo{year}{2019}).
+
+\bibitem{Battaglia_CS_2019}
+\bibinfo{author}{Battaglia, M.}, \bibinfo{author}{Lee, C.}, \bibinfo{author}{Thomason, W.}, \bibinfo{author}{Fike, J.} \& \bibinfo{author}{Sadeghpour, A.}
+\newblock \bibinfo{title}{Hail damage impacts on corn productivity: a review}.
+\newblock \emph{\bibinfo{journal}{Crop Sci.}} \textbf{\bibinfo{volume}{59}}, \bibinfo{pages}{1--14} (\bibinfo{year}{2019}).
+
+\bibitem{Dhillon_CJPS_2021}
+\bibinfo{author}{Dhillon, G.~S.} \emph{et~al.}
+\newblock \bibinfo{title}{Effects of simulated hail damage and foliar-applied recovery treatments on growth and grain yield of wheat, field pea, and dry bean crops}.
+\newblock \emph{\bibinfo{journal}{Can. J. Plant Sci.}} \textbf{\bibinfo{volume}{101}}, \bibinfo{pages}{758--769} (\bibinfo{year}{2021}).
+
+\bibitem{Changnon_JAMC_1971}
+\bibinfo{author}{Changnon, S.~A.}
+\newblock \bibinfo{title}{Hailfall characteristics related to crop damage}.
+\newblock \emph{\bibinfo{journal}{J. Appl. Meteorol.}} \textbf{\bibinfo{volume}{10}}, \bibinfo{pages}{270 -- 274} (\bibinfo{year}{1971}).
+
+\bibitem{Yue_PLOSONE_2019}
+\bibinfo{author}{Yue, Y.}, \bibinfo{author}{Zhou, L.}, \bibinfo{author}{Zhu, A.-x.} \& \bibinfo{author}{Ye, X.}
+\newblock \bibinfo{title}{Vulnerability of cotton subjected to hail damage}.
+\newblock \emph{\bibinfo{journal}{PLOS ONE}} \textbf{\bibinfo{volume}{14}}, \bibinfo{pages}{1--21} (\bibinfo{year}{2019}).
+
+\bibitem{Morgan_JAMC_1976}
+\bibinfo{author}{Morgan, G.~M.} \& \bibinfo{author}{Towery, N.~G.}
+\newblock \bibinfo{title}{On the role of strong winds in damage to crops by hail and its estimation with a simple instrument}.
+\newblock \emph{\bibinfo{journal}{J. Appl. Meteorol.}} \textbf{\bibinfo{volume}{15}}, \bibinfo{pages}{891 -- 898} (\bibinfo{year}{1976}).
+
+\bibitem{Sanchez_JAMC_1996}
+\bibinfo{author}{S\'anchez, J.~L.} \emph{et~al.}
+\newblock \bibinfo{title}{Crop damage: the hail size factor}.
+\newblock \emph{\bibinfo{journal}{J. Appl. Meteorol.}} \textbf{\bibinfo{volume}{35}}, \bibinfo{pages}{1535 -- 1541} (\bibinfo{year}{1996}).
+
+\bibitem{Dessens_GRL_1995}
+\bibinfo{author}{Dessens, J.}
+\newblock \bibinfo{title}{Severe convective weather in the context of a nighttime global warming}.
+\newblock \emph{\bibinfo{journal}{Geophys. Res. Lett.}} \textbf{\bibinfo{volume}{22}}, \bibinfo{pages}{1241--1244} (\bibinfo{year}{1995}).
+
+\bibitem{Botzen_REE_2010}
+\bibinfo{author}{Botzen, W. J.~W.}, \bibinfo{author}{Bouwer, L.~M.} \& \bibinfo{author}{Bergh, J. C. J. M. v.~d.}
+\newblock \bibinfo{title}{Climate change and hailstorm damage: empirical evidence and implications for agriculture and insurance}.
+\newblock \emph{\bibinfo{journal}{Resour. Energy Econ.}} \textbf{\bibinfo{volume}{32}}, \bibinfo{pages}{341--362} (\bibinfo{year}{2010}).
+
+\bibitem{Portmann_MZ_2025}
+\bibinfo{author}{Portmann, R.} \emph{et~al.}
+\newblock \bibinfo{title}{Earlier harvest but more hail -- hail risk to winter wheat in {S}witzerland since 1972}.
+\newblock \emph{\bibinfo{journal}{Meteorol. Z.}} \bibinfo{pages}{--} (\bibinfo{year}{2026}).
+
+\bibitem{Lepore_EF_2021}
+\bibinfo{author}{Lepore, C.}, \bibinfo{author}{Abernathey, R.}, \bibinfo{author}{Henderson, N.}, \bibinfo{author}{Allen, J.~T.} \& \bibinfo{author}{Tippett, M.~K.}
+\newblock \bibinfo{title}{Future global convective environments in {CMIP6} models}.
+\newblock \emph{\bibinfo{journal}{Earth's Future}} \textbf{\bibinfo{volume}{9}}, \bibinfo{pages}{e2021EF002277} (\bibinfo{year}{2021}).
+
+\bibitem{SPC_SHIP}
+\bibinfo{author}{{NOAA SPC}}.
+\newblock \bibinfo{title}{Significant hail parameter}.
+\newblock \bibinfo{howpublished}{\url{https://www.spc.noaa.gov/exper/mesoanalysis/help/help_sigh.html}} (\bibinfo{year}{2022}).
+\newblock \bibinfo{note}{National Oceanographic and Atmospheric Administration National Weather Service Storm Prediction Center, accessed 21 June 2022}.
+
+\bibitem{Eccel_IJC_2012}
+\bibinfo{author}{Eccel, E.}, \bibinfo{author}{Cau, P.}, \bibinfo{author}{Riemann-Campe, K.} \& \bibinfo{author}{Biasioli, F.}
+\newblock \bibinfo{title}{Quantitative hail monitoring in an {A}lpine area: 35-year climatology and links with atmospheric variables}.
+\newblock \emph{\bibinfo{journal}{Int. J. Climatol.}} \textbf{\bibinfo{volume}{3}}, \bibinfo{pages}{503--517} (\bibinfo{year}{2012}).
+
+\bibitem{Portmann_GBC_2010}
+\bibinfo{author}{Portmann, F.~T.}, \bibinfo{author}{Siebert, S.} \& \bibinfo{author}{D\"oll, P.}
+\newblock \bibinfo{title}{{MIRCA2000—G}lobal monthly irrigated and rainfed crop areas around the year 2000: a new high-resolution data set for agricultural and hydrological modeling}.
+\newblock \emph{\bibinfo{journal}{Global Biogeochem. Cy.}} \textbf{\bibinfo{volume}{24}} (\bibinfo{year}{2010}).
+
+\bibitem{Yin_GRL_2005}
+\bibinfo{author}{Yin, J.~H.}
+\newblock \bibinfo{title}{A consistent poleward shift of the storm tracks in simulations of 21st century climate}.
+\newblock \emph{\bibinfo{journal}{Geophys. Res. Lett.}} \textbf{\bibinfo{volume}{32}} (\bibinfo{year}{2005}).
+
+\bibitem{Tamarin_GRL_2017}
+\bibinfo{author}{Tamarin, T.} \& \bibinfo{author}{Kaspi, Y.}
+\newblock \bibinfo{title}{The poleward shift of storm tracks under global warming: a {L}agrangian perspective}.
+\newblock \emph{\bibinfo{journal}{Geophys. Res. Lett.}} \textbf{\bibinfo{volume}{44}}, \bibinfo{pages}{10,666--10,674} (\bibinfo{year}{2017}).
+
+\bibitem{Heffernan_Nat_2016}
+\bibinfo{author}{Heffernan, O.}
+\newblock \bibinfo{title}{The mystery of the expanding tropics}.
+\newblock \emph{\bibinfo{journal}{Nature}} \textbf{\bibinfo{volume}{530}}, \bibinfo{pages}{20--22} (\bibinfo{year}{2016}).
+
+\bibitem{IPCC_2021_WGI_Ch_11}
+\bibinfo{author}{Seneviratne, S.} \emph{et~al.}
+\newblock \bibinfo{title}{ in \textit{Weather and climate extreme events in a changing climate}} (eds \bibinfo{editor}{Masson-Delmotte, V.} \emph{et~al.}) \emph{\bibinfo{booktitle}{Climate Change 2021: The Physical Science Basis. Contribution of Working Group I to the Sixth Assessment Report of the Intergovernmental Panel on Climate Change}} \bibinfo{type}{book section}~\bibinfo{chapter}{11}, \bibinfo{pages}{1513--1765} (\bibinfo{publisher}{Cambridge University Press}, \bibinfo{address}{Cambridge, UK and New York, NY, USA}, \bibinfo{year}{2021}).
+\newblock \urlprefix\url{https://www.ipcc.ch/report/ar6/wg1/downloads/report/IPCC_AR6_WGI_Chapter11.pdf}.
+
+\bibitem{Taszarek_npj_2021}
+\bibinfo{author}{Taszarek, M.}, \bibinfo{author}{Allen, J.~T.}, \bibinfo{author}{Marchio, M.} \& \bibinfo{author}{Brooks, H.~E.}
+\newblock \bibinfo{title}{Global climatology and trends in convective environments from {ERA5} and rawinsonde data}.
+\newblock \emph{\bibinfo{journal}{npj Clim. Atmos. Sci.}} \textbf{\bibinfo{volume}{4}}, \bibinfo{pages}{35} (\bibinfo{year}{2021}).
+
+\bibitem{Raupach_npjCAS_2023}
+\bibinfo{author}{Raupach, T.~H.}, \bibinfo{author}{Soderholm, J.~S.}, \bibinfo{author}{Warren, R.~A.} \& \bibinfo{author}{Sherwood, S.~C.}
+\newblock \bibinfo{title}{Changes in hail hazard across {A}ustralia: 1979-2021}.
+\newblock \emph{\bibinfo{journal}{npj Clim. Atmos. Sci.}} \textbf{\bibinfo{volume}{6}}, \bibinfo{pages}{143} (\bibinfo{year}{2023}).
+
+\bibitem{Sari_JGRA_2025}
+\bibinfo{author}{Sari, F.~P.} \& \bibinfo{author}{Lasher-Trapp, S.}
+\newblock \bibinfo{title}{Hailstorm events over a maritime tropical region: storm environments and characteristics}.
+\newblock \emph{\bibinfo{journal}{J. Geophys. Res.-Atmos.}} \textbf{\bibinfo{volume}{130}}, \bibinfo{pages}{e2024JD042718} (\bibinfo{year}{2025}).
+\newblock \bibinfo{note}{E2024JD042718 2024JD042718}.
+
+\bibitem{Jagermeyr_NF_2021}
+\bibinfo{author}{J\"agermeyr, J.} \emph{et~al.}
+\newblock \bibinfo{title}{Climate impacts on global agriculture emerge earlier in new generation of climate and crop models}.
+\newblock \emph{\bibinfo{journal}{Nat. Food}} \textbf{\bibinfo{volume}{2}}, \bibinfo{pages}{873--885} (\bibinfo{year}{2021}).
+
+\bibitem{Franke_GCB_2022}
+\bibinfo{author}{Franke, J.~A.} \emph{et~al.}
+\newblock \bibinfo{title}{Agricultural breadbaskets shift poleward given adaptive farmer behavior under climate change}.
+\newblock \emph{\bibinfo{journal}{Glob. Change Biol.}} \textbf{\bibinfo{volume}{28}}, \bibinfo{pages}{167--181} (\bibinfo{year}{2022}).
+
+\bibitem{Mallinson_JC_2024}
+\bibinfo{author}{Mallinson, H.}, \bibinfo{author}{Lasher-Trapp, S.}, \bibinfo{author}{Trapp, J.}, \bibinfo{author}{Woods, M.} \& \bibinfo{author}{Orendorf, S.}
+\newblock \bibinfo{title}{Hailfall in a possible future climate using a pseudo-global warming approach: hail characteristics and mesoscale influences}.
+\newblock \emph{\bibinfo{journal}{J. Climate}} \textbf{\bibinfo{volume}{37}}, \bibinfo{pages}{527 -- 549} (\bibinfo{year}{2024}).
+
+\bibitem{Gensini_npjCAS_2024}
+\bibinfo{author}{Gensini, V.~A.} \emph{et~al.}
+\newblock \bibinfo{title}{Hailstone size dichotomy in a warming climate}.
+\newblock \emph{\bibinfo{journal}{npj Clim. Atmos. Sci.}} \textbf{\bibinfo{volume}{7}}, \bibinfo{pages}{185} (\bibinfo{year}{2024}).
+
+\bibitem{Battaglioli_NG_2026}
+\bibinfo{author}{Battaglioli, F.}, \bibinfo{author}{Taszarek, M.}, \bibinfo{author}{Groenemeijer, P.}, \bibinfo{author}{P\'u\v{c}ik, T.} \& \bibinfo{author}{R\"adler, A.}
+\newblock \bibinfo{title}{Contrasting trends in very large hail events and related economic losses across the globe}.
+\newblock \emph{\bibinfo{journal}{Nature Geoscience}} \textbf{\bibinfo{volume}{19}}, \bibinfo{pages}{52--58} (\bibinfo{year}{2026}).
+\newblock \urlprefix\url{https://doi.org/10.1038/s41561-025-01868-0}.
+
+\end{thebibliography}
+\endgroup
 
 \section*{Methods}
 \label{sec:methods}
@@ -611,9 +817,24 @@ Material Section \ref{SM-sec:proxy-formulas}. Proxies results were masked to
 land areas in recognition that the proxies were trained on land-based reports
 and no surface-based climatologies are available for ocean areas. Proxy outputs
 (binary hail-prone or not-hail-prone) were collated into annual hail-prone days.
+
+\subsection*{Proxy normalisation}
+
 To give proxies equal weighting when calculating multimodel, multi-proxy means,
-annual hail-prone days were normalised per model and proxy (Supplementary
-Material Section \ref{SM-sec:proxy-normalisation}).
+annual hail-prone days were normalised per model and proxy. The three proxies
+produced binary outputs, classifying each day as hail prone or not hail prone.
+Annual hail-prone days were the sum of all hail-prone days per year per
+location. To account for differences between the proxies and between models, and
+to allow each proxy to have the same weight when calculating multimodel,
+multi-proxy means, annual hail-prone days (AHPD) were normalised per proxy and
+per model, such that
+
+\begin{equation}
+\textrm{AHPD}_{m,p,i,j,y} = \frac{\textrm{AHPD}_{m,p,i,j,y}}{\max\left([\textrm{AHPD}_{m,p,i,j,y}\;\forall\; i, j, y]\right)} \times 100,
+\end{equation}
+
+\noindent where $m$, $p$, $i$, $j$, $y$ are indices for model, proxy, longitude,
+latitude, and year, respectively.
 
 \subsection*{Per-degree framework}
 
@@ -662,11 +883,136 @@ used version v1.0.4 of the code.
 \begingroup
 \renewcommand{\refname}{\vspace{-0.5\baselineskip}}
 \begin{thebibliography}{10}
+\expandafter\ifx\csname url\endcsname\relax
+  \def\url#1{\burl{#1}}\fi
+\expandafter\ifx\csname urlprefix\endcsname\relax\def\urlprefix{URL }\fi
+\providecommand{\bibinfo}[2]{#2}
+\providecommand{\eprint}[2][]{\url{#2}}
+\providecommand{\doi}[1]{\url{https://doi.org/#1}}
+\bibcommenthead
 
-\setcounter{NAT@ctr}{62}
-\setcounter{enumiv}{62}
+\setcounter{NAT@ctr}{41}
+\setcounter{enumiv}{41}
 
-% bibitems
+\bibitem{CMCC-CM2-SR5_historical}
+\bibinfo{author}{Lovato, T.} \& \bibinfo{author}{Peano, D.}
+\newblock \bibinfo{title}{{CMCC CMCC-CM2-SR5 model output prepared for CMIP6 CMIP historical}} (\bibinfo{year}{2020}).
+\newblock \urlprefix\url{https://doi.org/10.22033/ESGF/CMIP6.3825}.
+
+\bibitem{CMCC-CM2-SR5_ssp585}
+\bibinfo{author}{Lovato, T.} \& \bibinfo{author}{Peano, D.}
+\newblock \bibinfo{title}{{CMCC CMCC-CM2-SR5 model output prepared for CMIP6 ScenarioMIP ssp585}} (\bibinfo{year}{2020}).
+\newblock \urlprefix\url{https://doi.org/10.22033/ESGF/CMIP6.3896}.
+
+\bibitem{CMCC-ESM2_historical}
+\bibinfo{author}{Lovato, T.}, \bibinfo{author}{Peano, D.} \& \bibinfo{author}{Butensch\"{o}n, M.}
+\newblock \bibinfo{title}{{CMCC CMCC-ESM2 model output prepared for CMIP6 CMIP historical}} (\bibinfo{year}{2021}).
+\newblock \urlprefix\url{https://doi.org/10.22033/ESGF/CMIP6.13195}.
+
+\bibitem{CMCC-ESM2_ssp585}
+\bibinfo{author}{Lovato, T.}, \bibinfo{author}{Peano, D.} \& \bibinfo{author}{Butensch\"{o}n, M.}
+\newblock \bibinfo{title}{{CMCC CMCC-ESM2 model output prepared for CMIP6 ScenarioMIP ssp585}} (\bibinfo{year}{2021}).
+\newblock \urlprefix\url{https://doi.org/10.22033/ESGF/CMIP6.13259}.
+
+\bibitem{CNRM-CM6-1_historical}
+\bibinfo{author}{Voldoire, A.}
+\newblock \bibinfo{title}{{CMIP6 simulations of the CNRM-CERFACS based on CNRM-CM6-1 model for CMIP experiment historical}} (\bibinfo{year}{2018}).
+\newblock \urlprefix\url{https://doi.org/10.22033/ESGF/CMIP6.4066}.
+
+\bibitem{CNRM-CM6-1_ssp585}
+\bibinfo{author}{Voldoire, A.}
+\newblock \bibinfo{title}{{CNRM-CERFACS CNRM-CM6-1 model output prepared for CMIP6 ScenarioMIP ssp585}} (\bibinfo{year}{2019}).
+\newblock \urlprefix\url{https://doi.org/10.22033/ESGF/CMIP6.4224}.
+
+\bibitem{EC-Earth3_historical}
+\bibinfo{author}{{EC-Earth Consortium (EC-Earth)}}.
+\newblock \bibinfo{title}{{EC-Earth-Consortium EC-Earth3 model output prepared for CMIP6 CMIP historical}} (\bibinfo{year}{2019}).
+\newblock \urlprefix\url{https://doi.org/10.22033/ESGF/CMIP6.4700}.
+
+\bibitem{EC-Earth3_ssp585}
+\bibinfo{author}{{EC-Earth Consortium (EC-Earth)}}.
+\newblock \bibinfo{title}{{EC-Earth-Consortium EC-Earth3 model output prepared for CMIP6 ScenarioMIP ssp585}} (\bibinfo{year}{2019}).
+\newblock \urlprefix\url{https://doi.org/10.22033/ESGF/CMIP6.4912}.
+
+\bibitem{NASA-GISS_historical}
+\bibinfo{author}{{NASA Goddard Institute for Space Studies (NASA/GISS)}}.
+\newblock \bibinfo{title}{{NASA-GISS GISS-E2.1G model output prepared for CMIP6 CMIP historical}} (\bibinfo{year}{2018}).
+\newblock \urlprefix\url{https://doi.org/10.22033/ESGF/CMIP6.7127}.
+
+\bibitem{NASA-GISS_ssp585}
+\bibinfo{author}{{NASA Goddard Institute for Space Studies (NASA/GISS)}}.
+\newblock \bibinfo{title}{{NASA-GISS GISS-E2.1G model output prepared for CMIP6 ScenarioMIP ssp585}} (\bibinfo{year}{2020}).
+\newblock \urlprefix\url{https://doi.org/10.22033/ESGF/CMIP6.7460}.
+
+\bibitem{MIROC_historical}
+\bibinfo{author}{Tatebe, H.} \& \bibinfo{author}{Watanabe, M.}
+\newblock \bibinfo{title}{{MIROC MIROC6 model output prepared for CMIP6 CMIP historical}} (\bibinfo{year}{2018}).
+\newblock \urlprefix\url{https://doi.org/10.22033/ESGF/CMIP6.5603}.
+
+\bibitem{MIROC_ssp585}
+\bibinfo{author}{Shiogama, H.}, \bibinfo{author}{Abe, M.} \& \bibinfo{author}{Tatebe, H.}
+\newblock \bibinfo{title}{{MIROC MIROC6 model output prepared for CMIP6 ScenarioMIP ssp585}} (\bibinfo{year}{2019}).
+\newblock \urlprefix\url{https://doi.org/10.22033/ESGF/CMIP6.5771}.
+
+\bibitem{MPI-ESM1-2-HR_historical}
+\bibinfo{author}{Jungclaus, J.} \emph{et~al.}
+\newblock \bibinfo{title}{{MPI-M MPI-ESM1.2-HR model output prepared for CMIP6 CMIP historical}} (\bibinfo{year}{2019}).
+\newblock \urlprefix\url{https://doi.org/10.22033/ESGF/CMIP6.6594}.
+
+\bibitem{MPI-ESM1-2-HR_ssp585}
+\bibinfo{author}{Schupfner, M.} \emph{et~al.}
+\newblock \bibinfo{title}{{DKRZ MPI-ESM1.2-HR model output prepared for CMIP6 ScenarioMIP ssp585}} (\bibinfo{year}{2019}).
+\newblock \urlprefix\url{https://doi.org/10.22033/ESGF/CMIP6.4403}.
+
+\bibitem{MRI-ESM2-0_historical}
+\bibinfo{author}{Yukimoto, S.} \emph{et~al.}
+\newblock \bibinfo{title}{{MRI MRI-ESM2.0 model output prepared for CMIP6 CMIP historical}} (\bibinfo{year}{2019}).
+\newblock \urlprefix\url{https://doi.org/10.22033/ESGF/CMIP6.6842}.
+
+\bibitem{MRI-ESM2-0_ssp585}
+\bibinfo{author}{Yukimoto, S.} \emph{et~al.}
+\newblock \bibinfo{title}{{MRI MRI-ESM2.0 model output prepared for CMIP6 ScenarioMIP ssp585}} (\bibinfo{year}{2019}).
+\newblock \urlprefix\url{https://doi.org/10.22033/ESGF/CMIP6.6929}.
+
+\bibitem{Bracegirdle_ASL_2020}
+\bibinfo{author}{Bracegirdle, T.~J.} \emph{et~al.}
+\newblock \bibinfo{title}{Twenty first century changes in {Antarctic and Southern Ocean} surface climate in {CMIP6}}.
+\newblock \emph{\bibinfo{journal}{Atmos. Sci. Lett.}} \textbf{\bibinfo{volume}{21}}, \bibinfo{pages}{e984} (\bibinfo{year}{2020}).
+
+\bibitem{Hersbach_QJRMS_2020}
+\bibinfo{author}{Hersbach, H.} \emph{et~al.}
+\newblock \bibinfo{title}{The {ERA5} global reanalysis}.
+\newblock \emph{\bibinfo{journal}{Q. J. Roy. Meteor. Soc.}} \textbf{\bibinfo{volume}{146}}, \bibinfo{pages}{1999--2049} (\bibinfo{year}{2020}).
+
+\bibitem{Schwertfeger_2024}
+\bibinfo{author}{Schwertfeger, B.~T.}
+\newblock \bibinfo{title}{btschwertfeger/python-cmethods: v2.3.0} (\bibinfo{year}{2024}).
+\newblock \urlprefix\url{https://doi.org/10.5281/zenodo.12168002}.
+
+\bibitem{Portmann_MIRCA_2022}
+\bibinfo{author}{Portmann, F.~T.}, \bibinfo{author}{Siebert, S.} \& \bibinfo{author}{D\"oll, P.}
+\newblock \bibinfo{title}{Mirca2000} (\bibinfo{year}{2022}).
+\newblock \urlprefix\url{https://doi.org/10.5281/zenodo.7422506}.
+
+\bibitem{ERA5_data}
+\bibinfo{author}{Hersbach, H.} \emph{et~al.}
+\newblock \bibinfo{title}{{ERA5} hourly data on pressure levels from 1979 to present} (\bibinfo{year}{2018}).
+\newblock \bibinfo{note}{Copernicus Climate Change Service (C3S) Climate Data Store (CDS).}
+
+\bibitem{Raupach_xarray_2022}
+\bibinfo{author}{Raupach, T.~H.}
+\newblock \bibinfo{title}{traupach/xarray\_parcel: v1.0.5} (\bibinfo{year}{2022}).
+\newblock \urlprefix\url{10.5281/zenodo.7073521}.
+
+\bibitem{Raupach_warming_levels_2024}
+\bibinfo{author}{Raupach, T.~H.}
+\newblock \bibinfo{title}{Code to calculate warming levels from {CMIP6} and {CMIP5}} (\bibinfo{year}{2024}).
+\newblock \urlprefix\url{https://doi.org/10.5281/zenodo.10785698}.
+
+\bibitem{Raupach_zenodo_archive_2026}
+\bibinfo{author}{Raupach, T.}
+\newblock \bibinfo{title}{traupach/future\_hail\_global: v1.0.4} (\bibinfo{year}{2026}).
+\newblock \urlprefix\url{https://doi.org/10.5281/zenodo.15099057}.
 
 \end{thebibliography}
 \endgroup

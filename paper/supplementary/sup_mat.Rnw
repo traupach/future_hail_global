@@ -798,11 +798,11 @@ indicates hail-prone conditions when
     T_{500} & < & 265.46 \textrm{ K} \label{eq:extra_conditions_3},
 \end{eqnarray}
 
-where MLCAPE$_{100}$ (J kg$^{-1}$) is convective available potential energy
-calculated using a well-mixed parcel over the lowest 100 hPa of the atmosphere,
-$S_{06}$ (m s$^{-1}$) is 0-6 km bulk vertical wind shear, LR (K km$^{-1}$) is
-the lapse rate between 700 hPa and 500 hPa, LI$_{100}$ (K) is the lifted index
-\citep{Galway_BAMS_1956} defined using same parcel as that used by
+\noindent where MLCAPE$_{100}$ (J kg$^{-1}$) is convective available potential
+energy calculated using a well-mixed parcel over the lowest 100 hPa of the
+atmosphere, $S_{06}$ (m s$^{-1}$) is 0-6 km bulk vertical wind shear, LR (K
+km$^{-1}$) is the lapse rate between 700 hPa and 500 hPa, LI$_{100}$ (K) is the
+lifted index \citep{Galway_BAMS_1956} defined using same parcel as that used by
 MLCAPE$_{100}$, $T_{500}$ (K) is the temperature at 500 hPa, and $\alpha$ and
 $\beta$ are parameters that vary with the melting level height such that
 
@@ -848,17 +848,17 @@ and $\beta$ were set as follows:
 \log_{10}(\beta) & = & 0.00204 \times \textrm{MLH} - 1.75631. \label{eq:beta}
 \end{eqnarray}
 
-Figure \ref{fig:proxy_by_MLH} shows the original proxy \citep{Raupach_MWR_2023}
-discriminator lines (set by Equations \ref{eq:discrim}, \ref{eq:alpha}, and
-\ref{eq:beta}) for various values of melting level height (MLH). When the MLH is
-below about 1500 m, the value of $\alpha$ becomes negative and the value of
-$\beta$ becomes very small, and the proxy stops detecting high-CAPE, high-shear
-conditions. So that the proxy is more reliable in colder regions where the
-melting level height is below 1500 m, in this work we have modified the proxy
-such that when the MLH is below 2000 m, the values of $\alpha$ and $\beta$ for
-an MLH of 2000 m are used (Equations \ref{eq:newalpha} and \ref{eq:newbeta}).
-This modification means the proxy is always able to detect high-CAPE, high-shear
-conditions.
+\noindent Figure \ref{fig:proxy_by_MLH} shows the original proxy
+\citep{Raupach_MWR_2023} discriminator lines (set by Equations \ref{eq:discrim},
+\ref{eq:alpha}, and \ref{eq:beta}) for various values of melting level height
+(MLH). When the MLH is below about 1500 m, the value of $\alpha$ becomes
+negative and the value of $\beta$ becomes very small, and the proxy stops
+detecting high-CAPE, high-shear conditions. So that the proxy is more reliable
+in colder regions where the melting level height is below 1500 m, in this work
+we have modified the proxy such that when the MLH is below 2000 m, the values of
+$\alpha$ and $\beta$ for an MLH of 2000 m are used (Equations \ref{eq:newalpha}
+and \ref{eq:newbeta}). This modification means the proxy is always able to
+detect high-CAPE, high-shear conditions.
 
 \begin{figure*}[!ht]
     \centering
@@ -927,8 +927,8 @@ environment as hail prone when
 \textrm{MLCIN}_{100} > -50,
 \end{eqnarray}
 
-where MLCIN$_{100}$ (J kg$^{-1}$) is convective inhibition for a well-mixed
-parcel over the lowest 100 hPa of the atmosphere. 
+\noindent where MLCIN$_{100}$ (J kg$^{-1}$) is convective inhibition for a
+well-mixed parcel over the lowest 100 hPa of the atmosphere. 
 
 \subsection{SHIP}
 
@@ -941,19 +941,19 @@ SHIP$_i$, as
 \label{eq:SHIP}
 \end{equation}
 
-where MUCAPE$_{250}$ (J kg$^{-1}$) is the convective available potential energy
-for the ``most unstable'' parcel, defined as the parcel with the largest
-equivalent potential temperature over the lowest 250 hPa of the atmosphere, MR
-(g kg$^{-1}$) is the mixing ratio for that parcel, and $T_{500}$ is the
-temperature at 500 hPa in \degr{}. SHIP$_i$ is only defined when 
+\noindent where MUCAPE$_{250}$ (J kg$^{-1}$) is the convective available
+potential energy for the ``most unstable'' parcel, defined as the parcel with
+the largest equivalent potential temperature over the lowest 250 hPa of the
+atmosphere, MR (g kg$^{-1}$) is the mixing ratio for that parcel, and $T_{500}$
+is the temperature at 500 hPa in \degr{}. SHIP$_i$ is only defined when 
 
 \begin{eqnarray}
 7 \leq \textrm{S06} \leq 27 \textrm{ m s}^{-1}, & \textrm{and} \\
 11 \leq \textrm{MR} \leq 13.6 \textrm{ g kg}^{-1}, &
 \end{eqnarray}
 
-and if $T_{500} > -5.5$ degrees C, then a value of $T_{500} = -5.5$ is used.
-Once SHIP$_i$ has been calculated using Equation \ref{eq:SHIP} and these
+\noindent and if $T_{500} > -5.5$ degrees C, then a value of $T_{500} = -5.5$ is
+used. Once SHIP$_i$ has been calculated using Equation \ref{eq:SHIP} and these
 constraints, the following modifications are made to get the final value of
 SHIP:
 
@@ -963,28 +963,12 @@ SHIP:
 \textrm{SHIP} = \textrm{SHIP}_i \times \frac{\textrm{FLH}}{2400}, & \textrm{if FLH} < 2400 \textrm{ m AGL},
 \end{eqnarray}
 
-where FLH is freezing-level height (height of dry-bulb zero degrees C) and AGL
-stands for above ground level (note Raupach et al., 2023 \cite{Raupach_MWR_2023}
-used FLH above sea level for Australia, but here we use FLH AGL as per both the
-original SHIP definition and PH18). We considered an environment to be hail
-prone when SHIP $> 0.1$, following Raupach et al., 2023 \cite{Raupach_MWR_2023}.
-
-\subsection{Proxy normalisation}
-\label{sec:proxy-normalisation}
-
-The three proxies produced binary outputs, classifying each day as hail prone or
-not hail prone. Annual hail-prone days were the sum of all hail-prone days per
-year per location. To account for differences between the proxies and between
-models, and to allow each proxy to have the same weight when calculating
-multimodel, multi-proxy means, annual hail-prone days (AHPD) were normalised per
-proxy and per model, such that
-
-\begin{equation}
-\textrm{AHPD}_{m,p,i,j,y} = \frac{\textrm{AHPD}_{m,p,i,j,y}}{\max\left([\textrm{AHPD}_{m,p,i,j,y}\;\forall\; i, j, y]\right)} \times 100,
-\end{equation}
-
-\noindent where $m$, $p$, $i$, $j$, $y$ are indices for model, proxy, longitude,
-latitude, and year, respectively.
+\noindent where FLH is freezing-level height (height of dry-bulb zero degrees C)
+and AGL stands for above ground level (note Raupach et al., 2023
+\cite{Raupach_MWR_2023} used FLH above sea level for Australia, but here we use
+FLH AGL as per both the original SHIP definition and PH18). We considered an
+environment to be hail prone when SHIP $> 0.1$, following Raupach et al., 2023
+\cite{Raupach_MWR_2023}.
 
 \FloatBarrier
 \footnotesize
