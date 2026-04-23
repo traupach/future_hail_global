@@ -70,13 +70,13 @@ hereafter PH18) and the satellite-based climatology of Bang \& Cecil, 2019
 (\cite{Bang_JAMC_2019}, hereafter BC19) while noting that both these global
 climatologies are for severe or large hail, and the proxies we use in this study
 are chosen to detect \textit{any} hail-prone conditions (with the low threshold
-we used for POH). We thus expect some differences with these previous global
+we used for SHIP). We thus expect some differences with these previous global
 climatologies. There are no ``perfect'' hail observations because hail is small
 in scale and relatively rare, radars and observations networks have limited
 spatial coverage, reports contain non-meteorological biases, and there are
 significant uncertainties in linking large-scale environments (using proxies) or
 observations aloft by satellite or radar to surface hail occurrence
-\citep{Raupach_NREE_2021}. The climatological studies we compared to included
+\citep{Raupach_NREE_2021}. The climatological studies to which we compared included
 all available data sources including proxies, radar, satellite, and
 observations/reports. We used as many studies as possible for each region, to
 incorporate local knowledge, observations, and model training into our global
@@ -95,15 +95,16 @@ Nations geoscheme \citep{UN_geoscheme}.
 In the main paper, we use the following shorthand definitions to refer to the
 following regions of the United Nations geoscheme \citep{UN_geoscheme}. ``Asia''
 refers to Southern, Eastern, Northern, and northern South-eastern Asia as shown
-in Figure \ref{fig:proxy_climatology_asia}; ``Oceania'' refers to Oceania and
-southern South-eastern Asia as shown in Figure
+in Supplementary Figure \ref{fig:proxy_climatology_asia}; ``Oceania'' refers to
+Oceania and southern South-eastern Asia as shown in Supplementary Figure
 \ref{fig:proxy_climatology_oceania}; ``North America'' refers to Northern
-America, Central America, and the Caribbean, as shown in Figure
+America, Central America, and the Caribbean, as shown in Supplementary Figure
 \ref{fig:proxy_climatology_north_america}; ``South America'' refers to South
-America as shown in Figure \ref{fig:proxy_climatology_south_america}; ``Europe''
-refers to Europe, Northern Africa, Western Asia, and Iran as shown in Figure
+America as shown in Supplementary Figure
+\ref{fig:proxy_climatology_south_america}; ``Europe'' refers to Europe, Northern
+Africa, Western Asia, and Iran as shown in Supplementary Figure
 \ref{fig:proxy_climatology_europe}; and ``Africa'' refers to Africa as shown in
-Figure \ref{fig:proxy_climatology_africa}.
+Supplementary Figure \ref{fig:proxy_climatology_africa}.
 
 \subsection{Southern, Eastern, Northern, and northern South-eastern Asia}
 
@@ -112,31 +113,32 @@ Figure \ref{fig:proxy_climatology_africa}.
 \caption{Mean and standard deviation of normalised annual hail-prone days across
 the model-proxy ensemble for the historical period, including CMIP6 models and
 ERA5 reanalysis, for Southern, Eastern, Northern, and northern South-eastern
-Asia. n=180 per grid point. Solid black lines show coastlines and political
+Asia. n=540 per grid point. Solid black lines show coastlines and political
 borders; dotted black lines show provincial boundaries for some countries.}
 \label{fig:proxy_climatology_asia}
 \end{figure}
 
-In Asia, the proxy ensemble (Figure \ref{fig:proxy_climatology_asia}) highlights
-the southern flank of the Himalaya and particularly its southeastern end as the
-most hail-prone region, with another hotspot in southern China, and low hail
-probability across the Tibetan plateau. This pattern matches a satellite severe
-hail climatology \citep{Bang_JAMC_2019} and is similar to the severe hail
-climatology of PH18, except that study shows another hotspot in the northeast of
-Pakistan which is not matched by the proxy ensemble or by BC19. Regional studies
-confirm that the northwestern Himalaya \citep{Bhat_NH_2024}, North, Northeast,
-and East India \citep{Rao_NH_2025}, Northern Thailand \citep{Mahavik_NH_2025},
-and Southwestern China \citep{Li_JAMC_2018} are hail hotspots. Hail is also
-reported across some parts of Central India \citep{Rao_NH_2025,
-Ravindren_NH_2025} where satellite and proxy products show only moderate hail
-probability. Hail in Western Siberia is infrequent but does occur in the regions
-highlighted by the proxy ensemble \citep{Gorbatenko_RMH_2020}. Station-based
-climatologies in China show high hail occurrence over the Tibetan Plateau
-\citep{Zhang_JAMC_2008, Li_JAMC_2018}, disagreeing with both proxy and satellite
-studies. In summary, the proxy ensemble agrees well with published climatologies
-for Southern, Eastern, Northern, and northern South-eastern Asia, except for the
-Tibetan Plateau where the ensemble agrees with satellite and proxy climatologies
-but disagrees with station data.
+In Asia, the proxy ensemble (Supplementary Figure
+\ref{fig:proxy_climatology_asia}) highlights the southern flank of the Himalaya
+and particularly its southeastern end as the most hail-prone region, with
+another hotspot in southern China, and low hail probability across the Tibetan
+plateau. This pattern matches a satellite severe hail climatology
+\citep{Bang_JAMC_2019} and is similar to the severe hail climatology of PH18,
+except that PH18 shows another hotspot in the northeast of Pakistan which is not
+matched by the proxy ensemble or by BC19. Regional studies confirm that the
+northwestern Himalaya \citep{Bhat_NH_2024}, North, Northeast, and East India
+\citep{Rao_NH_2025}, Northern Thailand \citep{Mahavik_NH_2025}, and Southwestern
+China \citep{Li_JAMC_2018} are hail hotspots. Hail is also reported across some
+parts of Central India \citep{Rao_NH_2025, Ravindren_NH_2025} where satellite
+and proxy products show only moderate hail probability. Hail in Western Siberia
+is infrequent but does occur in the regions highlighted by the proxy ensemble
+\citep{Gorbatenko_RMH_2020}. Station-based climatologies in China show high hail
+occurrence over the Tibetan Plateau \citep{Zhang_JAMC_2008, Li_JAMC_2018},
+disagreeing with both proxy and satellite studies. In summary, the proxy
+ensemble agrees well with published climatologies for Southern, Eastern,
+Northern, and northern South-eastern Asia, except for the Tibetan Plateau where
+the ensemble agrees with satellite and proxy climatologies but disagrees with
+station data.
 
 \FloatBarrier
 
@@ -145,24 +147,24 @@ but disagrees with station data.
 
 \begin{figure}[h]
 \includegraphics[width=\textwidth]{../../results/supplementary/proxy_climatology_oceania}
-\caption{As for Figure \ref{fig:proxy_climatology_asia} but for Oceania.}
+\caption{As for Supplementary Figure \ref{fig:proxy_climatology_asia} but for
+Oceania.}
 \label{fig:proxy_climatology_oceania}
 \end{figure}
 
-In Oceania, the proxy ensemble (Figure \ref{fig:proxy_climatology_oceania})
-shows high hail probability on the mid-eastern coast of Australia with higher
-hail probability in the country's northwest and low probability in the arid
-centre, some hail activity in New Zealand's North Island but lower probabilities
-in the South Island, and moderate hail activity in Indonesia.
-PH18 and BC19 both show regions of higher
-severe hail probability on the mid-eastern and northern coasts of Australia and
-moderate probabilities in Australia's northwest. PH18's results
-suggest the possibility of hail activity in Australia's southwest and western
-interior, where the ensemble generally shows low probability (although some
-ensemble members show hail activity in the far southwest). BC19
-shows low but non-zero severe hail probability across the western Maritime
-Continent, agreeing with the ensemble but disagreeing with
-PH18. The ensemble and PH18 agree on the North
+In Oceania, the proxy ensemble (Supplementary Figure
+\ref{fig:proxy_climatology_oceania}) shows high hail probability on the
+mid-eastern coast of Australia with higher hail probability in the country's
+northwest and low probability in the arid centre, some hail activity in New
+Zealand's North Island but lower probabilities in the South Island, and moderate
+hail activity in Indonesia. PH18 and BC19 both show regions of higher severe
+hail probability on the mid-eastern and northern coasts of Australia and
+moderate probabilities in Australia's northwest. PH18's results suggest the
+possibility of hail activity in Australia's southwest and western interior,
+where the ensemble generally shows low probability (although some ensemble
+members show hail activity in the far southwest). BC19 shows low but non-zero
+severe hail probability across the western Maritime Continent, agreeing with the
+ensemble but disagreeing with PH18. The ensemble and PH18 agree on the North
 Island of New Zealand showing higher hail probability than the South Island.
 Regional studies confirm the hail occurrence peak on Australia's east coast
 \citep{Raupach_npjCAS_2023, Brook_MWR_2024} and the possibility of a hail
@@ -181,25 +183,25 @@ Oceania and southern South-eastern Asia.
 
 \begin{figure}[h]
 \includegraphics[width=\textwidth]{../../results/supplementary/proxy_climatology_north_america}
-\caption{As for Figure \ref{fig:proxy_climatology_asia} but for Northern
-America, Central America, and the Caribbean.}
+\caption{As for Supplementary Figure \ref{fig:proxy_climatology_asia} but for
+Northern America, Central America, and the Caribbean.}
 \label{fig:proxy_climatology_north_america}
 \end{figure}
 
-The proxy ensemble (Figure \ref{fig:proxy_climatology_north_america}) shows
-hail-prone areas in Northern America as lying to the east of the Rocky Mountains
-with the highest occurrence of hail-prone conditions in the southeast United
-States of America (USA), along the Gulf of Mexico and eastern Florida. In
-addition, the ensemble shows hail-prone conditions extending north into Canada
-with the furthest extension in Alberta, and extending south into Central
-America, with a thin region of increased probability along the west coast of
-Mexico. The severe hail climatology of PH18 highlights a similar overall region
-of risk and also shows increased hail risk in Mexico's west, albeit a little
-further inland. However, PH18 has the highest probability area in the USA
-extending further north across the Great Plains than the proxy ensemble.
-Satellite-based detections also highlight similar regions as the proxy ensemble,
-but put the greatest occurrence across the US Great Plains and Cuba
-\citep{Bang_JAMC_2019}. Extended Data Figure
+The proxy ensemble (Supplementary Figure
+\ref{fig:proxy_climatology_north_america}) shows hail-prone areas in Northern
+America as lying to the east of the Rocky Mountains with the highest occurrence
+of hail-prone conditions in the southeast United States of America (USA), along
+the Gulf of Mexico and eastern Florida. In addition, the ensemble shows
+hail-prone conditions extending north into Canada with the furthest extension in
+Alberta, and extending south into Central America, with a thin region of
+increased probability along the west coast of Mexico. The severe hail
+climatology of PH18 highlights a similar overall region of risk and also shows
+increased hail risk in Mexico's west, albeit a little further inland. However,
+PH18 has the highest probability area in the USA extending further north across
+the Great Plains than the proxy ensemble. Satellite-based detections also
+highlight similar regions as the proxy ensemble, but put the greatest occurrence
+across the US Great Plains and Cuba \citep{Bang_JAMC_2019}. Extended Data Figure
 \ref{ED-fig:historical_annual_means} shows that the latitude of the peak in
 hail-prone conditions changes by proxy and model in our results. Regional
 climatologies confirm that the most hail-prone areas of the United States is the
@@ -226,36 +228,37 @@ hail-prone areas in Northern America, Central America, and the Caribbean.
 
 \begin{figure}[h]
 \includegraphics[width=\textwidth]{../../results/supplementary/proxy_climatology_south_america}
-\caption{As for Figure \ref{fig:proxy_climatology_asia} but for South America.}
+\caption{As for Supplementary Figure \ref{fig:proxy_climatology_asia} but for
+South America.}
 \label{fig:proxy_climatology_south_america}
 \end{figure}
 
-In South America, the proxy ensemble (Figure
+In South America, the proxy ensemble (Supplementary Figure
 \ref{fig:proxy_climatology_south_america}) shows regions of higher probability
 of hail-prone conditions to the east of the Andes, with hotspots in northern
 Argentina, Uruguay, southern Paraguay, southern Brazil, southern Bolivia, the
 northwest corner of Colombia, and a region covering southeastern Columbia,
-southern Venezuela, and northeastern Peru. PH18 shows agreement
-for northwestern Argentina with hail probability extending into Uruguay and
-Bolivia, but show less hail activity than the proxy ensemble in the north of
-the continent. BC19 further confirms the hotspot in the proxy
-ensemble over northern Argentina/Uruguay/Paraguay/southern Brazil as well as the
-hotspot in northwest Colombia. Regional studies show that northern Argentina and
-the border region between Brazil, Argentina and Paraguay is a hail hotspot
-\citep{Beal_AR_2020, Nesbitt_BAMS_2021, Bruick_MWR_2019, Martins_AR_2017,
-Mezher_AR_2012}. Southern Brazil is well established as a region that
-experiences frequent destructive hailstorms \citep{Martins_AR_2017}. A regional
-climatology in Argentina shows hotspots in the mid-northwest and northeast,
-which are captured by the proxy ensemble, and an isolated hotspot in the south
-which the ensemble does not capture \citep{Mezher_AR_2012}. In the north of
-South America, hailstorms are known to occur in the Central Andes of Peru
-\citep{Valdivia_AMT_2024}. In Colombia, hail is reported across the whole
-country, but the most hail-prone regions are in the western, central and eastern
-branches of the Andes (the ensemble highlights the eastern side), and in the
-Sierra Nevada de Santa Marta in the country's north, which agrees well with the
-ensemble \citep{Pena_Beltran_CG_2020}. There is a notable region of
-within-ensemble variability across the Peru/Colombia/Brazil border region. The
-proxy ensemble captures well the most hail-prone regions in South America.
+southern Venezuela, and northeastern Peru. PH18 shows agreement for northwestern
+Argentina with hail probability extending into Uruguay and Bolivia, but show
+less hail activity than the proxy ensemble in the north of the continent. BC19
+further confirms the hotspot in the proxy ensemble over northern
+Argentina/Uruguay/Paraguay/southern Brazil as well as the hotspot in northwest
+Colombia. Regional studies show that northern Argentina and the border region
+between Brazil, Argentina and Paraguay is a hail hotspot \citep{Beal_AR_2020,
+Nesbitt_BAMS_2021, Bruick_MWR_2019, Martins_AR_2017, Mezher_AR_2012}. Southern
+Brazil is well established as a region that experiences frequent destructive
+hailstorms \citep{Martins_AR_2017}. A regional climatology in Argentina shows
+hotspots in the mid-northwest and northeast, which are captured by the proxy
+ensemble, and an isolated hotspot in the south which the ensemble does not
+capture \citep{Mezher_AR_2012}. In the north of South America, hailstorms are
+known to occur in the Central Andes of Peru \citep{Valdivia_AMT_2024}. In
+Colombia, hail is reported across the whole country, but the most hail-prone
+regions are in the western, central and eastern branches of the Andes (the
+ensemble highlights the eastern side), and in the Sierra Nevada de Santa Marta
+in the country's north, which agrees well with the ensemble
+\citep{Pena_Beltran_CG_2020}. There is a notable region of within-ensemble
+variability across the Peru/Colombia/Brazil border region. The proxy ensemble
+captures well the most hail-prone regions in South America.
 
 \FloatBarrier
 
@@ -264,30 +267,29 @@ proxy ensemble captures well the most hail-prone regions in South America.
 
 \begin{figure}[h]
 \includegraphics[width=\textwidth]{../../results/supplementary/proxy_climatology_europe}
-\caption{As for Figure \ref{fig:proxy_climatology_asia} but for Europe, Northern
-Africa, and Western Asia.}
+\caption{As for Supplementary Figure \ref{fig:proxy_climatology_asia} but for
+Europe, Northern Africa, and Western Asia.}
 \label{fig:proxy_climatology_europe}
 \end{figure}
 
 In Europe, Northern Africa, Western Asia, and northern Iran, the proxy ensemble
-(Figure \ref{fig:proxy_climatology_europe}) shows hail hotspots in Italy
-(especially its north), Croatia, the foothills of the Alps, eastern Spain, and a
-swath that runs from southeast to northwest France and into southern Germany.
-The high Alps are a local minimum in hail-prone conditions. Hail-prone regions
-extend eastwards across Hungary, Romania, and across the Black Sea to Georgia,
-Armenia, Azerbaijan, and northern Iran. The ensemble shows the Mediterranean
-coasts as particularly hail prone, and the northern edges of the African
-continent show hail-prone conditions, particularly in Morocco.
-PH18 agrees well, showing similar peaks in northern Italy and
-the Pyrenees, the diagonal band across France, the minimum over the high Alps,
-the hotspot in eastern Spain, hail-prone conditions in Northern Africa, and the
-eastwards extension of hail-prone conditions to northern Iran.
-BC19 shows the highest number of hail detections in the
-Mediterranean Sea to the southeast of Italy, and generally agrees with the
-distribution of hail-prone regions in the ensemble, although the low resolution
-of the satellite data somewhat hampers detailed comparison. Regional
-climatologies broadly align with the proxy ensemble's distribution of hail-prone
-regions. By subregion:
+(Supplementary Figure \ref{fig:proxy_climatology_europe}) shows hail hotspots in
+Italy (especially its north), Croatia, the foothills of the Alps, eastern Spain,
+and a swath that runs from southeast to northwest France and into southern
+Germany. The high Alps are a local minimum in hail-prone conditions. Hail-prone
+regions extend eastwards across Hungary, Romania, and across the Black Sea to
+Georgia, Armenia, Azerbaijan, and northern Iran. The ensemble shows the
+Mediterranean coasts as particularly hail prone, and the northern edges of the
+African continent show hail-prone conditions, particularly in Morocco. PH18
+agrees well, showing similar peaks in northern Italy and the Pyrenees, the
+diagonal band across France, the minimum over the high Alps, the hotspot in
+eastern Spain, hail-prone conditions in Northern Africa, and the eastwards
+extension of hail-prone conditions to northern Iran. BC19 shows the highest
+number of hail detections in the Mediterranean Sea to the southeast of Italy,
+and generally agrees with the distribution of hail-prone regions in the
+ensemble, although the low resolution of the satellite data somewhat hampers
+detailed comparison. Regional climatologies broadly align with the proxy
+ensemble's distribution of hail-prone regions. By subregion:
 
 \begin{itemize}
     \item \textbf{Eastern Europe:} The Northern Caucasus has high hail
@@ -406,39 +408,41 @@ regions. By subregion:
 
 \begin{figure}[h]
 \includegraphics[width=\textwidth]{../../results/supplementary/proxy_climatology_africa}
-\caption{As for Figure \ref{fig:proxy_climatology_asia} but for Africa.}
+\caption{As for Supplementary Figure \ref{fig:proxy_climatology_asia} but for
+Africa.}
 \label{fig:proxy_climatology_africa}
 \end{figure}
 
-In Africa, the proxy ensemble (Figure \ref{fig:proxy_climatology_africa}) shows
-a band of high hail potential across the sub-Saharan tropics, with hotspots on
-the coasts of Nigeria, Benin, and Togo, uniform hail-prone condition occurrence
-across Ghana and higher occurrence in the east of C\^ote D'Ivoire, as well as a
-hotspot in northwest Democratic Republic of the Congo and the border region with
-the Central African Republic and Republic of the Congo. The region extends with
-lower hail-prone condition occurrence to the east across South Sudan, southern
-Sudan and northern Ethiopia, and to Eritrea. In the south, the obvious hotspot
-is in eastern South Africa, where hail-prone conditions spread northwest to the
-border with Botswana and north along the east coast into Mozambique. The
-southern tip of Madagascar is shown as hail-prone. PH18 and the ensemble broadly
-agree on the eastern South Africa and tropical hotspots, though PH18's high
-magnitudes are slightly to the north and east of those in the ensemble, and
-further inland, and they show hotspots in Angola and in Uganda near Lake
-Victoria, both regions in which the ensemble shows reduced hail risk. BC19
-broadly agrees with the ensemble, with a large tropical region of high numbers
-of hail detections and hotspots in eastern South Africa and Madagascar. Regional
-climatologies for southern Africa confirm the eastern South Africa hail hotspot
-\citep{Dyson_IJC_2021, Punge_NHESS_2023} with most severe thunderstorm
-environments occurring near the coast \citep{Blamey_CD_2017}, although the
-reanalysis-based climatology of Dyson et al., 2021 \cite{Dyson_IJC_2021} places
-the hail activity maximum slightly further inland. Hail climatology over
-tropical Africa remains subject to uncertainty \citep{Bang_JAMC_2019,
-Ni_JAMC_2017} with few regional climatologies available, but hail occurs
-relatively often in western Kenya \citep{Stephens_AFM_1992, Frisby_JAMC_1967}
-and has been reported, mostly rarely, across the rest of the African tropics
-\citep{Frisby_JAMC_1967}. Except for missing possible hail activity near Lake
-Victoria, the proxy ensemble agrees reasonably well with the limited
-climatological information available for Africa.
+In Africa, the proxy ensemble (Supplementary Figure
+\ref{fig:proxy_climatology_africa}) shows a band of high hail potential across
+the sub-Saharan tropics, with hotspots on the coasts of Nigeria, Benin, and
+Togo, uniform hail-prone condition occurrence across Ghana and higher occurrence
+in the east of C\^ote D'Ivoire, as well as a hotspot in northwest Democratic
+Republic of the Congo and the border region with the Central African Republic
+and Republic of the Congo. The region extends with lower hail-prone condition
+occurrence to the east across South Sudan, southern Sudan and northern Ethiopia,
+and to Eritrea. In the south, the obvious hotspot is in eastern South Africa,
+where hail-prone conditions spread northwest to the border with Botswana and
+north along the east coast into Mozambique. The southern tip of Madagascar is
+shown as hail-prone. PH18 and the ensemble broadly agree on the eastern South
+Africa and tropical hotspots, though PH18's high magnitudes are slightly to the
+north and east of those in the ensemble, and further inland, and they show
+hotspots in Angola and in Uganda near Lake Victoria, both regions in which the
+ensemble shows reduced hail risk. BC19 broadly agrees with the ensemble, with a
+large tropical region of high numbers of hail detections and hotspots in eastern
+South Africa and Madagascar. Regional climatologies for southern Africa confirm
+the eastern South Africa hail hotspot \citep{Dyson_IJC_2021, Punge_NHESS_2023}
+with most severe thunderstorm environments occurring near the coast
+\citep{Blamey_CD_2017}, although the reanalysis-based climatology of Dyson et
+al., 2021 \cite{Dyson_IJC_2021} places the hail activity maximum slightly
+further inland. Hail climatology over tropical Africa remains subject to
+uncertainty \citep{Bang_JAMC_2019, Ni_JAMC_2017} with few regional climatologies
+available, but hail occurs relatively often in western Kenya
+\citep{Stephens_AFM_1992, Frisby_JAMC_1967} and has been reported, mostly
+rarely, across the rest of the African tropics \citep{Frisby_JAMC_1967}. Except
+for missing possible hail activity near Lake Victoria, the proxy ensemble agrees
+reasonably well with the limited climatological information available for
+Africa.
 
 \FloatBarrier
 
@@ -453,14 +457,14 @@ India (Supplementary Figure \ref{fig:anoms_India_2015}), regions that were
 affected by hailstorms that caused major losses to wheat crops in this period
 \citep{Chattopadhyay_Mausam_2017, Singh_CS_2017}. Similarly, the proxies
 highlighted areas of central and southern Europe as particularly hail-prone in
-June 2022 (Supplementary Figure \ref{fig:anoms_Europe_2022}), when the
-passage of two low-pressure systems caused high-loss hailstorm outbreaks across
-these regions \citep{Pucik_2023}. The proxies also identified April 2015 and
-October 2022 as unusually hail-prone months in northeast India and western
-France, respectively; there were hailstorms reported in both regions during
-these respective months \cite{Chattopadhyay_Mausam_2017, Pucik_2023}. These
-case-study results increase our confidence in the ability of the multi-proxy
-mean to identify hail-prone conditions worldwide.
+June 2022 (Supplementary Figure \ref{fig:anoms_Europe_2022}), when the passage
+of two low-pressure systems caused high-loss hailstorm outbreaks across these
+regions \citep{Pucik_2023}. The proxies also identified April 2015 and October
+2022 as unusually hail-prone months in northeast India and western France,
+respectively; there were hailstorms reported in both regions during these
+respective months \cite{Chattopadhyay_Mausam_2017, Pucik_2023}. These case-study
+results increase our confidence in the ability of the multi-proxy mean to
+identify hail-prone conditions worldwide.
 
 \begin{figure*}[h]
     \centering
@@ -489,25 +493,16 @@ mean to identify hail-prone conditions worldwide.
 Projections of storm-relevant properties showed almost uniform increases in
 convective instability extremes as measured by convective available potential
 energy (CAPE) and lifted index (LI), and increasing extremes in convective
-inhibition (Supplementary Figure \ref{fig:ingredients_changes_1}).
-Projections in extremes in 0-6 km bulk wind shear (S06) showed decreases (mixed
-increases) in the northern (southern) hemisphere (Supplementary Figure
-\ref{fig:ingredients_changes_1}). Temperature-related ingredients increased
-as expected in the warmer scenarios (Supplementary Figure
-\ref{fig:ingredients_changes_2}). At times when CAPE was extreme, there were
-slight reductions in convective inhibition in South America and Africa,
-wide-spread increases in melting level height, and mostly non-significant changes
-in wind shear (Supplementary Figure
+inhibition (Supplementary Figure \ref{fig:ingredients_changes_1}). Projections
+in extremes in 0-6 km bulk wind shear (S06) showed decreases (mixed increases)
+in the northern (southern) hemisphere (Supplementary Figure
+\ref{fig:ingredients_changes_1}). Temperature-related ingredients increased as
+expected in the warmer scenarios (Supplementary Figure
+\ref{fig:ingredients_changes_2}). At times when CAPE was extreme (per epoch),
+there were slight reductions in convective inhibition in South America and
+Africa, wide-spread increases in melting level height, and mostly
+non-significant changes in wind shear (Supplementary Figure
 \ref{fig:ingredients_changes_at_extreme_times}).
-
-Crop hail risk projections for these case study regions are provided below. A
-region of southern Europe near the Alps showed an overall increase in hail-prone
-proportion of cropping season for potatoes, rye, and wheat, with proxy
-disagreement across the summer months and agreement on increases from October to
-April (Supplementary Figure \ref{fig:crop_lines_eu}). In India for rice, wheat
-and maize, there were non-significant increases in cropping season hail-prone
-proportion across the southern flank of the Himalaya, but decreases further
-south (Supplementary Figure \ref{fig:crop_lines_india}).
 
 \begin{figure*}[h]
     \includegraphics[width=\textwidth]{../../results/supplementary/ingredients_changes_cape}
@@ -535,7 +530,8 @@ south (Supplementary Figure \ref{fig:crop_lines_india}).
     \caption{As for Supplementary Figure \ref{fig:ingredients_changes_1} but for
     annual mean melting level height (MLH), annual mean temperature at 500 hPa
     ($T_{500}$), annual mean lapse rate (LR), and most-unstable parcel mixing
-    ratio (MUMR). To increase contrast the colour scale for LR is truncated.}
+    ratio (MUMR, calculated over the lowest 250 hPa). To increase contrast the
+    colour scale for LR is truncated.}
     \label{fig:ingredients_changes_2}
 \end{figure*}
 
@@ -672,8 +668,8 @@ print(tab, booktabs=TRUE, include.rownames=FALSE,
     ingredients: freezing level height (FLH), lapse rate (LR), melting level
     height (MLH), mixed-layer CAPE (MLCAPE$_{100}$), mixed-layer CIN
     (MLCIN$_{100}$), lifted index (LI), most-unstable CAPE (MUCAPE$_{250}$),
-    most-unstable mixing ratio (MUMR), 0-6 km bulk shear (S06), and temperature
-    at 500 hPa (T500).}
+    most-unstable mixing ratio (MUMR, over lowest 250 hPa), 0-6 km bulk shear
+    (S06), and temperature at 500 hPa (T500).}
     \label{fig:drivers}
 \end{figure*}
 
@@ -696,7 +692,7 @@ print(tab, booktabs=TRUE, include.rownames=FALSE,
     considered cropping times for selected crops at the given location. The
     chosen location is at the centre of the fuchsia square in the inset maps.
     Inset maps show changes in hail-prone proportion of cropping season by crop.
-    Lines in main plot show mean changes in hail-prone days per month over a
+    Lines in main plot show changes in mean hail-prone days per month over a
     4$\times$4\degr{} region around the chosen location (shown as a fuchsia
     square in inset maps), with vertical lines indicating the inter-model range
     per proxy (n=2560 per month). Changes and stippling in inset maps as for
@@ -707,42 +703,49 @@ print(tab, booktabs=TRUE, include.rownames=FALSE,
 \begin{figure*}[h]
     \centering
     \includegraphics[width=\textwidth]{../../results/supplementary/crop_lines_as}
-    \caption{As for Figure \ref{fig:crop_lines_af} but for Asia.}
+    \caption{As for Supplementary Figure \ref{fig:crop_lines_af} but for Asia.}
     \label{fig:crop_lines_as}
 \end{figure*}
 
 \begin{figure*}[h]
     \centering
     \includegraphics[width=\textwidth]{../../results/supplementary/crop_lines_au}
-    \caption{As for Figure \ref{fig:crop_lines_af} but for Australia.}
+    \caption{As for Supplementary Figure \ref{fig:crop_lines_af} but for Australia.}
     \label{fig:crop_lines_au}
 \end{figure*}
 
 \begin{figure*}[h]
     \centering
     \includegraphics[width=\textwidth]{../../results/supplementary/crop_lines_us}
-    \caption{As for Figure \ref{fig:crop_lines_af} but for the USA.}
+    \caption{As for Supplementary Figure \ref{fig:crop_lines_af} but for the USA.}
     \label{fig:crop_lines_ca}
 \end{figure*}
 
 \begin{figure*}[h]
     \centering
     \includegraphics[width=\textwidth]{../../results/supplementary/crop_lines_eu}
-    \caption{As for Figure \ref{fig:crop_lines_af} but for Europe.}
-    \label{fig:crop_lines_eu}c
+    \caption{As for Supplementary Figure \ref{fig:crop_lines_af} but for Europe.
+    A region of southern Europe near the Alps showed an overall increase in
+    hail-prone proportion of cropping season for potatoes, rye, and wheat, with
+    proxy disagreement across the summer months and agreement on increases from
+    October to April (Supplementary Figure \ref{fig:crop_lines_eu}).}
+    \label{fig:crop_lines_eu}
 \end{figure*}
 
 \begin{figure*}[h]
     \centering
     \includegraphics[width=\textwidth]{../../results/supplementary/crop_lines_nz}
-    \caption{As for Figure \ref{fig:crop_lines_af} but for New Zealand.}
+    \caption{As for Supplementary Figure \ref{fig:crop_lines_af} but for New Zealand.}
     \label{fig:crop_lines_nz}
 \end{figure*}
 
 \begin{figure*}[h]
     \centering
     \includegraphics[width=\textwidth]{../../results/supplementary/crop_lines_india}
-    \caption{As for Figure \ref{fig:crop_lines_af} but for India.}
+    \caption{As for Supplementary Figure \ref{fig:crop_lines_af} but for India.
+    For rice, wheat and maize, there were non-significant increases in cropping
+    season hail-prone proportion across the southern flank of the Himalaya, but
+    decreases further south (Supplementary Figure \ref{fig:crop_lines_india}).}
     \label{fig:crop_lines_india}
 \end{figure*}
 
@@ -848,7 +851,7 @@ and $\beta$ were set as follows:
 \log_{10}(\beta) & = & 0.00204 \times \textrm{MLH} - 1.75631. \label{eq:beta}
 \end{eqnarray}
 
-\noindent Figure \ref{fig:proxy_by_MLH} shows the original proxy
+\noindent Supplementary Figure \ref{fig:proxy_by_MLH} shows the original proxy
 \citep{Raupach_MWR_2023} discriminator lines (set by Equations \ref{eq:discrim},
 \ref{eq:alpha}, and \ref{eq:beta}) for various values of melting level height
 (MLH). When the MLH is below about 1500 m, the value of $\alpha$ becomes

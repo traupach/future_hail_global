@@ -103,23 +103,22 @@ framework, and used them to analyse projected changes in hail frequency and
 resulting changes in hail risk to crops.
 
 Because hailstorms are hard to observe and model owing to their small spatial
-size and relative rarity \cite{Raupach_NREE_2021}, proxies that detect
-hail-prone atmospheric conditions are often used in climatological studies. Hail
-proxies rely on detecting the atmospheric ``ingredients'' required for hail to
-form. Hailstones form by accretion of supercooled liquid water onto ice embryos
-suspended in the updraft of a thunderstorm, until they become too heavy to
-support, after which they fall while melting on their descent through warmer air
-\cite{Knight_2001}. Hailstorm ingredients are usually considered to include, at
-minimum, atmospheric instability to allow for a thunderstorm with strong
-updrafts that can support hail growth to form \cite{Brooks_AR_2003}, and
-vertical wind shear (differences in horizontal wind by height) to ``organise''
-the storm \cite{Brooks_AR_2013} and influence hailstone trajectories
-\cite{Lin_JAS_2022, Fischer_JAS_2025}. Instability--shear hail proxies are
-common, but may overestimate hail in tropical regions where instability is often
-high and wind shear better discriminates hailstorm environments
-\cite{Raupach_MWR_2023}. Proxies also suffer from the ``initiation problem'', in
-that storms rarely initiate even in storm-prone conditions
-\cite{Tippett_CCCR_2015}.
+size and relative rarity \cite{Raupach_NREE_2021}, climatological studies often
+use proxies that detect hail-prone conditions. Hail proxies rely on detecting
+the atmospheric ``ingredients'' required for hail to form. Hailstones form by
+accretion of supercooled liquid water onto ice embryos suspended in the updraft
+of a thunderstorm, until they become too heavy to support, after which they fall
+while melting on their descent through warmer air \cite{Knight_2001}. Hailstorm
+ingredients are usually considered to include, at minimum, atmospheric
+instability to allow for a thunderstorm with strong updrafts that can support
+hail growth to form \cite{Brooks_AR_2003}, and vertical wind shear (differences
+in horizontal wind by height) to ``organise'' the storm \cite{Brooks_AR_2013}
+and influence hailstone trajectories \cite{Lin_JAS_2022, Fischer_JAS_2025}.
+Instability--shear hail proxies are common, but may overestimate hail in
+tropical regions where instability is often high and wind shear may better
+discriminate hailstorm environments \cite{Raupach_MWR_2023}. Proxies also suffer
+from the ``initiation problem'', in that storms rarely initiate even in
+storm-prone conditions \cite{Tippett_CCCR_2015}.
 
 Climate change is expected to affect the ingredients for hailstorms and thus the
 frequency and severity of hail \cite{Raupach_NREE_2021}. A thermodynamic
@@ -131,23 +130,23 @@ troposphere \cite{Prein_NCC_2020}, leading to a reduction (or elimination
 \cite{Mahoney_NCC_2012}) of surface hail frequency; and third, an overall
 decrease in vertical wind shear \cite{Brooks_AR_2013} that is often outweighed
 by changes in instability \cite{Trapp_GRL_2009} and may not apply locally
-\cite{Radler_npjCAS_2019}. The broad thermodynamic expectation is of a reduction
-in surface hail frequency combined with an increase in severity when hail does
-reach the Earth's surface \cite{Raupach_NREE_2021}. However, regional studies
-show large geographical heterogeneity in trends in hail frequency, owing in part
-to offsetting effects and in part to changes in large-scale dynamics meaning
-that ingredient changes are not spatially uniform, while hail severity is
-generally expected to increase \cite{Raupach_NREE_2021}. Process uncertainties,
-such as those around the influence of changes in aerosol and ice nucleation
-particle concentrations, also remain \cite{Raupach_NREE_2021}.
+\cite{Radler_npjCAS_2019}. The broad thermodynamic expectation is of reduced
+surface hail frequency combined with increased severity when hail does reach the
+Earth's surface \cite{Raupach_NREE_2021}. However, regional studies show large
+geographical heterogeneity in hail frequency trends, owing partly to offsetting
+effects and partly to changes in large-scale dynamics meaning that ingredient
+changes are not spatially uniform, while hail severity is generally expected to
+increase \cite{Raupach_NREE_2021}. Process uncertainties, such as those around
+the influence of changes in aerosol concentrations, also remain
+\cite{Raupach_NREE_2021}.
 
 Hailstorms can damage crops by wounding plants and increasing pathogen infection
-\cite{Battaglia_CS_2019}, or breaking stems, defoliating, or crushing plants
+\cite{Battaglia_CS_2019}, breaking stems, defoliating, or crushing plants
 \cite{Dhillon_CJPS_2021}, resulting in substantial yield losses
-\cite{Dhillon_CJPS_2021}. Factors that affect the amount of crop damage
-inflicted by hail include the hailstone size \cite{Changnon_JAMC_1971} and
-number of hailstones per area \cite{Yue_PLOSONE_2019}, coincident horizontal
-wind \cite{Morgan_JAMC_1976}, and crop growth stage \cite{Sanchez_JAMC_1996,
+\cite{Dhillon_CJPS_2021}. Factors that affect crop damage inflicted by hail
+include the hailstone size \cite{Changnon_JAMC_1971} and number of hailstones
+per area \cite{Yue_PLOSONE_2019}, coincident horizontal wind
+\cite{Morgan_JAMC_1976}, and crop growth stage \cite{Sanchez_JAMC_1996,
 Dhillon_CJPS_2021,Yue_PLOSONE_2019}. Correlations between temperature and
 hailstorm damage in Europe \cite{Dessens_GRL_1995} have been used to project
 regional increases in damage with warming \cite{Botzen_REE_2010}, and in
@@ -161,21 +160,21 @@ and SHIP proxies -- to an ensemble of eight global projections from CMIP6, to
 examine projections of the frequency of hail-prone conditions globally. We used
 a per-degree framework \cite{Lepore_EF_2021} for simpler comparisons between
 models. For details of the simulations and proxies used, refer to ``Online
-methods'' and the supplementary information. First, to validate the global proxy
+methods'' and the supplementary information. To validate the global proxy
 climatology, we compared the multimodel, multi-proxy ensemble climatology to
-published local climatologies. Second, we examined relative changes in
-hail-prone conditions between historical and warmer periods, overall and
-seasonally, and identified the primary drivers of changes. Third, as a
-sensitivity study, we investigated the effects of projected changes on
-hail-prone proportions of time-invariant crop growing seasons for 26 different
-crops. Generally, hailstorm frequency is projected to shift poleward, with
-decreases in warmer environments and increases in cooler environments in future,
-driven primarily by increases in convective instability and offset by
-temperature or moisture increases. Our sensitivity analysis shows that generally
-the projected changes would increase hail occurrence risk to winter crops, while
-decreasing occurrence risk for summer crops.
+published local climatologies. We examined relative changes in hail-prone
+conditions between historical and warmer periods, overall and seasonally, and
+identified the primary drivers of changes. As a sensitivity study, we
+investigated the effects of projected changes on hail-prone proportions of
+time-invariant crop growing seasons for 26 different crops. Generally, hailstorm
+frequency is projected to shift poleward, with decreases in warmer environments
+and increases in cooler environments in future, driven primarily by increases in
+convective instability and offset by temperature or moisture increases. Our
+sensitivity analysis shows that generally the projected changes would increase
+hail occurrence risk to winter crops, while decreasing occurrence risk for
+summer crops.
 
-\subsection*{Climatology for the historical period}
+\subsection*{Climatology and proxy validation}
 
 The multimodel, multi-proxy climatology of normalised annual hail-prone days for
 1980--1999 highlights known hail-prone regions globally (Figure
@@ -189,7 +188,7 @@ Eccel proxy \cite{Eccel_IJC_2012} producing the greatest number of hail-prone
 days. Given the broad geographical agreement but differences in absolute numbers
 of hail-prone days, we use annual hail-prone days normalised by per-proxy
 per-model maxima, and focus primarily on changes in multi-proxy, multimodel mean
-annual normalised hail-prone days in our analyses.
+annual normalised hail-prone days in our analyses. 
 
 The Raupach, Eccel, and SHIP proxies were trained in Australia
 \citep{Raupach_MWR_2023}, Italy \citep{Eccel_IJC_2012}, and the USA
@@ -198,15 +197,18 @@ detailed comparison between the ensemble proxy results and published
 climatologies worldwide (Supplementary Section \ref{SM-sec:proxy_validation} and
 Supplementary Figures
 \ref{SM-fig:proxy_climatology_asia}--\ref{SM-fig:proxy_climatology_africa}). The
-Raupach proxy was specifically designed to adapt to latitudinal changes in hail
-environments and was trained in Australia using data from the tropics to
-mid-latitudes, covering most types of environments in which hail is expected
-\citep{Raupach_MWR_2023}. Generally, spatial agreement of the proxy ensemble
-with published climatologies was strong. The proxy ensemble disagreed with
-station reports (but not satellite or proxy studies) over the Tibetan Plateau,
-and in the USA some ensemble members placed the peak hail risk on the Gulf Coast
-rather than on the Great Plains. The proxy ensemble showed greater
-inter-model-proxy disagreement over the tropics than the mid-latitudes. 
+Raupach proxy was designed to adapt to latitudinal changes in hail environments
+and was trained in Australia using data from the tropics to mid-latitudes,
+covering most environments in which hail is expected \citep{Raupach_MWR_2023}.
+Generally, spatial agreement of the proxy ensemble with published climatologies
+was strong. The proxy ensemble disagreed with station reports (but not satellite
+or proxy studies) over the Tibetan Plateau, and in the USA some ensemble members
+placed the peak hail risk on the Gulf Coast rather than on the Great Plains. The
+proxy ensemble showed greater inter-model-proxy disagreement over the tropics
+than the mid-latitudes. Multi-proxy means were able to identify particularly
+hail-prone conditions in case studies in areas in which the proxies were not
+trained (Supplementary Section \ref{SM-sec:cases} and Supplementary Figures
+\ref{SM-fig:anoms_India_2015}, \ref{SM-fig:anoms_Europe_2022}).
 
 \begin{figure*}[!ht]
     \includegraphics[width=\textwidth]{../../results/main/CMIP6_ERA5_historical}
@@ -221,7 +223,7 @@ inter-model-proxy disagreement over the tropics than the mid-latitudes.
 
 \subsection*{Changes in hail-prone days with warming}
 
-Multimodel, multi-proxy mean changes in normalised annual hail-prone days for 2
+Changes in multimodel, multi-proxy mean normalised annual hail-prone days for 2
 \degr{} and 3 \degr{} of global warming show an overall poleward shift in
 hail-prone conditions under both warming scenarios (Figure
 \ref{fig:future_changes_hail_days}). Changes for 3 \degr{} warming were similar
@@ -280,24 +282,27 @@ increases in the cool season, for example in the southeast USA (Figure
 
 \subsection*{Drivers of the projected changes}
 
+Projections showed increased extreme convective available potential energy
+(CAPE), wide decreases in extreme wind shear, and increases in mean temperature
+at 500 hPa and moist-unstable-parcel mixing ratio (Supplementary Section
+\ref{SM-sec:projected_ingredients} and Supplementary Figures
+\ref{SM-fig:ingredients_changes_1}--\ref{SM-fig:ingredients_changes_at_extreme_times}).
 The main drivers of projected changes in this study, measured as the difference
 between projected changes and changes when the future values for single
 ingredients were de-biased, depended on the proxy (Figure \ref{fig:drivers}).
-Projections for proxy ingredients are shown in Supplementary Section
-\ref{SM-sec:projected_ingredients}. Overall, increases in hail-prone environment
-frequency were driven by instability increases, while reductions in hail-prone
-environment frequency were driven by temperature-related or moisture-related
-(for SHIP) ingredients. The sums of changes across de-biased ingredients were
-close to the projected changes where no ingredients were de-biased, indicating
-that these results explain most of the projected changes, with the small
-differences that remain likely related to interactions between ingredients. The
-large differences between the Eccel proxy and the other proxies were caused by
-the instability--shear proxy reacting to increases in instability without
-explicitly accounting for offsetting owing to temperature or moisture changes.
-Changes in SHIP were driven mainly by changes in the most-unstable mixing ratio,
-while in the Raupach proxy, increases in hail-prone days owing to instability
-increases were offset by changes in melting level height and temperature at 500
-hPa.
+Overall, increases in hail-prone environment frequency were driven by
+instability increases, while reductions in hail-prone environment frequency were
+driven by temperature-related or moisture-related (for SHIP) ingredients. The
+sums of changes across de-biased ingredients were close to the projected changes
+where no ingredients were de-biased, indicating that these results explain most
+of the projected changes, with the small differences that remain likely related
+to interactions between ingredients. The large differences between the Eccel
+proxy and the other proxies were caused by the instability--shear proxy reacting
+to increases in instability without explicitly accounting for offsetting owing
+to temperature or moisture changes. Changes in SHIP were driven mainly by
+changes in the most-unstable-parcel mixing ratio, while in the Raupach proxy,
+increases in hail-prone days owing to instability increases were offset by
+changes in melting level height and temperature at 500 hPa.
 
 \begin{figure*}[!ht]
     \includegraphics[width=\textwidth]{../../results/main/sig_drivers}
@@ -308,35 +313,35 @@ hPa.
     \degr{} epoch for unchanged ingredients, minus the difference with the given
     ingredient de-biased in the 3 \degr{} epoch. Red (blue) areas show where an
     ingredient added to (subtracted from) the projected change. Ingredients
-    shown here are melting level height (MLH, a-c), mixed-layer CAPE (MLCAPE,
-    calculated using a well-mixed parcel on the lowest 100 hPa, d-f),
-    most-unstable CAPE (MUCAPE, calculated using the parcel with the largest
-    equivalent potential temperature over the lowest 250 hPa, g-i),
-    most-unstable parcel mixing ratio (MUMR, j-l), and temperature at 500 hPa
-    (T500, m-o). ``Sum'' (p-r) shows sums across changes from all de-biased
-    ingredients (column sums from Supplementary Figure \ref{SM-fig:drivers}) and
-    ``Ref'' (s-u) shows the projected changes per proxy when no ingredients were
-    de-biased. Columns show hail proxies and the colour scale is in annual hail
-    days.}
+    shown here are melting level height (MLH, a-c), mixed-layer convective
+    available potential energy (MLCAPE, calculated using a well-mixed parcel on
+    the lowest 100 hPa, d-f), most-unstable convective available potential
+    energy (MUCAPE, calculated using the parcel with the largest equivalent
+    potential temperature over the lowest 250 hPa, g-i), most-unstable-parcel
+    mixing ratio (MUMR, j-l), and temperature at 500 hPa (T500, m-o). ``Sum''
+    (p-r) shows sums across changes from all de-biased ingredients (column sums
+    from Supplementary Figure \ref{SM-fig:drivers}) and ``Ref'' (s-u) shows the
+    projected changes per proxy when no ingredients were de-biased. Columns show
+    hail proxies and the colour scale is in annual hail days.}
     \label{fig:drivers}
 \end{figure*}
 
 \subsection*{Changes in hail-prone cropping periods}
 
 Projected proportions of crop growing time considered hail-prone, for 26 crops
-by world region, showed the strongest reductions in Africa and strongest
-increases in Europe (Figure \ref{fig:crop_changes}). We used a new metric, the
-hail-prone proportion of cropping season (HPP), defined as the proportion of
-total cropping days considered hail prone at a given location, in a given year
-and for a given crop, based on monthly irrigated and rain-fed cropped areas
-\citep{Portmann_GBC_2010}, to measure relative hail occurrence hazard per crop.
-For the historical period, the six crops with the highest hail hazard were
-sorghum, millet, groundnuts/peanuts, rice, soybeans, and maize, with high hazard
-in the African tropics and southeast, southeast North America, and southeast
-South America (Extended Data Figure \ref{ED-fig:historic_crop_proportions}).
-Warming of 2\degr{} and 3\degr{} was projected to reduce HPP for these crops in
-these regions while increasing HPP for crops grown in more poleward regions
-(Supplementary Figure \ref{SM-fig:crop_changes_3C}). 
+by world region, showed broad reductions in Africa and broad increases in Asia
+(Figure \ref{fig:crop_changes}). We used a new metric, the hail-prone proportion
+of cropping season (HPP), defined as the proportion of total cropping days
+considered hail prone at a given location, in a given year and for a given crop,
+based on monthly irrigated and rain-fed cropped areas \citep{Portmann_GBC_2010},
+to measure relative hail occurrence hazard per crop. For the historical period,
+the six crops with the highest hail hazard were sorghum, millet,
+groundnuts/peanuts, rice, soybeans, and maize, with high hazard in the African
+tropics and southeast Africa, southeast North America, and southeast South
+America (Extended Data Figure \ref{ED-fig:historic_crop_proportions}). Warming
+was projected to reduce HPP for these crops in these regions while increasing
+HPP for crops grown in more poleward regions (Supplementary Figure
+\ref{SM-fig:crop_changes_3C}). 
 
 \begin{figure*}[!ht]
     \includegraphics[width=\textwidth]{../../results/main/crop_changes}
@@ -361,7 +366,7 @@ In Africa, all crops were projected to experience fewer hail-prone days, with
 regional increases not statistically significant (Extended Data Figure
 \ref{ED-fig:crop_changes_africa}). In Asia (Extended Data Figure
 \ref{ED-fig:crop_changes_asia}), there were a range of responses, with
-decreasing hail hazard in India and southeastern in China, but increases in HPP
+decreasing hail hazard in India and southeastern China, but increases in HPP
 across the north driving overall increases in hazard for many crops. Maize was
 projected to experience greater hazard in southeastern China but lesser hazard
 in the northeast, while HPP for wheat and rapeseed/canola increased in
@@ -369,24 +374,25 @@ northeastern China. In Europe and Western Asia, most significant changes were
 increases, concentrated in a zonal band at around 60\degg{}N and in regions
 around the European Alps, an area to the southeast of the Black Sea, and in
 southern Iran (Extended Data Figure \ref{ED-fig:crop_changes_europe}). Increases
-in HPP for rye were heavily concentrated in Finland, Estonia, Latvia, and the
+in HPP for rye were especially strong in Finland, Estonia, Latvia, and the
 adjoining areas of Russia. In North America, there were significant increases
 for barley and rye, which showed regional increases in HPP across central and
-eastern USA, and Canada. For other crops, there were generally decreases in HPP
-projected in the southeast, with increases projected in the northwest and across
-northern Canada (Extended Data Figure \ref{ED-fig:crop_changes_north_america}).
-In Oceania, barley was projected to have increased hail hazard, albeit with a
-large range in projected changes, while HPP decreased for all other crops.
-Significant decreases in HPP were concentrated in Australia's northeast, while
-significant increases were in a small region of southeast Australia and the
-South Island of New Zealand (Extended Data Figure
+eastern USA, and Canada (Extended Data Figure
+\ref{ED-fig:crop_changes_north_america}). For other crops, there were generally
+decreases in HPP projected in the southeast, with increases projected in the
+northwest and across northern Canada. In Oceania, barley was projected to have
+increased hail hazard, albeit with a large range in projected changes, while HPP
+decreased for all other crops. Significant decreases in HPP were concentrated in
+Australia's northeast, while significant increases were in a small region of
+southeast Australia and the South Island of New Zealand (Extended Data Figure
 \ref{ED-fig:crop_changes_oceania}). In South America, all crops were projected
-to have decreased overall hazard, except date palm and sugar beet which grow in
-small areas. However, regional changes show statistically significant increases
-in HPP for several crops in a region of the southern Pampas and west to the
-Andes (Extended Data Figure \ref{ED-fig:crop_changes_south_america}).
+to have decreased overall hazard, except date palm and sugar beet which had few
+significant changes (Extended Data Table \ref{ED-tab:bar_ns}). However, regional
+changes show statistically significant increases in HPP for several crops in a
+region of the southern Pampas and west to the Andes (Extended Data Figure
+\ref{ED-fig:crop_changes_south_america}).
 
-Monthly changes for point locations (Supplementary Figures
+Localised monthly changes (Supplementary Figures
 \ref{SM-fig:crop_lines_af}--\ref{SM-fig:crop_lines_india}) highlight that the
 crops with the greatest projected increases in risk were those with winter
 cropping periods, while those with the greatest reductions in risk were those
@@ -411,7 +417,7 @@ relative importance of instability versus shear to the proxy
 \cite{Raupach_MWR_2023} (Supplementary Section \ref{SM-sec:raupach_proxy}), and
 thus is less sensitive to increased instability in the tropics. Driver analysis
 shows this interaction, with the Raupach proxy less sensitive to instability in
-the tropics than in the mid-latitudes (Figure \ref{fig:drivers}).
+the tropics than in the mid-latitudes (Figure \ref{fig:drivers}d).
 Instability--shear proxies have a tendency to overestimate hail probability in
 the tropics \cite{Raupach_MWR_2023}, which motivated development of the Raupach
 proxy. The disagreement between proxy projections means there remains high
@@ -428,11 +434,11 @@ crops were most likely to experience reductions in hazard. We note that changes
 in crop risk depend heavily on crop vulnerability which changes during growing
 seasons \citep{Dhillon_CJPS_2021}. Similar to the differences between the Eccel
 and Raupach/SHIP proxies, our results indicate that temperature-related effects
-such as melting of hail \cite{Mahoney_NCC_2012} mean that changes in hail
-condition frequency may differ from those for all convective storms, regardless
-of whether the storms produce hail, which are generally projected to increase
-with warming \cite{Lepore_EF_2021}. We compare our results to previous studies
-in Supplementary Section \ref{SM-sec:comparison_prev_studies}.
+such as melting of hail \cite{Mahoney_NCC_2012} mean that changes in hail-prone
+condition frequency may differ from those for all convective storms (regardless
+of whether they produce hail), which are generally projected to increase with
+warming \cite{Lepore_EF_2021}. We compare our results to previous studies in
+Supplementary Section \ref{SM-sec:comparison_prev_studies}.
 
 We used CMIP6 projections that include changes in atmospheric circulations, thus
 avoiding a purely thermodynamic approach. Our projections align with projections
@@ -450,17 +456,15 @@ assumed to be perfectly applicable globally since storm properties differ by
 location \cite{Brooks_AR_2003, Raupach_MWR_2023}. However, the Raupach proxy is
 designed to take spatial variability in storm conditions into account and
 performs reasonably across the Australian continent which contains a wide
-variety of storm environments \cite{Raupach_npjCAS_2023}, we validated the
+variety of storm environments \cite{Raupach_npjCAS_2023}, and we validated the
 ensemble-mean proxy results against published climatologies (Supplementary
-Section \ref{SM-sec:proxy_validation}), and the multi-proxy means were able to
-identify particularly hail-prone conditions in case studies in areas in which
-the proxies used here were not trained (Supplementary Section
-\ref{SM-sec:cases}). The assumption of proxy stationarity in future climates
-introduces uncertainty and should be tested. We did not consider ocean areas:
-the proxies here were trained over land \cite{Raupach_MWR_2023, Eccel_IJC_2012},
-maritime hailstorms may exhibit characteristics distinct from land storms
-\cite{Sari_JGRA_2025}, and there remains uncertainty in the occurrence of hail
-in maritime storms \citep{Knight_2001}.
+Section \ref{SM-sec:proxy_validation}). The assumption of proxy stationarity in
+future climates introduces uncertainty and should be tested. We did not consider
+ocean areas because the proxies here were trained over land
+\cite{Raupach_MWR_2023, Eccel_IJC_2012}, maritime hailstorms may exhibit
+characteristics distinct from land storms \cite{Sari_JGRA_2025}, and there
+remains uncertainty in the occurrence of hail in maritime storms
+\citep{Knight_2001}.
 
 Our results contribute to understanding climate impacts on global food
 production. Most previous studies have concentrated on temperature,
@@ -487,19 +491,20 @@ precluding examination of changes in hailstorm severity or hailstone size.
 Increases in atmospheric instability (Supplementary Figure
 \ref{SM-fig:ingredients_changes_1}) in regions with sufficient moisture
 availability would generally be expected to increase generation of large
-hailstones that could survive melting \cite{Raupach_NREE_2021}, severity may
+hailstones that could survive melting \cite{Raupach_NREE_2021}, so severity may
 increase while frequency decreases. However, it remains difficult to draw
 conclusions on hail size from environmental proxies, given complicated
 offsetting and seasonally-dependent effects of ingredient changes
 \cite{Mallinson_JC_2024}. A coincident decrease of small hail and increase of
 large hail aligns has been projected for the end of the century in the USA
-\cite{Gensini_npjCAS_2024}, and pseudo-global-warming simulations for hailstorms
-in the USA have shown a seasonal shift with increasing hailstone sizes in
-cold-season storms \cite{Mallinson_JC_2024}. While it is likely that global
-severe hail projections would differ from the ``any hail'' projections shown
-here, the possibility of some areas experiencing compounding risks with
-increased frequency hail frequency in the cold season combined with increased
-hail stone size \cite{Mallinson_JC_2024, Battaglioli_NG_2026} may produce a
+\cite{Gensini_npjCAS_2024}, pseudo-global-warming simulations in the USA have
+shown a seasonal shift with increasing hailstone sizes in cold-season storms
+\cite{Mallinson_JC_2024}, and end-of-century increases in hailstone size are
+projected for some cities in Australia \cite{Raupach_GRL_2025}. While it is
+likely that global severe hail projections would differ from the ``any hail''
+projections shown here, the possibility of some areas experiencing compounding
+risks with increased hail frequency in the cold season combined with increased
+hailstone size \cite{Mallinson_JC_2024, Battaglioli_NG_2026} may produce a
 pronounced risk to winter crops that merits further investigation.
 
 \backmatter
@@ -542,6 +547,7 @@ authors declare no other competing financial or non-financial interests.
 \providecommand{\eprint}[2][]{\url{#2}}
 \providecommand{\doi}[1]{\url{https://doi.org/#1}}
 \bibcommenthead
+
 
 \bibitem{Raupach_NREE_2021}
 \bibinfo{author}{Raupach, T.~H.} \emph{et~al.}
@@ -745,6 +751,12 @@ authors declare no other competing financial or non-financial interests.
 \newblock \bibinfo{title}{Hailstone size dichotomy in a warming climate}.
 \newblock \emph{\bibinfo{journal}{npj Clim. Atmos. Sci.}} \textbf{\bibinfo{volume}{7}}, \bibinfo{pages}{185} (\bibinfo{year}{2024}).
 
+\bibitem{Raupach_GRL_2025}
+\bibinfo{author}{Raupach, T.~H.} \& \bibinfo{author}{Aldridge, J.}
+\newblock \bibinfo{title}{Changes in hail damage potential in major {A}ustralian cities with global warming}.
+\newblock \emph{\bibinfo{journal}{Geophys. Res. Lett.}} \textbf{\bibinfo{volume}{52}}, \bibinfo{pages}{e2025GL117676} (\bibinfo{year}{2025}).
+\newblock \bibinfo{note}{E2025GL117676 2025GL117676}.
+
 \bibitem{Battaglioli_NG_2026}
 \bibinfo{author}{Battaglioli, F.}, \bibinfo{author}{Taszarek, M.}, \bibinfo{author}{Groenemeijer, P.}, \bibinfo{author}{P\'u\v{c}ik, T.} \& \bibinfo{author}{R\"adler, A.}
 \newblock \bibinfo{title}{Contrasting trends in very large hail events and related economic losses across the globe}.
@@ -869,8 +881,8 @@ Table \ref{SM-tab:CMIP6_data_refs}.
 \bmhead{Code availability}
 
 Convective indices were calculated using \texttt{xarray\_parcel} by T. H.
-Raupach (\url{https://doi.org/10.5281/zenodo.7073521})
-\cite{Raupach_xarray_2022}. Warming levels were calculated using code by T. H.
+Raupach (\url{https://doi.org/10.5281/zenodo.16924288})
+\cite{Raupach_xarray_2025}. Warming levels were calculated using code by T. H.
 Raupach (\url{https://doi.org/10.5281/zenodo.10785698})
 \cite{Raupach_warming_levels_2024}. De-biasing code was \texttt{python-cmethods}
 by B. T. Schwertfeger (\url{https://doi.org/10.5281/zenodo.12168002})
@@ -891,8 +903,8 @@ used version v1.0.4 of the code.
 \providecommand{\doi}[1]{\url{https://doi.org/#1}}
 \bibcommenthead
 
-\setcounter{NAT@ctr}{41}
-\setcounter{enumiv}{41}
+\setcounter{NAT@ctr}{42}
+\setcounter{enumiv}{42}
 
 \bibitem{CMCC-CM2-SR5_historical}
 \bibinfo{author}{Lovato, T.} \& \bibinfo{author}{Peano, D.}
@@ -998,11 +1010,6 @@ used version v1.0.4 of the code.
 \bibinfo{author}{Hersbach, H.} \emph{et~al.}
 \newblock \bibinfo{title}{{ERA5} hourly data on pressure levels from 1979 to present} (\bibinfo{year}{2018}).
 \newblock \bibinfo{note}{Copernicus Climate Change Service (C3S) Climate Data Store (CDS).}
-
-\bibitem{Raupach_xarray_2022}
-\bibinfo{author}{Raupach, T.~H.}
-\newblock \bibinfo{title}{traupach/xarray\_parcel: v1.0.5} (\bibinfo{year}{2022}).
-\newblock \urlprefix\url{10.5281/zenodo.7073521}.
 
 \bibitem{Raupach_warming_levels_2024}
 \bibinfo{author}{Raupach, T.~H.}
