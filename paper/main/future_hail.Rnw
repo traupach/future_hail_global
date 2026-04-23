@@ -906,6 +906,7 @@ used version v1.0.4 of the code.
 \setcounter{NAT@ctr}{42}
 \setcounter{enumiv}{42}
 
+
 \bibitem{CMCC-CM2-SR5_historical}
 \bibinfo{author}{Lovato, T.} \& \bibinfo{author}{Peano, D.}
 \newblock \bibinfo{title}{{CMCC CMCC-CM2-SR5 model output prepared for CMIP6 CMIP historical}} (\bibinfo{year}{2020}).
@@ -1010,6 +1011,11 @@ used version v1.0.4 of the code.
 \bibinfo{author}{Hersbach, H.} \emph{et~al.}
 \newblock \bibinfo{title}{{ERA5} hourly data on pressure levels from 1979 to present} (\bibinfo{year}{2018}).
 \newblock \bibinfo{note}{Copernicus Climate Change Service (C3S) Climate Data Store (CDS).}
+
+\bibitem{Raupach_xarray_2025}
+\bibinfo{author}{Raupach, T.~H.}
+\newblock \bibinfo{title}{traupach/xarray\_parcel: v1.0.5} (\bibinfo{year}{2025}).
+\newblock \urlprefix\url{10.5281/zenodo.7073521}.
 
 \bibitem{Raupach_warming_levels_2024}
 \bibinfo{author}{Raupach, T.~H.}
