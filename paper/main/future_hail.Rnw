@@ -38,7 +38,7 @@
 \makeatother
 
 \begin{document}
-%\linenumbers
+\linenumbers
 
 %TC:ignore
 \title{Shifting hail hazard under global warming and effects on crop hail risk}
