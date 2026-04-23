@@ -151,10 +151,10 @@ lines <- gsub('3C', '3\\\\degr{}', lines)
 lines <- gsub(' / ', '/', lines)
 cat(lines, sep = '\n')
 @
-\caption{Numbers of samples (grid points with significant changes) used to
-generate each box plot in Figure \ref{main-fig:crop_changes}. ``N. America''
-stands for North America, ``S. America'' for South America, and ``G.nuts'' for
-groundnuts.}
+\caption{\textbf{Samples in box plots}. Numbers of samples (grid points with
+significant changes) used to generate each box plot in Figure
+\ref{main-fig:crop_changes}. ``N. America'' stands for North America, ``S.
+America'' for South America, and ``G.nuts'' for groundnuts.}
 \label{tab:bar_ns}
 \end{table}
 
