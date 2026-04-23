@@ -825,10 +825,10 @@ proxy, a modified version of the proxy in Raupach et al., 2023
 \cite{Raupach_MWR_2023}, the Eccel proxy of Eccel et al., 2012
 \cite{Eccel_IJC_2012}, and SHIP, a threshold of 0.1 on the Significant Hail
 Parameter \cite{SPC_SHIP}. The proxies are described in detail in Supplementary
-Material Section \ref{SM-sec:proxy-formulas}. Proxies results were masked to
-land areas in recognition that the proxies were trained on land-based reports
-and no surface-based climatologies are available for ocean areas. Proxy outputs
-(binary hail-prone or not-hail-prone) were collated into annual hail-prone days.
+Section \ref{SM-sec:proxy-formulas}. Proxies results were masked to land areas
+in recognition that the proxies were trained on land-based reports and no
+surface-based climatologies are available for ocean areas. Proxy outputs (binary
+hail-prone or not-hail-prone) were collated into annual hail-prone days.
 
 \subsection*{Proxy normalisation}
 
