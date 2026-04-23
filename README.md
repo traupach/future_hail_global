@@ -1,4 +1,4 @@
-# Software for "Shifting hail hazard under global warming"
+# Software for "Shifting hail hazard under global warming and effects on crop hail risk"
 
 This repository contains the complete code used for the research study "Shifting hail hazard under global warming" by T.H. Raupach, R. Portmann, C. Siderius, and S.C. Sherwood. 
 
