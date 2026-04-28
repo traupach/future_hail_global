@@ -61,7 +61,7 @@
     \centering
     \includegraphics[width=\textwidth]{../../results/extended_data/historical_crop_proportion_hail_prone}
     \caption{\textbf{Multimodel, multi-proxy mean hail-prone proportions of
-    cropping seasons for the historical period} n=20 per grid point. Brackets
+    cropping seasons for the historical period}. n=20 per grid point. Brackets
     in titles show the spatial average of mean hail-prone proportion of cropping
     seasons by crop (numbers of samples shown in Supplementary Table
     \ref{SM-tab:crop_spatial_samples}). Plots are subset to remove areas with no
@@ -151,7 +151,7 @@ lines <- gsub('3C', '3\\\\degr{}', lines)
 lines <- gsub(' / ', '/', lines)
 cat(lines, sep = '\n')
 @
-\caption{\textbf{Samples in box plots}. Numbers of samples (grid points with
+\caption{\textbf{Numbers of samples in box plots}. Numbers of samples (grid points with
 significant changes) used to generate each box plot in Figure
 \ref{main-fig:crop_changes}. ``N. America'' stands for North America, ``S.
 America'' for South America, and ``G.nuts'' for groundnuts.}

@@ -469,11 +469,11 @@ identify hail-prone conditions worldwide.
 \begin{figure*}[h]
     \centering
     \includegraphics[width=\textwidth]{../../results/supplementary/monthly_anoms_India_2015}
-    \caption{\textbf{Monthly multi-proxy mean normalised hail-prone day
-    anomalies for the Indian region in 2015.} Anomalies are calculated using
-    ERA5 data with respect to the monthly ERA5 historical climatology
-    (1980-1999), figure shows multi-proxy mean anomalies (n=3 per grid cell).
-    The normalisation factor was held constant.}
+    \caption{Monthly multi-proxy mean normalised hail-prone day anomalies for
+    the Indian region in 2015. Anomalies are calculated using ERA5 data with
+    respect to the monthly ERA5 historical climatology (1980-1999), figure shows
+    multi-proxy mean anomalies (n=3 per grid cell). The normalisation factor was
+    held constant.}
     \label{fig:anoms_India_2015}
 \end{figure*}
 
@@ -509,14 +509,14 @@ non-significant changes in wind shear (Supplementary Figure
     \includegraphics[width=0.958\textwidth]{../../results/supplementary/ingredients_changes_shear}
     \includegraphics[width=0.987\textwidth]{../../results/supplementary/ingredients_changes_cin}
     \includegraphics[width=0.976\textwidth]{../../results/supplementary/ingredients_changes_lifted_index}
-    \caption{\textbf{Differences in multimodel mean (n=160 per grid point) hail
-    ingredients by epoch.} Ingredients shown are annual extreme (99th
-    percentile) convective available potential energy (CAPE), annual extreme
-    (99th percentile) 0-6 km bulk wind shear (S06), annual extreme (1st
-    percentile) convective inhibition (CIN), and annual extreme (1st percentile)
-    lifted index. CAPE, CIN, and LI were calculated using a well-mixed parcel
-    over the lowest 100 hPa. Stippling shows regions in which at least 50\% of
-    the model/proxy combinations agreed with the sign of the mean difference and
+    \caption{Differences in multimodel mean (n=160 per grid point) hail
+    ingredients by epoch. Ingredients shown are annual extreme (99th percentile)
+    convective available potential energy (CAPE), annual extreme (99th
+    percentile) 0-6 km bulk wind shear (S06), annual extreme (1st percentile)
+    convective inhibition (CIN), and annual extreme (1st percentile) lifted
+    index. CAPE, CIN, and LI were calculated using a well-mixed parcel over the
+    lowest 100 hPa. Stippling shows regions in which at least 50\% of the
+    model/proxy combinations agreed with the sign of the mean difference and
     also showed significant differences in the mean ($p < 0.05$ on a two-sided
     Welch's t-test, n=20 years per epoch).}
     \label{fig:ingredients_changes_1}
@@ -627,7 +627,7 @@ runs = runs %>% arrange(model) %>% select(Model=model,
                                           Orog=backup_orography) %>%
                                           mutate(Orog=case_when(Orog=='False'~'', Orog=='True'~'X'))
 tab = xtable(runs, label='tab:model_details',
-             caption='\\textbf{CMIP6 model details}. ``Res\'\' is nominal model resolution, ``Vert\'\' is the number of vertical levels in the model. An X in the column ``Orog\'\' indicates models for which no orography was provided; in these cases the orography for the historical run of CNRM-CM6-1 was interpolated to the model grid for use here. We used data at 6-hourly temporal resolution.')
+             caption='CMIP6 model details. ``Res\'\' is nominal model resolution, ``Vert\'\' is the number of vertical levels in the model. An X in the column ``Orog\'\' indicates models for which no orography was provided; in these cases the orography for the historical run of CNRM-CM6-1 was interpolated to the model grid for use here. We used data at 6-hourly temporal resolution.')
 print(tab, booktabs=TRUE, include.rownames=FALSE, 
       size='footnotesize', table.placement='h')
 @
@@ -656,14 +656,14 @@ print(tab, booktabs=TRUE, include.rownames=FALSE,
         MRI-ESM2-0 MRI & ssp585 & \cite{MRI-ESM2-0_ssp585} & CC BY 4.0 \\
         \bottomrule
     \end{tabular}
-    \caption{\textbf{References and licenses for CMIP6 data}.}
+    \caption{References and licenses for CMIP6 data.}
     \label{tab:CMIP6_data_refs}
 \end{table}
 
 \begin{figure*}[h]
     \centering
     \includegraphics[width=0.81\textwidth]{../../results/supplementary/all_drivers}
-    \caption{\textbf{Drivers of changes across models.} As for main text Figure
+    \caption{Drivers of changes across models. As for main text Figure
     \ref{main-fig:drivers} but showing all ingredients. Rows show de-biased
     ingredients: freezing level height (FLH), lapse rate (LR), melting level
     height (MLH), mixed-layer CAPE (MLCAPE$_{100}$), mixed-layer CIN
@@ -676,19 +676,18 @@ print(tab, booktabs=TRUE, include.rownames=FALSE,
 \begin{figure*}[h]
     \centering
     \includegraphics[width=\textwidth]{../../results/supplementary/changes_crop_proportion_hail_prone_3C}
-    \caption{\textbf{Change in multimodel, multi-proxy mean hail-prone
-    proportions of cropping seasons for 3 \degr{} warming.} n=480 per grid cell.
-    Stippling as for Supplementary Figure \ref{fig:ingredients_changes_1} and
-    region subset as for Extended Data Figure
-    \ref{ED-fig:historic_crop_proportions}.}
+    \caption{Change in multimodel, multi-proxy mean hail-prone proportions of
+    cropping seasons for 3 \degr{} warming. n=480 per grid cell. Stippling as
+    for Supplementary Figure \ref{fig:ingredients_changes_1} and region subset
+    as for Extended Data Figure \ref{ED-fig:historic_crop_proportions}.}
     \label{fig:crop_changes_3C}
 \end{figure*}
 
 \begin{figure*}[h]
     \centering
     \includegraphics[width=\textwidth]{../../results/supplementary/crop_lines_af}
-    \caption{\textbf{Changes affecting crops at a selected location in Africa.}
-    The horizontal black lines in the top inset plot indicate which months are
+    \caption{Changes affecting crops at a selected location in Africa. The
+    horizontal black lines in the top inset plot indicate which months are
     considered cropping times for selected crops at the given location. The
     chosen location is at the centre of the fuchsia square in the inset maps.
     Inset maps show changes in hail-prone proportion of cropping season by crop.
@@ -866,9 +865,9 @@ detect high-CAPE, high-shear conditions.
 \begin{figure*}[!ht]
     \centering
     \includegraphics[width=\textwidth]{../../results/supplementary/proxy_by_MLH}
-    \caption{\textbf{Original proxy for various values of melting level height
-    (MLH).} CAPE stands for convective available potential energy. $S_{06}$ is
-    0-6 km bulk vertical wind shear. The same discriminator lines are shown on
+    \caption{Original proxy for various values of melting level height (MLH).
+    CAPE stands for convective available potential energy. $S_{06}$ is 0-6 km
+    bulk vertical wind shear. The same discriminator lines are shown on
     logarithmic and linear scales.}
     \label{fig:proxy_by_MLH}
 \end{figure*}
@@ -889,8 +888,8 @@ shown by Supplementary Figure \ref{fig:Raupach_extra_conds}.
 \begin{figure*}[h!]
     \centering
     \includegraphics[width=\textwidth]{../../results/supplementary/Raupach_extra_conds_3C}
-    \caption{\textbf{Effect of extra conditions on Raupach proxy for 3 \degr{}
-    warming}. Changes shown are in multimodel mean annual hail-prone days (n=160
+    \caption{Effect of extra conditions on Raupach proxy for 3 \degr{}
+    warming. Changes shown are in multimodel mean annual hail-prone days (n=160
     per grid point). On left, the updated Raupach proxy with extra conditions
     applied; on right, changes in the updated Raupach proxy without extra
     conditions applied.}
