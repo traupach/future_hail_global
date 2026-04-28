@@ -887,7 +887,7 @@ by B. T. Schwertfeger (\url{https://doi.org/10.5281/zenodo.12168002})
 \cite{Schwertfeger_2024}. All study code is archived at
 \url{https://doi.org/10.5281/zenodo.15099057}
 \cite{Raupach_zenodo_archive_2026} and available under CC-BY-NC; this article
-used version v1.0.4 of the code.
+used version v1.0.5 of the code.
 
 \bmhead{Methods-only references}
 \begingroup
@@ -1022,7 +1022,7 @@ used version v1.0.4 of the code.
 
 \bibitem{Raupach_zenodo_archive_2026}
 \bibinfo{author}{Raupach, T.}
-\newblock \bibinfo{title}{traupach/future\_hail\_global: v1.0.4} (\bibinfo{year}{2026}).
+\newblock \bibinfo{title}{traupach/future\_hail\_global: v1.0.5} (\bibinfo{year}{2026}).
 \newblock \urlprefix\url{https://doi.org/10.5281/zenodo.15099057}.
 
 \end{thebibliography}
